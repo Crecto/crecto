@@ -17,11 +17,13 @@ dependencies:
 
 ## TODO
 
-- [ ] Schema
-- [ ] Repo
-- [ ] Adapters
-- [ ] Query class
-- [ ] Everything
+- [ ] Choose adapter in config
+- [ ] Different primary key
+- [ ] Associations
+- [ ] Validations
+- [ ] Callbacks
+- [ ] Preload
+- [ ] Joins
 
 ## Usage
 

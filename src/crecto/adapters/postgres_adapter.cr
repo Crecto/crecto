@@ -75,16 +75,13 @@ module Crecto
       end
 
       private def self.insert(connection, queryable_instance)
-        query_hash = queryable_instance.to_query_hash
-        values = query_hash.values.map do |value|
-          value.class == String ? "'#{value}'" : "#{value}"
-        end
+        fields_values = instance_fields_and_values(queryable_instance)
 
         query_string = ["INSERT INTO"]
         query_string.push "#{queryable_instance.class.table_name}"
-        query_string.push "(#{query_hash.keys.join(", ")})"
+        query_string.push "(#{fields_values[:fields]})"
         query_string.push "VALUES"
-        query_string.push "(#{values.join(", ")})"
+        query_string.push "(#{fields_values[:values]})"
         query_string.push "RETURNING *"
 
         query = connection.exec(query_string.join(" "))
@@ -93,23 +90,28 @@ module Crecto
       end
 
       private def self.update(connection, queryable_instance)
-        query_hash = queryable_instance.to_query_hash
-        values = query_hash.values.map do |value|
-          value.class == String ? "'#{value}'" : "#{value}"
-        end
+        fields_values = instance_fields_and_values(queryable_instance)
 
         query_string = ["UPDATE"]
         query_string.push "#{queryable_instance.class.table_name}"
         query_string.push "SET"
-        query_string.push "(#{query_hash.keys.join(", ")})"
+        query_string.push "(#{fields_values[:fields]})"
         query_string.push "="
-        query_string.push "(#{values.join(", ")})"
+        query_string.push "(#{fields_values[:values]})"
         query_string.push "WHERE"
         query_string.push "#{queryable_instance.class.primary_key}=#{queryable_instance.pkey_value}"
         query_string.push "RETURNING *"
 
         query = connection.exec(query_string.join(" "))
         query.rows[0]
+      end
+
+      private def self.instance_fields_and_values(queryable_instance)
+        query_hash = queryable_instance.to_query_hash
+        values = query_hash.values.map do |value|
+          value.class == String ? "'#{value}'" : "#{value}"
+        end
+        {fields: query_hash.keys.join(", "), values: values.join(", ")}
       end
 
       private def self.delete(connection, queryable_instance)
@@ -119,18 +121,16 @@ module Crecto
         query_string.push "#{queryable_instance.class.primary_key}=#{queryable_instance.pkey_value}"
         query_string.push "RETURNING *"
 
-        puts query_string.join(" ")
         query = connection.exec(query_string.join(" "))
         query.rows[0]
       end
 
       private def self.wheres(queryable, query)
-        resp = "WHERE"
+        query_string = ["WHERE "]
 
         wheres = query.wheres.as(Hash)
-        wheres.keys.each_with_index do |key, index|
-          resp += " AND " unless index == 0
-          resp += " #{queryable.table_name}.#{key}"
+        where_clauses = wheres.keys.map do |key|
+          resp = " #{queryable.table_name}.#{key}"
           if wheres[key].is_a?(String)
             resp += "='#{wheres[key]}'"
           elsif wheres[key].is_a?(Int32) || wheres[key].is_a?(Int64)
@@ -139,8 +139,8 @@ module Crecto
             resp += " in #{wheres[key]}"
           end
         end
-
-        resp
+        query_string.push where_clauses.join(" AND ")
+        query_string.join("")
       end
 
       private def self.order_bys(query)
