@@ -20,7 +20,8 @@ module Crecto
       Crecto::Adapters::Postgres.execute_on_instance(:update, queryable_instance)
     end
 
-    def self.delete
+    def self.delete(queryable_instance)
+      Crecto::Adapters::Postgres.execute_on_instance(:delete, queryable_instance)
     end
 
     def self.preload

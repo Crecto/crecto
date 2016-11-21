@@ -39,13 +39,13 @@ class User
 	end
 end
 
-u = User.new
-u.name = "test"
-u.age = 123
-Crecto::Repo.insert(u)
+user = User.new
+user.name = "test"
+user.age = 123
+Crecto::Repo.insert(user)
 
-u.name = "new name"
-Crecto::Repo.update(u)
+user.name = "new name"
+Crecto::Repo.update(user)
 
 query = Crecto::Repo::Query
 	.where(name: "new name", age: 123)
@@ -57,6 +57,8 @@ Crecto::Repo.all(User, query)
 Crecto::Repo.get(User, 1)
 
 Crecto::Repo.get_by(User, name: "new name", id: 1121)
+
+Crecto::Repo.delete(user)
 ```
 
 ## Development

@@ -52,5 +52,19 @@ describe Crecto do
         x.as(Array)[1].should eq("new name")
       end
     end
+
+    describe "#update" do
+      it "should update the model" do
+        u = User.new
+        u.name = "fridge"
+        u.things = 123
+        u.nope = 12.45432
+        u.yep = false
+        u.stuff = 9993
+        
+        Crecto::Repo.insert(u)
+        Crecto::Repo.delete(u)
+      end
+    end
   end 
 end

@@ -43,6 +43,8 @@ module Crecto
           insert(connection, queryable_instance)
         when :update
           update(connection, queryable_instance)
+        when :delete
+          delete(connection, queryable_instance)
         end
 
         DB.checkin(connection)
@@ -106,6 +108,18 @@ module Crecto
         query_string.push "#{queryable_instance.class.primary_key}=#{queryable_instance.pkey_value}"
         query_string.push "RETURNING *"
 
+        query = connection.exec(query_string.join(" "))
+        query.rows[0]
+      end
+
+      private def self.delete(connection, queryable_instance)
+        query_string = ["DELETE FROM"]
+        query_string.push "#{queryable_instance.class.table_name}"
+        query_string.push "WHERE"
+        query_string.push "#{queryable_instance.class.primary_key}=#{queryable_instance.pkey_value}"
+        query_string.push "RETURNING *"
+
+        puts query_string.join(" ")
         query = connection.exec(query_string.join(" "))
         query.rows[0]
       end
