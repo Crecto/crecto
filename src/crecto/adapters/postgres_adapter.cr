@@ -8,7 +8,6 @@ module Crecto
       ENV["DB_POOL_TIMEOUT"] ||= "0.01"
 
       DB = ConnectionPool.new(ENV["DB_POOL_CAPACITY"].to_i, ENV["DB_POOL_TIMEOUT"].to_f) do
-        puts "connect"
         PG.connect(ENV["PG_URL"])
       end
 
@@ -36,12 +35,12 @@ module Crecto
         result
       end
 
-      def self.execute_on_instance(operation, queryable_instance, opts)
+      def self.execute_on_instance(operation, queryable_instance)
         connection = DB.checkout()
 
         result = case operation
         when :insert
-          insert(connection, queryable_instance, opts)
+          insert(connection, queryable_instance)
         end
 
         DB.checkin(connection)
@@ -71,7 +70,7 @@ module Crecto
         query.rows
       end
 
-      private def self.insert(connection, queryable_instance, opts)
+      private def self.insert(connection, queryable_instance)
         query_hash = queryable_instance.to_query_hash
         values = query_hash.values.map do |value|
           value.class == String ? "'#{value}'" : "#{value}"

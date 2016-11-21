@@ -52,6 +52,8 @@ query = Crecto::Repo::Query
 Crecto::Repo.all(User, query)
 
 Crecto::Repo.get(User, 1)
+
+Crecto::Repo.get_by(User, name: "fridge", id: 1121)
 ```
 
 ## Development

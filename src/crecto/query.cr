@@ -2,7 +2,7 @@ module Crecto
   module Repo
     class Query
       property selects : Array(String)
-      property wheres : (Hash(Symbol, Int32 | String) | Hash(Symbol, Array(String | Int32)))?
+      property wheres : (Hash(Symbol, Int32) | Hash(Symbol, Int32 | String) | Hash(Symbol, Array(String | Int32)))?
       property joins : (Hash(Symbol, Hash(Symbol, String | Array(String))))?
       property order_by : String?
       property limit : (Int32 | Int64)?

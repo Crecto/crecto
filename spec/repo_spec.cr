@@ -29,5 +29,12 @@ describe Crecto do
         row.as(Array)[0].should eq(1121)
       end
     end
+
+    describe "#get_by" do
+      it "should return a row" do
+        row = Crecto::Repo.get_by(User, name: "fridge", id: 1121)
+        row[0].should eq(1121)
+      end
+    end
   end 
 end
