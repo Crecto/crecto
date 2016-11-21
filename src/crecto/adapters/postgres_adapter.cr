@@ -24,6 +24,18 @@ module Crecto
         result
       end
 
+      def self.execute(operation : Symbol, queryable, id : Int32 | Int64 | String)
+        connection = DB.checkout()
+
+        result = case operation
+        when :get
+          get(connection, queryable, id)
+        end
+
+        DB.checkin(connection)
+        result
+      end
+
       def self.execute_on_instance(operation, queryable_instance, opts)
         connection = DB.checkout()
 
@@ -36,7 +48,17 @@ module Crecto
         result
       end
 
-      def self.all(connection, queryable, query)
+      private def self.get(connection, queryable, id)
+        query_string = ["SELECT *"]
+        query_string.push "FROM #{queryable.table_name}"
+        query_string.push "WHERE #{queryable.primary_key}=#{id}"
+        query_string.push "LIMIT 1"
+
+        query = connection.exec(query_string.join(" "))
+        query.rows[0]
+      end
+
+      private def self.all(connection, queryable, query)
         query_string = ["SELECT"]
         query_string.push query.selects.join(", ")
         query_string.push "FROM #{queryable.table_name}"
@@ -49,21 +71,20 @@ module Crecto
         query.rows
       end
 
-      def self.insert(connection, queryable_instance, opts)
+      private def self.insert(connection, queryable_instance, opts)
         query_hash = queryable_instance.to_query_hash
-        fields = query_hash.keys.join(", ")
-
-        values = ""
-        query_hash.values.each_with_index do |value, index|
-          values += ", " unless index == 0
-          if value.class == String
-            values += "'#{value}'"
-          else
-            values += "#{value}"
-          end
+        values = query_hash.values.map do |value|
+          value.class == String ? "'#{value}'" : "#{value}"
         end
 
-        query = connection.exec("INSERT INTO #{queryable_instance.class.table_name} (#{fields}) VALUES (#{values}) RETURNING *")
+        query_string = ["INSERT INTO"]
+        query_string.push "#{queryable_instance.class.table_name}"
+        query_string.push "(#{query_hash.keys.join(", ")})"
+        query_string.push "VALUES"
+        query_string.push "(#{values.join(", ")})"
+        query_string.push "RETURNING *"
+
+        query = connection.exec(query_string.join(" "))
         queryable_instance.id = query.to_hash[0]["id"].as(Int32 | Int64)
         queryable_instance
       end

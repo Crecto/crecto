@@ -35,7 +35,7 @@ class User
 		field :age, :integer
 		field :name, :string
 		field :is_admin, :boolean
-		field :temporary_info, :float, {virtual: true}
+		field :temporary_info, :float, virtual: true
 	end
 end
 
@@ -48,7 +48,10 @@ query = Crecto::Repo::Query
 	.where(name: "test", age: 123)
 	.order_by("users.name")
 	.limit(1)
+	
 Crecto::Repo.all(User, query)
+
+Crecto::Repo.get(User, 1)
 ```
 
 ## Development

@@ -4,7 +4,8 @@ module Crecto
       Crecto::Adapters::Postgres.execute(:all, queryable, query)
     end
 
-    def self.get
+    def self.get(queryable, id)
+      Crecto::Adapters::Postgres.execute(:get, queryable, id)
     end
 
     def self.first

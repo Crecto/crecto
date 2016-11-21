@@ -33,6 +33,7 @@ module Crecto
       check_type!(field_name, {{field_type}})
 
       {% field_type = "Int32 | Int64" if field_type == :integer %}
+      {% field_type = "Int32 | Int64" if field_type == :text %}
       {% field_type = :float64 if field_type == :float %}
       {% field_type = :bool if field_type == :boolean %}
 
