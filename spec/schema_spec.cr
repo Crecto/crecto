@@ -1,17 +1,5 @@
 require "./spec_helper"
 
-class User
-  include Crecto::Schema
-
-  schema "users" do
-    field :name, :string, {primary_key: true}
-    field :things, :integer
-    field :stuff, :integer, {virtual: true}
-    field :nope, :float
-    field :yep, :boolean
-  end
-end
-
 describe Crecto do
   describe "Schema" do
     describe "#schema and #field" do
@@ -20,11 +8,11 @@ describe Crecto do
       end
 
       it "should set the primary key" do
-        User.primary_key.should eq("name")
+        User.primary_key.should eq("id")
       end
 
       it "should set the changeset fields" do
-        User.changeset_fields.should eq(["name", "things", "nope", "yep"])
+        User.changeset_fields.should eq([:name, :things, :nope, :yep])
       end
 
       it "should set properties for the fields" do

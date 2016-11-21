@@ -19,6 +19,8 @@ dependencies:
 
 - [ ] Schema
 - [ ] Repo
+- [ ] Adapters
+- [ ] Query class
 - [ ] Everything
 
 ## Usage
@@ -30,12 +32,23 @@ class User
 	include Crecto::Schema
 
 	schema "users" do
-		field :id, :ineger, {primary_key: true}
+		field :age, :integer
 		field :name, :string
 		field :is_admin, :boolean
 		field :temporary_info, :float, {virtual: true}
 	end
 end
+
+u = User.new
+u.name = "test"
+u.age = 123
+Crecto::Repo.insert(u)
+
+query = Crecto::Repo::Query
+	.where(name: "test", age: 123)
+	.order_by("users.name")
+	.limit(1)
+Crecto::Repo.all(User, query)
 ```
 
 ## Development

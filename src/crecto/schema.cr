@@ -4,28 +4,32 @@ module Crecto
     VALID_FIELD_OPTIONS = [:primary_key, :virtual]
     VALID_HAS_OPTIONS = [:foreign_key]
     VALID_BELONGS_TO_OPTIONS = [:foreign_key]
+    FIELDS = [] of String
+
+    property id : (Int32 | Int64)?
+    property created_at : Time?
+    property updated_at : Time?
 
     macro schema(table_name, &block)
       @@table_name = {{table_name.id.stringify}}
-      @@primary_key : String?
-      @@changeset_fields = [] of String
+      @@primary_key = "id"
+      @@changeset_fields = [] of Symbol
 
       {{yield}}
 
       setup
     end
 
-    macro field(field_name, field_type, *opts)
+    macro field(field_name, field_type, **opts)
       virtual = false
-      {% for opt in opts %}
-        {% if opt[:primary_key] %}
-          @@primary_key = {{field_name.id.stringify}}
-        {% elsif opt[:virtual] %}
-          virtual = true
-        {% end %}
+      {% if opts[:primary_key] %}
+        @@primary_key = {{field_name.id.stringify}}
+      {% elsif opts[:virtual] %}
+        virtual = true
       {% end %}
 
-      @@changeset_fields << {{field_name.id.stringify}} unless virtual
+      @@changeset_fields << {{field_name}} unless virtual
+      {% FIELDS << field_name %}
       check_type!(field_name, {{field_type}})
 
       {% field_type = "Int32 | Int64" if field_type == :integer %}
@@ -54,6 +58,14 @@ module Crecto
     end
 
     macro setup
+      def to_query_hash
+        h = {} of Symbol => Int32 | Int64 | String | Float64 | Bool | Nil
+        {% for field in FIELDS %}
+          h[{{field}}] = self.{{field.id}} if self.{{field.id}}
+        {% end %}
+        h
+      end
+
       def self.primary_key
         @@primary_key
       end
