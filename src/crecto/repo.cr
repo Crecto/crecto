@@ -16,7 +16,8 @@ module Crecto
       Crecto::Adapters::Postgres.execute_on_instance(:insert, queryable_instance)
     end
 
-    def self.update
+    def self.update(queryable_instance)
+      Crecto::Adapters::Postgres.execute_on_instance(:update, queryable_instance)
     end
 
     def self.delete

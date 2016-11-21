@@ -44,8 +44,11 @@ u.name = "test"
 u.age = 123
 Crecto::Repo.insert(u)
 
+u.name = "new name"
+Crecto::Repo.update(u)
+
 query = Crecto::Repo::Query
-	.where(name: "test", age: 123)
+	.where(name: "new name", age: 123)
 	.order_by("users.name")
 	.limit(1)
 	
@@ -53,7 +56,7 @@ Crecto::Repo.all(User, query)
 
 Crecto::Repo.get(User, 1)
 
-Crecto::Repo.get_by(User, name: "fridge", id: 1121)
+Crecto::Repo.get_by(User, name: "new name", id: 1121)
 ```
 
 ## Development

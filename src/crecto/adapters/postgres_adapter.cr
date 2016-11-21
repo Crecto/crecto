@@ -41,6 +41,8 @@ module Crecto
         result = case operation
         when :insert
           insert(connection, queryable_instance)
+        when :update
+          update(connection, queryable_instance)
         end
 
         DB.checkin(connection)
@@ -86,6 +88,26 @@ module Crecto
         query = connection.exec(query_string.join(" "))
         queryable_instance.id = query.to_hash[0]["id"].as(Int32 | Int64)
         queryable_instance
+      end
+
+      private def self.update(connection, queryable_instance)
+        query_hash = queryable_instance.to_query_hash
+        values = query_hash.values.map do |value|
+          value.class == String ? "'#{value}'" : "#{value}"
+        end
+
+        query_string = ["UPDATE"]
+        query_string.push "#{queryable_instance.class.table_name}"
+        query_string.push "SET"
+        query_string.push "(#{query_hash.keys.join(", ")})"
+        query_string.push "="
+        query_string.push "(#{values.join(", ")})"
+        query_string.push "WHERE"
+        query_string.push "#{queryable_instance.class.primary_key}=#{queryable_instance.pkey_value}"
+        query_string.push "RETURNING *"
+
+        query = connection.exec(query_string.join(" "))
+        query.rows[0]
       end
 
       private def self.wheres(queryable, query)

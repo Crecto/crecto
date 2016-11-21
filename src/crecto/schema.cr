@@ -5,6 +5,7 @@ module Crecto
     VALID_HAS_OPTIONS = [:foreign_key]
     VALID_BELONGS_TO_OPTIONS = [:foreign_key]
     FIELDS = [] of String
+    PRIMARY_KEY = "id"
 
     property id : (Int32 | Int64)?
     property created_at : Time?
@@ -24,6 +25,7 @@ module Crecto
       virtual = false
       {% if opts[:primary_key] %}
         @@primary_key = {{field_name.id.stringify}}
+        PRIMARY_KEY = {{field_name.id.stringify}}
       {% elsif opts[:virtual] %}
         virtual = true
       {% end %}
@@ -65,6 +67,10 @@ module Crecto
           h[{{field}}] = self.{{field.id}} if self.{{field.id}}
         {% end %}
         h
+      end
+
+      def pkey_value
+        self.{{PRIMARY_KEY.id}}
       end
 
       def self.primary_key
