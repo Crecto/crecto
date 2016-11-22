@@ -86,7 +86,7 @@ module Crecto
         q.push  "RETURNING *"
 
         query = connection.exec(q.join(" "))
-        queryable_instance.id = query.to_hash[0]["id"].as(Int32 | Int64)
+        queryable_instance.id = query.to_hash[0]["id"].as(Int32)
         queryable_instance
       end
 

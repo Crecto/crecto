@@ -5,11 +5,11 @@ class User
   include Crecto::Schema
 
   schema "users" do
-    field :name, :string
-    field :things, :integer
-    field :stuff, :integer, virtual: true
-    field :nope, :float
-    field :yep, :boolean
+    field :name, String
+    field :things, Int32
+    field :stuff, Int32, virtual: true
+    field :nope, Float64
+    field :yep, Bool
   end
 end
 
@@ -17,6 +17,6 @@ class Tester
 	include Crecto::Schema
 
 	schema "testers" do
-		field :oof, :string
+		field :oof, String
 	end	
 end

@@ -1,13 +1,13 @@
 module Crecto
   module Schema
-    VALID_FIELD_TYPES = [:integer, :string, :float, :boolean]
+    VALID_FIELD_TYPES = [String, Int32, Float64, Bool, Time]
     VALID_FIELD_OPTIONS = [:primary_key, :virtual]
     VALID_HAS_OPTIONS = [:foreign_key]
     VALID_BELONGS_TO_OPTIONS = [:foreign_key]
     FIELDS = [] of String
     PRIMARY_KEY = "id"
 
-    property id : (Int32 | Int64)?
+    property id : Int32?
     property created_at : Time?
     property updated_at : Time?
 
@@ -30,16 +30,11 @@ module Crecto
         virtual = true
       {% end %}
 
+      check_type!(field_name, {{field_type}})
       @@changeset_fields << {{field_name}} unless virtual
       {% FIELDS << field_name %}
-      check_type!(field_name, {{field_type}})
 
-      {% field_type = "Int32 | Int64" if field_type == :integer %}
-      {% field_type = "Int32 | Int64" if field_type == :text %}
-      {% field_type = :float64 if field_type == :float %}
-      {% field_type = :bool if field_type == :boolean %}
-
-      property {{field_name.id}} : {{field_type.camelcase.id + "?"}}
+      property {{field_name.id}} : {{field_type}}?
     end
 
     macro has_many(name, queryable)
