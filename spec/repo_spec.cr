@@ -18,22 +18,25 @@ describe Crecto do
 
     describe "#all" do
       it "should return rows" do
-        rows = Crecto::Repo.all(User, Crecto::Repo::Query.where(name: "fridge", things: 123).order_by("users.name").limit(1))
-        rows.as(Array).size.should be > 0
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(name: "fridge", things: 123).order_by("users.name").limit(1))
+        users = users.as(Array) unless users.nil?
+        users.as(Array).size.should be > 0
       end
     end
 
     describe "#get" do
       it "should return a user" do
-        row = Crecto::Repo.get(User, 1121)
-        row.as(Array)[0].should eq(1121)
+        user = Crecto::Repo.get(User, 1121).as(User)
+        user.is_a?(User).should eq(true)
+        user.id.should eq(1121)
       end
     end
 
     describe "#get_by" do
       it "should return a row" do
-        row = Crecto::Repo.get_by(User, name: "fridge", id: 1121)
-        row[0].should eq(1121)
+        user = Crecto::Repo.get_by(User, name: "fridge", id: 1121).as(User)
+        user.id.should eq(1121)
+        user.name.should eq("fridge")
       end
     end
 
@@ -49,12 +52,12 @@ describe Crecto do
         Crecto::Repo.insert(u)
         u.name = "new name"
         x = Crecto::Repo.update(u)
-        x.as(Array)[1].should eq("new name")
+        x.as(Hash)["name"].should eq("new name")
       end
     end
 
-    describe "#update" do
-      it "should update the model" do
+    describe "#delete" do
+      it "should delete the model" do
         u = User.new
         u.name = "fridge"
         u.things = 123

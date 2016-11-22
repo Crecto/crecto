@@ -58,7 +58,7 @@ module Crecto
         query_string.push "LIMIT 1"
 
         query = connection.exec(query_string.join(" "))
-        query.rows[0]
+        queryable.from_sql(query.to_hash[0])
       end
 
       private def self.all(connection, queryable, query)
@@ -71,7 +71,7 @@ module Crecto
         query_string.push limit(query) unless query.limit.nil?
         query_string.push offset(query) unless query.offset.nil?
         query = connection.exec(query_string.join(" "))
-        query.rows
+        query.to_hash.map{|row| queryable.from_sql(row) }
       end
 
       private def self.insert(connection, queryable_instance)
@@ -103,7 +103,7 @@ module Crecto
         query_string.push "RETURNING *"
 
         query = connection.exec(query_string.join(" "))
-        query.rows[0]
+        query.to_hash[0]
       end
 
       private def self.instance_fields_and_values(queryable_instance)
@@ -122,7 +122,7 @@ module Crecto
         query_string.push "RETURNING *"
 
         query = connection.exec(query_string.join(" "))
-        query.rows[0]
+        query.to_hash[0]
       end
 
       private def self.wheres(queryable, query)

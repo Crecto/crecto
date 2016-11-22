@@ -61,6 +61,8 @@ module Crecto
     end
 
     macro setup
+      extend BuildFromSQL
+
       def to_query_hash
         h = {} of Symbol => Int32 | Int64 | String | Float64 | Bool | Nil
         {% for field in FIELDS %}

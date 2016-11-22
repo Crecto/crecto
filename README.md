@@ -19,6 +19,7 @@ dependencies:
 
 - [ ] Choose adapter in config
 - [ ] Different primary key
+- [ ] deal with created_at & updated_at
 - [ ] Associations
 - [ ] Validations
 - [ ] Callbacks
@@ -54,11 +55,14 @@ query = Crecto::Repo::Query
 	.order_by("users.name")
 	.limit(1)
 	
-Crecto::Repo.all(User, query)
+users = Crecto::Repo.all(User, query)
+users.as(Array) unless users.nil?
 
-Crecto::Repo.get(User, 1)
+user = Crecto::Repo.get(User, 1)
+user.as(User) unless user.nil?
 
 Crecto::Repo.get_by(User, name: "new name", id: 1121)
+user.as(User) unless user.nil?
 
 Crecto::Repo.delete(user)
 ```
