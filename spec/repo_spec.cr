@@ -18,8 +18,12 @@ describe Crecto do
 
     describe "#all" do
       it "should return rows" do
-        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(name: "fridge", things: 123).order_by("users.name").limit(1))
-        users = users.as(Array) unless users.nil?
+        query = Crecto::Repo::Query
+          .where(name: "fridge", things: 123)
+          .order_by("users.name")
+          .limit(1)
+        users = Crecto::Repo.all(User, query)
+        users = users.as(Array)
         users.as(Array).size.should be > 0
       end
     end
