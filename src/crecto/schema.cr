@@ -1,5 +1,9 @@
 module Crecto
   module Schema
+    include Crecto::Schema::HasMany
+    include Crecto::Schema::HasOne
+    include Crecto::Schema::BelongsTo
+
     VALID_FIELD_TYPES = [String, Int32, Float64, Bool, Time]
     VALID_FIELD_OPTIONS = [:primary_key, :virtual]
     VALID_HAS_OPTIONS = [:foreign_key]
@@ -35,18 +39,6 @@ module Crecto
       {% FIELDS << field_name %}
 
       property {{field_name.id}} : {{field_type}}?
-    end
-
-    macro has_many(name, queryable)
-
-    end
-
-    macro has_one(name, queryable)
-
-    end
-
-    macro belongs_to(name, queryable)
-
     end
 
     macro check_type!(field_name, field_type)

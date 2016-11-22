@@ -10,6 +10,9 @@ class User
     field :stuff, Int32, virtual: true
     field :nope, Float64
     field :yep, Bool
+    has_many :users
+    has_one :thing
+    belongs_to :stuff
   end
 end
 
