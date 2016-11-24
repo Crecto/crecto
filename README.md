@@ -29,7 +29,9 @@ dependencies:
 ```crystal
 require "crecto"
 
+#
 # Define table name, fields and validations in your class
+#
 class User
   include Crecto::Schema
   extend Crecto::Changeset
@@ -49,7 +51,9 @@ user = User.new
 user.name = "123"
 user.age = 123
 
+#
 # Check the changeset to see changes and errors
+#
 changeset = User.changeset(user)
 puts changeset.valid? # false
 puts changeset.errors # {:field => "name", :message => "is invalid"}
@@ -59,32 +63,46 @@ u.name = "test"
 changeset = User.changeset(user)
 changeset.valid? # true
 
+#
 # Use Repo to insert into database
+#
 Crecto::Repo.insert(user)
 
+#
 # User Repo to update database
+#
 user.name = "new name"
 Crecto::Repo.update(user)
 
+#
 # Query syntax
+#
 query = Crecto::Repo::Query
   .where(name: "new name", age: 123)
   .order_by("users.name")
   .limit(1)
 
-# all  
+#
+# all
+#
 users = Crecto::Repo.all(User, query)
 users.as(Array) unless users.nil?
 
+#
 # get by primary key
+#
 user = Crecto::Repo.get(User, 1)
 user.as(User) unless user.nil?
 
+#
 # get by fields
+#
 Crecto::Repo.get_by(User, name: "new name", id: 1121)
 user.as(User) unless user.nil?
 
+#
 # delete
+#
 Crecto::Repo.delete(user)
 ```
 
