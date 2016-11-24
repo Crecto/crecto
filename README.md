@@ -1,6 +1,6 @@
 # Crecto
 
-Database wrapper for Crystal.  Based on [Ecto](https://github.com/elixir-ecto/ecto) for Elixir language.
+Database wrapper for Crystal.  Inspired by [Ecto](https://github.com/elixir-ecto/ecto) for Elixir language.
 
 ** WORK IN PROGRESS **
 
