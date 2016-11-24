@@ -10,6 +10,7 @@ module Crecto
     property id : Int32?
     property created_at : Time?
     property updated_at : Time?
+    property initial_values : Hash(Symbol, Int32 | Int64 | String | Float64 | Bool | Nil)?
 
     macro schema(table_name, &block)
       FIELDS = [] of String
@@ -18,6 +19,7 @@ module Crecto
       @@table_name = {{table_name.id.stringify}}
       @@primary_key = "id"
       @@changeset_fields = [] of Symbol
+      @@initial_values = {} of Symbol => Int32 | Int64 | String | Float64 | Bool | Nil
 
       {{yield}}
 

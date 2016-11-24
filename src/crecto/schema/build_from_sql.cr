@@ -22,6 +22,8 @@ module Crecto
         #   updated = hash["updated_at"].as(Time)
         #   object.updated_at = updated.to_s("%s%L").to_i64
         # end
+        
+        object.initial_values = object.to_query_hash
         object
       end
     end
