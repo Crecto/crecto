@@ -85,7 +85,5 @@ end
 # * limit
 # * offset
 
-# Repo.all(User, select: 'id', where: {name: 'fred'}, joins: {class: Post, where: {name: 'this post'}}, order_by: "users.name", limit: 1, offset: 40)
-
 # Query.select('id').where(name: "fred").join(Post, where: {name: "this post"}).order_by("users.name").limit(1).offset(4)
 

@@ -6,16 +6,15 @@ module Crecto
 
     VALID_FIELD_TYPES = [String, Int32, Float64, Bool, Time]
     VALID_FIELD_OPTIONS = [:primary_key, :virtual]
-    VALID_HAS_OPTIONS = [:foreign_key]
-    VALID_BELONGS_TO_OPTIONS = [:foreign_key]
-    FIELDS = [] of String
-    PRIMARY_KEY = "id"
 
     property id : Int32?
     property created_at : Time?
     property updated_at : Time?
 
     macro schema(table_name, &block)
+      FIELDS = [] of String
+      PRIMARY_KEY = "id"
+      
       @@table_name = {{table_name.id.stringify}}
       @@primary_key = "id"
       @@changeset_fields = [] of Symbol
@@ -26,6 +25,12 @@ module Crecto
     end
 
     macro field(field_name, field_type, **opts)
+      {% for opt in opts %}
+        {% unless VALID_FIELD_OPTIONS.includes?(opt.id.symbolize) %}
+          raise Crecto::InvalidOption.new("{{opt}} is not a valid option, must be one of #{VALID_FIELD_OPTIONS.join(", ")}")
+        {% end %}
+      {% end %}
+
       virtual = false
       {% if opts[:primary_key] %}
         @@primary_key = {{field_name.id.stringify}}
@@ -34,7 +39,7 @@ module Crecto
         virtual = true
       {% end %}
 
-      check_type!(field_name, {{field_type}})
+      check_type!({{field_name}}, {{field_type}})
       @@changeset_fields << {{field_name}} unless virtual
       {% FIELDS << field_name %}
 
