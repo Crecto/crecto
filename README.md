@@ -16,10 +16,16 @@ dependencies:
 
 ## TODO
 
+#### Before first release
+
 - [ ] DOCS!
-- [ ] Choose adapter in config
-- [ ] Different primary key
+- [ ] Test different primary key
 - [ ] deal with created_at & updated_at
+- [ ] Repo accept a changeset
+
+#### Roadmap
+
+- [ ] Choose adapter in config
 - [ ] Associations
 - [ ] Preload
 - [ ] Joins
