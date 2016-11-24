@@ -65,7 +65,7 @@ puts changeset.valid? # false
 puts changeset.errors # {:field => "name", :message => "is invalid"}
 puts changeset.changes # {:name => "123"}
 
-u.name = "test"
+user.name = "test"
 changeset = User.changeset(user)
 changeset.valid? # true
 
