@@ -17,35 +17,72 @@ describe Crecto do
       end
     end
 
-    # describe "#validate_format" do
-    #   it "should not be valid" do
-    #     u = User.new
-    #     u.name = "123"
-    #     u.nope = 0.123
-    #     u.things = 123
-    #     changeset = User.changeset(u)
-    #     changeset.valid?.should eq(false)
-    #   end
+    describe "#validate_format" do
+      it "should not be valid" do
+        u = UserFormat.new
+        u.name = "123"
+        changeset = UserFormat.changeset(u)
+        changeset.valid?.should eq(false)
+      end
 
-    #   it "should have some errors" do
-    #     u = User.new
-    #     u.name = "123"
-    #     u.nope = 0.123
-    #     u.things = 123
-    #     changeset = User.changeset(u)
-    #     changeset.errors.size.should be > 0
-    #     changeset.errors[0].should eq({:field => "name", :message => "is invalid"})
-    #   end
-    # end
+      it "should have some errors" do
+        u = UserFormat.new
+        u.name = "123"
+        changeset = UserFormat.changeset(u)
+        changeset.errors.size.should be > 0
+        changeset.errors[0].should eq({:field => "name", :message => "is invalid"})
+      end
+    end
 
-    # describe "#validate_inclusion" do
-    #   u = User.new
-    #   u.nope = 0.123
-    #   u.things = 123
-    #   u.name = "fred"
-    #   changeset = User.changeset(u)
-    #   changeset.valid?.should eq(false)
-    #   puts changeset.errors
-    # end
+    describe "#validate_inclusion" do
+      it "should not be valid" do
+        u = UserInclusion.new
+        u.name = "fred"
+        changeset = User.changeset(u)
+        changeset.valid?.should eq(false)
+      end
+
+      it "should have some errors" do
+        u = UserInclusion.new
+        u.name = "fred"
+        changeset = User.changeset(u)
+        changeset.errors.size.should be > 0
+        changeset.errors[0].should eq({:field => "name", :message => "is invalid"})
+      end
+    end
+
+    describe "#validate_exclusion" do
+      it "should not be valid" do
+        u = UserExclusion.new
+        u.name = "bill"
+        changeset = User.changeset(u)
+        changeset.valid?.should eq(false)
+      end
+
+      it "should have some errors" do
+        u = UserExclusion.new
+        u.name = "bill"
+        changeset = User.changeset(u)
+        changeset.errors.size.should be > 0
+        changeset.errors[0].should eq({:field => "name", :message => "is invalid"})
+      end
+    end
+
+    describe "#validate_length" do
+      it "should not be valid" do
+        u = UserLength.new
+        u.name = "fridge"
+        changeset = User.changeset(u)
+        changeset.valid?.should eq(false)
+      end
+
+      it "should have some errors" do
+        u = UserLength.new
+        u.name = "fridge"
+        changeset = User.changeset(u)
+        changeset.errors.size.should be > 0
+        changeset.errors[0].should eq({:field => "name", :message => "is invalid"})
+      end
+    end
   end
 end

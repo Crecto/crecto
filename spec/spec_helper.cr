@@ -14,10 +14,6 @@ class User
     has_many :posts, Post
     has_one :thing, Thing
   end
-
-  validate_required :nope
-  validate_required [:name, :things]
-  validate_format :name, /[*a-zA-Z]/
 end
 
 class UserRequired
@@ -32,6 +28,58 @@ class UserRequired
 
   validate_required :name
   validate_required [:age, :is_admin]
+end
+
+class UserFormat
+  include Crecto::Schema
+  extend Crecto::Changeset
+
+  schema "users_required" do
+    field :name, String
+    field :age, Int32
+    field :is_admin, Bool
+  end
+
+  validate_format :name, /[*a-zA-Z]/
+end
+
+class UserInclusion
+  include Crecto::Schema
+  extend Crecto::Changeset
+
+  schema "users_required" do
+    field :name, String
+    field :age, Int32
+    field :is_admin, Bool
+  end
+
+  validate_inclusion :name, ["bill", "ted"]
+end
+
+class UserExclusion
+  include Crecto::Schema
+  extend Crecto::Changeset
+
+  schema "users_required" do
+    field :name, String
+    field :age, Int32
+    field :is_admin, Bool
+  end
+
+  validate_exclusion :name, ["bill", "ted"]
+end
+
+class UserLength
+  include Crecto::Schema
+  extend Crecto::Changeset
+
+  schema "users_required" do
+    field :name, String
+    field :age, Int32
+    field :is_admin, Bool
+  end
+
+  validate_length :name, max: 5
 end
 
 class Thing
