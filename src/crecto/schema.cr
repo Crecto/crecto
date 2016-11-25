@@ -10,7 +10,7 @@ module Crecto
     property id : Int32?
     property created_at : Time?
     property updated_at : Time?
-    property initial_values : Hash(Symbol, Int32 | Int64 | String | Float64 | Bool | Nil)?
+    property initial_values : Hash(Symbol, Int32 | Int64 | String | Float64 | Bool | Time | Nil)?
 
     macro schema(table_name, &block)
       FIELDS = [] of String
@@ -19,7 +19,7 @@ module Crecto
       @@table_name = {{table_name.id.stringify}}
       @@primary_key = "id"
       @@changeset_fields = [] of Symbol
-      @@initial_values = {} of Symbol => Int32 | Int64 | String | Float64 | Bool | Nil
+      @@initial_values = {} of Symbol => Int32 | Int64 | String | Float64 | Bool | Time | Nil
 
       {{yield}}
 
@@ -58,9 +58,9 @@ module Crecto
       extend BuildFromSQL
 
       def to_query_hash
-        h = {} of Symbol => Int32 | Int64 | String | Float64 | Bool | Nil
+        h = {} of Symbol => Int32 | Int64 | String | Float64 | Bool | Time | Nil
         {% for field in FIELDS %}
-          h[{{field}}] = self.{{field.id}} if self.{{field.id}}
+          h[{{field}}] = self.{{field.id}} if self.{{field.id}} && @@changeset_fields.includes?({{field}})
         {% end %}
         h
       end

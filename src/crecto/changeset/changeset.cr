@@ -3,12 +3,12 @@ module Crecto
     class Changeset
       property action : Symbol?
       property errors = [] of Hash(Symbol, String)
-      property changes = [] of Hash(Symbol, Bool | Float64 | Int32 | Int64 | String | Nil)
-      property source : Hash(Symbol, Bool | Float64 | Int32 | Int64 | String | Nil)?
+      property changes = [] of Hash(Symbol, Bool | Float64 | Int32 | Int64 | String | Time | Nil)
+      property source : Hash(Symbol, Bool | Float64 | Int32 | Int64 | String | Time | Nil)?
 
       private property valid = true
       private property class_key : String?
-      private property instance_hash : Hash(Symbol, Bool | Float64 | Int32 | Int64 | String | Nil)
+      private property instance_hash : Hash(Symbol, Bool | Float64 | Int32 | Int64 | String | Time | Nil)
 
       def initialize(instance)
         @class_key = instance.class.to_s
@@ -17,8 +17,10 @@ module Crecto
 
         check_required!
         check_formats!
-        check_inclusions!
-        check_exclusions!
+        check_array_inclusions!
+        check_range_inclusions!
+        check_array_exclusions!
+        check_range_exclusions!
         check_lengths!
         diff_from_initial_values!
       end
@@ -44,21 +46,51 @@ module Crecto
         end
       end
 
-      private def check_inclusions!
-        return unless REQUIRED_INCLUSIONS.has_key?(@class_key)
-        REQUIRED_INCLUSIONS[@class_key].each do |inclusion|
+      private def check_array_inclusions!
+        return unless REQUIRED_ARRAY_INCLUSIONS.has_key?(@class_key)
+        REQUIRED_ARRAY_INCLUSIONS[@class_key].each do |inclusion|
           next unless @instance_hash.has_key?(inclusion[:field])
           val = @instance_hash.fetch(inclusion[:field])
-          add_error(inclusion[:field].to_s, "is invalid") unless inclusion[:in].to_a.includes?(val)
+          add_error(inclusion[:field].to_s, "is invalid") unless inclusion[:in].includes?(val)
         end
       end
 
-      private def check_exclusions!
-        return unless REQUIRED_EXCLUSIONS.has_key?(@class_key)
-        REQUIRED_EXCLUSIONS[@class_key].each do |exclusion|
+      private def check_range_inclusions!
+        return unless REQUIRED_RANGE_INCLUSIONS.has_key?(@class_key)
+        REQUIRED_RANGE_INCLUSIONS[@class_key].each do |inclusion|
+          next unless @instance_hash.has_key?(inclusion[:field])
+          val = @instance_hash.fetch(inclusion[:field])
+          if inclusion[:in].is_a?(Range(Float64, Float64)) && val.is_a?(Float64)
+            add_error(inclusion[:field].to_s, "is invalid") unless inclusion[:in].as(Range(Float64, Float64)).includes?(val.as(Float64))
+          elsif inclusion[:in].is_a?(Range(Int32, Int32)) && val.is_a?(Int32)
+            add_error(inclusion[:field].to_s, "is invalid") unless inclusion[:in].as(Range(Int32, Int32)).includes?(val.as(Int32))
+          elsif inclusion[:in].is_a?(Range(Time, Time)) && val.is_a?(Time)
+            add_error(inclusion[:field].to_s, "is invalid") unless inclusion[:in].as(Range(Time, Time)).includes?(val.as(Time))            
+          end
+        end
+      end
+
+      private def check_array_exclusions!
+        return unless REQUIRED_ARRAY_EXCLUSIONS.has_key?(@class_key)
+        REQUIRED_ARRAY_EXCLUSIONS[@class_key].each do |exclusion|
           next unless @instance_hash.has_key?(exclusion[:field])
           val = @instance_hash.fetch(exclusion[:field])
-          add_error(exclusion[:field].to_s, "is invalid") if exclusion[:in].to_a.includes?(val)
+          add_error(exclusion[:field].to_s, "is invalid") if exclusion[:in].includes?(val)
+        end
+      end
+
+      private def check_range_exclusions!
+        return unless REQUIRED_RANGE_EXCLUSIONS.has_key?(@class_key)
+        REQUIRED_RANGE_EXCLUSIONS[@class_key].each do |exclusion|
+          next unless @instance_hash.has_key?(exclusion[:field])
+          val = @instance_hash.fetch(exclusion[:field])
+          if exclusion[:in].is_a?(Range(Float64, Float64)) && val.is_a?(Float64)
+            add_error(exclusion[:field].to_s, "is invalid") if exclusion[:in].as(Range(Float64, Float64)).includes?(val.as(Float64))
+          elsif exclusion[:in].is_a?(Range(Int32, Int32)) && val.is_a?(Int32)
+            add_error(exclusion[:field].to_s, "is invalid") if exclusion[:in].as(Range(Int32, Int32)).includes?(val.as(Int32))
+          elsif exclusion[:in].is_a?(Range(Time, Time)) && val.is_a?(Time)
+            add_error(exclusion[:field].to_s, "is invalid") if exclusion[:in].as(Range(Time, Time)).includes?(val.as(Time))            
+          end
         end
       end
 

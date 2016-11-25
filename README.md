@@ -63,7 +63,7 @@ user.age = 123
 changeset = User.changeset(user)
 puts changeset.valid? # false
 puts changeset.errors # {:field => "name", :message => "is invalid"}
-puts changeset.changes # {:name => "123"}
+puts changeset.changes # {:name => "123", :age => 123}
 
 user.name = "test"
 changeset = User.changeset(user)

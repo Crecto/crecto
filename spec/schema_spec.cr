@@ -30,5 +30,17 @@ describe Crecto do
         u.yep.should eq(false)
       end
     end
+
+    describe "#to_query_hash" do
+      it "should build the correct hash from the object" do
+        u = User.new
+        u.name = "tester"
+        u.things = 6644
+        u.stuff = 2343 # virtual, shouldn't be in query hash
+        u.nope = 34.9900
+
+        u.to_query_hash.should eq({:name => "tester", :things => 6644, :nope => 34.9900})
+      end 
+    end
   end
 end
