@@ -3,6 +3,13 @@ require "pool/connection"
 
 module Crecto
   module Adapters
+
+    #
+    # Adapter module for PostgresSQL
+    #
+    # Uses [crystal-pg](https://github.com/will/crystal-pg) for now.
+    #
+    # Other adapters should follow this same pattern
     module Postgres
       ENV["DB_POOL_CAPACITY"] ||= "25"
       ENV["DB_POOL_TIMEOUT"] ||= "0.01"
@@ -11,6 +18,9 @@ module Crecto
         PG.connect(ENV["PG_URL"])
       end
 
+      #
+      # Query data store using a *query*
+      #
       def self.execute(operation : Symbol, queryable, query : Crecto::Repo::Query)
         connection = DB.checkout()
 
@@ -23,6 +33,9 @@ module Crecto
         result
       end
 
+      #
+      # Query data store using an *id*, returning a single record.
+      #
       def self.execute(operation : Symbol, queryable, id : Int32 | Int64 | String)
         connection = DB.checkout()
 
@@ -35,6 +48,7 @@ module Crecto
         result
       end
 
+      # Query data store in relation to a *queryable_instance* of Schema
       def self.execute_on_instance(operation, queryable_instance)
         connection = DB.checkout()
 

@@ -1,9 +1,27 @@
 module Crecto
   module Changeset
+    # Changeset instance returned when evaluating a changeset.
+    #
+    # ```
+    # user = User.new
+    # changeset = User.changeset(user)
+    # ```
+    #
+    # The Changeset instance has the following properties:
+    #
+    # * `action` - Action performed by Repo on the changeset (:insert, :upate, etc)
+    # * `errors` - Array of field validation errors
+    # * `changes` - An array of changes on fields
+    # * `source` - Hash of the original data
+    #
     class Changeset
+      # :nodoc:
       property action : Symbol?
+      # :nodoc:
       property errors = [] of Hash(Symbol, String)
+      # :nodoc:
       property changes = [] of Hash(Symbol, Bool | Float64 | Int32 | Int64 | String | Time | Nil)
+      # :nodoc:
       property source : Hash(Symbol, Bool | Float64 | Int32 | Int64 | String | Time | Nil)?
 
       private property valid = true
@@ -25,6 +43,7 @@ module Crecto
         diff_from_initial_values!
       end
 
+      # Returns whether the changeset is valid (has no errors)
       def valid?
         @valid
       end
