@@ -106,7 +106,7 @@ module Crecto
       end
 
       private def diff_from_initial_values!
-        @initial_values = {} of Symbol => Int32 | Int64 | String | Float64 | Bool | Nil if @initial_values.nil?
+        @initial_values = {} of Symbol => Int32 | Int64 | String | Float64 | Bool | Time | Nil if @initial_values.nil?
         @changes.clear
         @instance_hash.each do |field, value|
           @changes.push({field => value}) if @initial_values.as(Hash).fetch(field, nil) != value
