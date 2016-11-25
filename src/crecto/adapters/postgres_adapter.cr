@@ -168,7 +168,7 @@ module Crecto
           if value.is_a?(String)
             "'#{value}'"
           elsif value.is_a?(Time)
-            "'#{value.to_s("%Y-%m-%d %H:%M:%S")}'"
+            "'#{value.to_utc.to_s("%Y-%m-%d %H:%M:%S")}'"
           else
             "#{value}"
           end

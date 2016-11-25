@@ -10,7 +10,7 @@ describe Crecto do
         u.nope = 12.45432
         u.yep = false
         u.stuff = 9993
-        u.some_date = Time.now - 10.days
+        u.some_date = Time.now.at_beginning_of_hour
         
         Crecto::Repo.insert(u)
         u.id.should_not eq(nil)
@@ -34,6 +34,7 @@ describe Crecto do
         user = Crecto::Repo.get(User, 1121).as(User)
         user.is_a?(User).should eq(true)
         user.id.should eq(1121)
+        user.some_date.should eq(Time.now.at_beginning_of_hour)
       end
     end
 
