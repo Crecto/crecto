@@ -8,6 +8,7 @@ CREATE TABLE users(
   stuff integer,
   nope float,
   yep bool,
+  some_date timestamp without time zone,
   created_at timestamp without time zone,
   updated_at timestamp without time zone
 );

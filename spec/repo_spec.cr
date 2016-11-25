@@ -10,6 +10,7 @@ describe Crecto do
         u.nope = 12.45432
         u.yep = false
         u.stuff = 9993
+        u.some_date = Time.now - 10.days
         
         Crecto::Repo.insert(u)
         u.id.should_not eq(nil)

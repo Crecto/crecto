@@ -165,7 +165,13 @@ module Crecto
       private def self.instance_fields_and_values(queryable_instance)
         query_hash = queryable_instance.to_query_hash
         values = query_hash.values.map do |value|
-          value.class == String ? "'#{value}'" : "#{value}"
+          if value.is_a?(String)
+            "'#{value}'"
+          elsif value.is_a?(Time)
+            "'#{value.to_s("%Y-%m-%d %H:%M:%S")}'"
+          else
+            "#{value}"
+          end
         end
         {fields: query_hash.keys.join(", "), values: values.join(", ")}
       end

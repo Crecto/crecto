@@ -12,7 +12,7 @@ describe Crecto do
       end
 
       it "should set the changeset fields" do
-        User.changeset_fields.should eq([:name, :things, :nope, :yep])
+        User.changeset_fields.should eq([:name, :things, :nope, :yep, :some_date])
       end
 
       it "should set properties for the fields" do

@@ -18,9 +18,7 @@ dependencies:
 
 #### Before first release
 
-- [ ] DOCS!
 - [ ] Test different primary key
-- [ ] Store / Retrieve `Time`s
 - [ ] deal with created_at & updated_at
 - [ ] Repo accept a changeset
 

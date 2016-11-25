@@ -1,6 +1,5 @@
 module Crecto
-  # A repository maps to an underlying data store, controlled by the
-  # adapter.
+  # A repository maps to an underlying data store, controlled by the adapter.
   module Repo
     # Return a list of `queryable` instances using the *query* param
     #

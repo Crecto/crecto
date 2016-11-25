@@ -11,6 +11,7 @@ class User
     field :stuff, Int32, virtual: true
     field :nope, Float64
     field :yep, Bool
+    field :some_date, Time
     has_many :posts, Post
     has_one :thing, Thing
   end
