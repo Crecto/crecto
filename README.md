@@ -20,8 +20,10 @@ dependencies:
 
 - [ ] Repo accept a changeset
 
-#### Roadmap
+#### Roadmap (in no particular order)
 
+- [ ] OR WHERE
+- [ ] Benchmark vs Active Record
 - [ ] Choose adapter in config
 - [ ] Associations
 - [ ] Preload
@@ -81,8 +83,10 @@ Crecto::Repo.update(user)
 # Query syntax
 #
 query = Crecto::Repo::Query
-  .where(name: "new name", age: 123)
-  .order_by("users.name")
+  .where(name: "new name")
+  .where("users.age < 124")
+  .order_by("users.name ASC")
+  .order_by("users.age DESC")
   .limit(1)
 
 #

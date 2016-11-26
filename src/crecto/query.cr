@@ -6,11 +6,11 @@ module Crecto
     #
     class Query
       property selects : Array(String)
-      property wheres : (Hash(Symbol, Int32) | Hash(Symbol, Int32 | String) | Hash(Symbol, Array(String | Int32)))?
-      property joins : (Hash(Symbol, Hash(Symbol, String | Array(String))))?
-      property order_by : String?
-      property limit : (Int32 | Int64)?
-      property offset : (Int32 | Int64)?
+      property wheres = [] of Hash(Symbol, Int32) | Hash(Symbol, Int32 | String) | Hash(Symbol, Array(String | Int32)) | String
+      property joins = [] of Hash(Symbol, Hash(Symbol, String | Array(String)))
+      property order_bys = [] of String
+      property limit : Int32?
+      property offset : Int32?
 
       # Fields to select, separated by comma.  Default is "*"
       def self.select(selects)
@@ -20,6 +20,11 @@ module Crecto
       # Key => Value pair(s) used in query `WHERE`
       def self.where(**wheres)
         self.new.where(**wheres)
+      end
+
+      # Query where with a string (i.e. `.where("users.id > 10"))
+      def self.where(where_string : String)
+        self.new.where(where_string)
       end
 
       # TODO: not done yet
@@ -55,7 +60,12 @@ module Crecto
       # :nodoc:
       def where(**wheres)
         wheres = wheres.to_h
-        @wheres = wheres
+        @wheres.push wheres
+        self
+      end
+
+      def where(where_string : String)
+        @wheres.push where_string
         self
       end
 
@@ -67,7 +77,7 @@ module Crecto
 
       # :nodoc:
       def order_by(order)
-        @order_by = order
+        @order_bys.push(order)
         self
       end
 

@@ -22,8 +22,10 @@ describe Crecto do
     describe "#all" do
       it "should return rows" do
         query = Crecto::Repo::Query
-          .where(name: "fridge", things: 123)
-          .order_by("users.name")
+          .where(name: "fridge")
+          .where("users.things < 124")
+          .order_by("users.name ASC")
+          .order_by("users.things DESC")
           .limit(1)
         users = Crecto::Repo.all(User, query)
         users = users.as(Array)

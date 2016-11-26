@@ -79,9 +79,9 @@ module Crecto
         q =     ["SELECT"]
         q.push  query.selects.join(", ")
         q.push  "FROM #{queryable.table_name}"
-        q.push  wheres(queryable, query) unless query.wheres.nil?
+        q.push  wheres(queryable, query) if query.wheres.any?
         # TODO: JOINS
-        q.push  order_bys(query) unless query.order_by.nil?
+        q.push  order_bys(query) if query.order_bys.any?
         q.push  limit(query) unless query.limit.nil?
         q.push  offset(query) unless query.offset.nil?
 
@@ -137,24 +137,33 @@ module Crecto
 
       private def self.wheres(queryable, query)
         q = ["WHERE "]
+        where_clauses = [] of String
 
-        wheres = query.wheres.as(Hash)
-        where_clauses = wheres.keys.map do |key|
-          resp = " #{queryable.table_name}.#{key}"
-          if wheres[key].is_a?(String)
-            resp += "='#{wheres[key]}'"
-          elsif wheres[key].is_a?(Int32) || wheres[key].is_a?(Int64)
-            resp += "=#{wheres[key]}"
-          else
-            resp += " in #{wheres[key]}"
+        query.wheres.each do |where|
+          if where.is_a?(String)
+            where_clauses.push where
+          elsif where.is_a?(Hash)
+            where_clauses += where.keys.map do |key|
+            resp = " #{queryable.table_name}.#{key}"
+            if where[key].nil?
+                resp += "= NULL"
+            elsif where[key].is_a?(String)
+              resp += "= '#{where[key]}'"
+            elsif where[key].is_a?(Int32) || where[key].is_a?(Int64)
+              resp += "= #{where[key]}"
+            else
+              resp += " in #{where[key]}"
+            end
+          end
           end
         end
+        
         q.push where_clauses.join(" AND ")
         q.join("")
       end
 
       private def self.order_bys(query)
-        "ORDER BY #{query.order_by.as(String)}"
+        "ORDER BY #{query.order_bys.join(", ")}"
       end
 
       private def self.limit(query)
