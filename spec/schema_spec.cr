@@ -8,7 +8,7 @@ describe Crecto do
       end
 
       it "should set the primary key" do
-        User.primary_key.should eq("id")
+        User.primary_key_field.should eq("id")
       end
 
       it "should set the changeset fields" do
@@ -39,8 +39,19 @@ describe Crecto do
         u.stuff = 2343 # virtual, shouldn't be in query hash
         u.nope = 34.9900
 
-        u.to_query_hash.should eq({:name => "tester", :things => 6644, :nope => 34.9900})
+        u.to_query_hash.should eq({:name => "tester", :things => 6644, :nope => 34.9900, :created_at => nil, :updated_at => nil})
       end 
+    end
+
+    describe "changing default values" do
+      it "should set properties for the values" do
+        u = UserDifferentDefaults.new
+
+        now = Time.now
+        u.xyz = now
+        u.to_query_hash.should eq({:xyz => now})
+        UserDifferentDefaults.primary_key_field.should eq("user_id")
+      end
     end
   end
 end

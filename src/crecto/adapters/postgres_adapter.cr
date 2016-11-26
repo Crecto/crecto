@@ -68,7 +68,7 @@ module Crecto
       private def self.get(connection, queryable, id)
         q =     ["SELECT *"]
         q.push  "FROM #{queryable.table_name}"
-        q.push  "WHERE #{queryable.primary_key}=#{id}"
+        q.push  "WHERE #{queryable.primary_key_field}=#{id}"
         q.push  "LIMIT 1"
 
         query = connection.exec(q.join(" "))
@@ -90,6 +90,8 @@ module Crecto
       end
 
       private def self.insert(connection, queryable_instance)
+        queryable_instance.updated_at_to_now
+        queryable_instance.created_at_to_now
         fields_values = instance_fields_and_values(queryable_instance)
 
         q =     ["INSERT INTO"]
@@ -100,11 +102,12 @@ module Crecto
         q.push  "RETURNING *"
 
         query = connection.exec(q.join(" "))
-        queryable_instance.id = query.to_hash[0]["id"].as(Int32)
+        queryable_instance.update_primary_key(query.to_hash[0]["id"].as(Int32))
         queryable_instance
       end
 
       private def self.update(connection, queryable_instance)
+        queryable_instance.updated_at_to_now
         fields_values = instance_fields_and_values(queryable_instance)
 
         q =     ["UPDATE"]
@@ -114,7 +117,7 @@ module Crecto
         q.push  "="
         q.push  "(#{fields_values[:values]})"
         q.push  "WHERE"
-        q.push  "#{queryable_instance.class.primary_key}=#{queryable_instance.pkey_value}"
+        q.push  "#{queryable_instance.class.primary_key_field}=#{queryable_instance.pkey_value}"
         q.push  "RETURNING *"
 
         query = connection.exec(q.join(" "))
@@ -125,7 +128,7 @@ module Crecto
         q =     ["DELETE FROM"]
         q.push  "#{queryable_instance.class.table_name}"
         q.push  "WHERE"
-        q.push  "#{queryable_instance.class.primary_key}=#{queryable_instance.pkey_value}"
+        q.push  "#{queryable_instance.class.primary_key_field}=#{queryable_instance.pkey_value}"
         q.push  "RETURNING *"
 
         query = connection.exec(q.join(" "))
@@ -165,7 +168,9 @@ module Crecto
       private def self.instance_fields_and_values(queryable_instance)
         query_hash = queryable_instance.to_query_hash
         values = query_hash.values.map do |value|
-          if value.is_a?(String)
+          if value.nil?
+            "NULL"
+          elsif value.is_a?(String)
             "'#{value}'"
           elsif value.is_a?(Time)
             "'#{value.to_utc.to_s("%Y-%m-%d %H:%M:%S")}'"

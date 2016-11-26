@@ -17,6 +17,19 @@ class User
   end
 end
 
+class UserDifferentDefaults
+  include Crecto::Schema
+  extend Crecto::Changeset
+
+  created_at_field "xyz"
+  updated_at_field nil
+
+  schema "users" do
+    field :user_id, Int32, primary_key: true
+    field :name, String
+  end
+end
+
 class UserRequired
   include Crecto::Schema
   extend Crecto::Changeset

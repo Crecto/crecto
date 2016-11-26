@@ -18,8 +18,6 @@ dependencies:
 
 #### Before first release
 
-- [ ] Test different primary key
-- [ ] deal with created_at & updated_at
 - [ ] Repo accept a changeset
 
 #### Roadmap

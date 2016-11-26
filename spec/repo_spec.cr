@@ -14,6 +14,8 @@ describe Crecto do
         
         Crecto::Repo.insert(u)
         u.id.should_not eq(nil)
+        u.created_at.should_not eq(nil)
+        u.updated_at.should_not eq(nil)
       end
     end
 
@@ -59,6 +61,7 @@ describe Crecto do
         u.name = "new name"
         x = Crecto::Repo.update(u)
         x.as(Hash)["name"].should eq("new name")
+        x.as(Hash)["updated_at"].as(Time).epoch_ms.should be_close(Time.now.epoch_ms, 2000)
       end
     end
 
