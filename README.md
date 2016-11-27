@@ -2,8 +2,6 @@
 
 Database wrapper for Crystal.  Inspired by [Ecto](https://github.com/elixir-ecto/ecto) for Elixir language.
 
-** WORK IN PROGRESS **
-
 ## Installation
 
 Add this to your application's `shard.yml`:
@@ -16,13 +14,11 @@ dependencies:
 
 ## TODO
 
-#### Before first release
-
-- [ ] DELETE ALL (with an array or no arguments will clear the table)
-
 #### Roadmap (in no particular order)
 
 - [ ] OR WHERE
+- [ ] DELETE ALL (with an array or no arguments will clear the table)
+- [ ] UPDATE ALL
 - [ ] Benchmark vs Active Record
 - [ ] Choose adapter in config
 - [ ] Associations
@@ -115,9 +111,61 @@ user.as(User) unless user.nil?
 changeset = Crecto::Repo.delete(user)
 ```
 
-## Development
+## Some Benchmarks
 
-TODO: Write development instructions here
+```Crystal
+require "crecto"
+
+class User
+  include Crecto::Schema
+  extend Crecto::Changeset(User)
+
+  schema "users" do
+    field :name, String
+    field :things, Int32
+    field :stuff, Int32, virtual: true
+    field :nope, Float64
+    field :yep, Bool
+    field :some_date, Time
+  end
+
+  validate_required :name
+  validate_format :name, /[*a-zA-Z]/
+  validate_inclusion :name, ["fridge", "mcridge"]
+  validate_length :name, min: 2, max: 10
+end
+
+start_time = Time.now
+10000.times do
+  user = User.new
+  user.name = "fridge"
+  changeset = User.changeset(user)
+  changeset = Crecto::Repo.insert(changeset)
+end
+end_time = Time.now
+puts "elapsed: #{end_time - start_time}"
+```
+`elapsed: 00:00:02.6528820`
+
+```Ruby
+class User < ApplicationRecord
+  validates :name,
+    presence: true, 
+    inclusion: { in: ["fridge", "mcridge"] }, 
+    format: { with: /[*a-zA-Z]/ }, 
+    length: { minimum: 2, maximum: 10 }
+end
+
+start_time = Time.now
+10000.times do
+  u = User.new
+  u.name = "fridge"
+  u.save
+end
+end_time = Time.now
+puts "elapsed: #{end_time-start_time}"
+```
+`elapsed: 14.624411`
 
 ## Contributing
 
