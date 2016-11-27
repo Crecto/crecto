@@ -111,7 +111,13 @@ user.as(User) unless user.nil?
 changeset = Crecto::Repo.delete(user)
 ```
 
-## Some Benchmarks
+## Performance
+
+#### crystal:
+	
+* crystal 0.20.0
+
+`elapsed: 2.6528820` seconds
 
 ```Crystal
 require "crecto"
@@ -145,7 +151,13 @@ end
 end_time = Time.now
 puts "elapsed: #{end_time - start_time}"
 ```
-`elapsed: 00:00:02.6528820`
+
+#### Ruby / Rails
+
+* ruby 2.3.1
+* rails 5.0.0
+
+`elapsed: 14.624411` seconds
 
 ```Ruby
 class User < ApplicationRecord
@@ -165,7 +177,6 @@ end
 end_time = Time.now
 puts "elapsed: #{end_time-start_time}"
 ```
-`elapsed: 14.624411`
 
 ## Contributing
 
