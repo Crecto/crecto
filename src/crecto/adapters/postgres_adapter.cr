@@ -70,7 +70,7 @@ module Crecto
 
       # Query data store in relation to a *changeset*
       def self.execute_on_instance(operation, changeset : Crecto::Changeset::Changeset)
-        execute_on_instance(changeset.instance)
+        execute_on_instance(operation, changeset.instance)
       end
 
       private def self.get(connection, queryable, id)
