@@ -1,5 +1,5 @@
 module Crecto
-  module Changeset
+  module Changeset(T)
     # Changeset instance returned when evaluating a changeset.
     #
     # ```
@@ -14,7 +14,8 @@ module Crecto
     # * `changes` - An array of changes on fields
     # * `source` - Hash of the original data
     #
-    class Changeset
+    class Changeset(T)
+
       # :nodoc:
       property action : Symbol?
       # :nodoc:
@@ -28,10 +29,10 @@ module Crecto
       private property class_key : String?
       private property instance_hash : Hash(Symbol, Bool | Float64 | Int32 | Int64 | String | Time | Nil)
 
-      def initialize(instance)
-        @class_key = instance.class.to_s
-        @instance_hash = instance.to_query_hash
-        @source = instance.initial_values
+      def initialize(@instance : T)
+        @class_key = @instance.class.to_s
+        @instance_hash = @instance.to_query_hash
+        @source = @instance.initial_values
 
         check_required!
         check_formats!
@@ -46,6 +47,10 @@ module Crecto
       # Returns whether the changeset is valid (has no errors)
       def valid?
         @valid
+      end
+
+      def instance
+        @instance
       end
 
       private def check_required!
@@ -132,7 +137,7 @@ module Crecto
         end
       end
 
-      private def add_error(key, val)
+      def add_error(key, val)
         errors.push({field: key, message: val}.to_h)
         @valid = false
       end

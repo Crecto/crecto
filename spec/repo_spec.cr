@@ -12,10 +12,10 @@ describe Crecto do
         u.stuff = 9993
         u.some_date = Time.now.at_beginning_of_hour
         
-        Crecto::Repo.insert(u)
-        u.id.should_not eq(nil)
-        u.created_at.should_not eq(nil)
-        u.updated_at.should_not eq(nil)
+        changeset = Crecto::Repo.insert(u)
+        changeset.instance.id.should_not eq(nil)
+        changeset.instance.created_at.should_not eq(nil)
+        changeset.instance.updated_at.should_not eq(nil)
       end
     end
 
@@ -59,11 +59,13 @@ describe Crecto do
         u.yep = false
         u.stuff = 9993
         
-        Crecto::Repo.insert(u)
+        changeset = Crecto::Repo.insert(u)
+        u = changeset.instance
         u.name = "new name"
-        x = Crecto::Repo.update(u)
-        x.as(Hash)["name"].should eq("new name")
-        x.as(Hash)["updated_at"].as(Time).epoch_ms.should be_close(Time.now.epoch_ms, 2000)
+        changeset = Crecto::Repo.update(u)
+        changeset.instance.name.should eq("new name")
+        changeset.valid?.should eq(true)
+        changeset.instance.updated_at.as(Time).epoch_ms.should be_close(Time.now.epoch_ms, 2000)
       end
     end
 
@@ -76,7 +78,8 @@ describe Crecto do
         u.yep = false
         u.stuff = 9993
         
-        Crecto::Repo.insert(u)
+        changeset = Crecto::Repo.insert(u)
+        u = changeset.instance
         Crecto::Repo.delete(u)
       end
     end

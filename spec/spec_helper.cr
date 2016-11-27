@@ -3,7 +3,7 @@ require "../src/crecto"
 
 class User
   include Crecto::Schema
-  extend Crecto::Changeset
+  extend Crecto::Changeset(User)
 
   schema "users" do
     field :name, String
@@ -19,7 +19,7 @@ end
 
 class UserDifferentDefaults
   include Crecto::Schema
-  extend Crecto::Changeset
+  extend Crecto::Changeset(UserDifferentDefaults)
 
   created_at_field "xyz"
   updated_at_field nil
@@ -32,7 +32,7 @@ end
 
 class UserRequired
   include Crecto::Schema
-  extend Crecto::Changeset
+  extend Crecto::Changeset(UserRequired)
 
   schema "users_required" do
     field :name, String
@@ -46,7 +46,7 @@ end
 
 class UserFormat
   include Crecto::Schema
-  extend Crecto::Changeset
+  extend Crecto::Changeset(UserFormat)
 
   schema "users_required" do
     field :name, String
@@ -59,7 +59,7 @@ end
 
 class UserInclusion
   include Crecto::Schema
-  extend Crecto::Changeset
+  extend Crecto::Changeset(UserInclusion)
 
   schema "users_required" do
     field :name, String
@@ -72,7 +72,7 @@ end
 
 class UserExclusion
   include Crecto::Schema
-  extend Crecto::Changeset
+  extend Crecto::Changeset(UserExclusion)
 
   schema "users_required" do
     field :name, String
@@ -85,7 +85,7 @@ end
 
 class UserLength
   include Crecto::Schema
-  extend Crecto::Changeset
+  extend Crecto::Changeset(UserLength)
 
   schema "users_required" do
     field :name, String

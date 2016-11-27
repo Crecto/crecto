@@ -9,7 +9,7 @@ module Crecto
     # ```
     def self.all(queryable, query = Query.new)
       Crecto::Adapters::Postgres.execute(:all, queryable, query)
-    end
+    end 
 
     # Return a single insance of `queryable` by primary key with *id*.
     #
@@ -39,6 +39,18 @@ module Crecto
       Crecto::Adapters::Postgres.execute_on_instance(:insert, queryable_instance)
     end
 
+    # Insert a changeset instance into the data store.
+    #
+    # ```
+    # user = User.new
+    # changeset = User.changeset(user)
+    # Repo.insert(changeset)
+    # ```
+    def self.insert(changeset : Crecto::Changeset::Changeset)
+      Crecto::Adapters::Postgres.execute_on_instance(:insert, changeset)
+    end
+
+
     # Update a shema instance in the data store.
     #
     # ```
@@ -48,6 +60,15 @@ module Crecto
       Crecto::Adapters::Postgres.execute_on_instance(:update, queryable_instance)
     end
 
+    # Update a changeset instance in the data store.
+    #
+    # ```
+    # Repo.update(changeset)
+    # ```
+    def self.update(changeset : Crecto::Changeset::Changeset)
+      Crecto::Adapters::Postgres.execute_on_instance(:update, changeset)
+    end
+
     # Delete a shema instance from the data store.
     #
     # ```
@@ -55,6 +76,15 @@ module Crecto
     # ```
     def self.delete(queryable_instance)
       Crecto::Adapters::Postgres.execute_on_instance(:delete, queryable_instance)
+    end
+
+    # Delete a changeset instance from the data store.
+    #
+    # ```
+    # Repo.delete(changeset)
+    # ```
+    def self.delete(changeset : Crecto::Changeset::Changeset)
+      Crecto::Adapters::Postgres.execute_on_instance(:delete, changeset)
     end
 
     # Not done yet, placeohlder for associations

@@ -18,7 +18,7 @@ dependencies:
 
 #### Before first release
 
-- [ ] Repo accept a changeset
+- [ ] DELETE ALL (with an array or no arguments will clear the table)
 
 #### Roadmap (in no particular order)
 
@@ -71,13 +71,15 @@ changeset.valid? # true
 #
 # Use Repo to insert into database
 #
-Crecto::Repo.insert(user)
+changeset = Crecto::Repo.insert(user)
+puts changeset.errors # []
 
 #
 # User Repo to update database
 #
 user.name = "new name"
-Crecto::Repo.update(user)
+changeset = Crecto::Repo.update(user)
+puts changeset.instance.name # "new name"
 
 #
 # Query syntax
@@ -110,7 +112,7 @@ user.as(User) unless user.nil?
 #
 # delete
 #
-Crecto::Repo.delete(user)
+changeset = Crecto::Repo.delete(user)
 ```
 
 ## Development

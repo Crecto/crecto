@@ -50,19 +50,27 @@ module Crecto
 
       # Query data store in relation to a *queryable_instance* of Schema
       def self.execute_on_instance(operation, queryable_instance)
+        changeset = queryable_instance.class.changeset(queryable_instance)
+        return changeset unless changeset.valid?
+
         connection = DB.checkout()
 
         result = case operation
         when :insert
-          insert(connection, queryable_instance)
+          insert(connection, changeset)
         when :update
-          update(connection, queryable_instance)
+          update(connection, changeset)
         when :delete
-          delete(connection, queryable_instance)
+          delete(connection, changeset)
         end
 
         DB.checkin(connection)
-        result
+        result.as(Crecto::Changeset::Changeset)
+      end
+
+      # Query data store in relation to a *changeset*
+      def self.execute_on_instance(operation, changeset : Crecto::Changeset::Changeset)
+        execute_on_instance(changeset.instance)
       end
 
       private def self.get(connection, queryable, id)
@@ -89,50 +97,76 @@ module Crecto
         query.to_hash.map{|row| queryable.from_sql(row) }
       end
 
-      private def self.insert(connection, queryable_instance)
-        queryable_instance.updated_at_to_now
-        queryable_instance.created_at_to_now
-        fields_values = instance_fields_and_values(queryable_instance)
+      private def self.insert(connection, changeset)
+        changeset.action = :insert
+        changeset.instance.updated_at_to_now
+        changeset.instance.created_at_to_now
+        fields_values = instance_fields_and_values(changeset.instance)
 
         q =     ["INSERT INTO"]
-        q.push  "#{queryable_instance.class.table_name}"
+        q.push  "#{changeset.instance.class.table_name}"
         q.push  "(#{fields_values[:fields]})"
         q.push  "VALUES"
         q.push  "(#{fields_values[:values]})"
         q.push  "RETURNING *"
 
         query = connection.exec(q.join(" "))
-        queryable_instance.update_primary_key(query.to_hash[0]["id"].as(Int32))
-        queryable_instance
+
+        if query.nil?
+          changeset.add_error("insert_error", "Insert Failed")
+        else
+          new_instance = changeset.instance.class.from_sql(query.to_hash[0])
+          changeset = new_instance.class.changeset(new_instance) unless new_instance.nil?
+        end
+
+        changeset
       end
 
-      private def self.update(connection, queryable_instance)
-        queryable_instance.updated_at_to_now
-        fields_values = instance_fields_and_values(queryable_instance)
+      private def self.update(connection, changeset)
+        changeset.action = :update
+        changeset.instance.updated_at_to_now
+        fields_values = instance_fields_and_values(changeset.instance)
 
         q =     ["UPDATE"]
-        q.push  "#{queryable_instance.class.table_name}"
+        q.push  "#{changeset.instance.class.table_name}"
         q.push  "SET"
         q.push  "(#{fields_values[:fields]})"
         q.push  "="
         q.push  "(#{fields_values[:values]})"
         q.push  "WHERE"
-        q.push  "#{queryable_instance.class.primary_key_field}=#{queryable_instance.pkey_value}"
+        q.push  "#{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}"
         q.push  "RETURNING *"
 
         query = connection.exec(q.join(" "))
-        query.to_hash[0]
+        if query.nil?
+          changeset.add_error("update_error", "Update Failed")
+        else
+          new_instance = changeset.instance.class.from_sql(query.to_hash[0])
+          changeset = new_instance.class.changeset(new_instance) unless new_instance.nil?
+        end
+
+        changeset
       end
 
-      private def self.delete(connection, queryable_instance)
+      private def self.delete(connection, changeset)
+        changeset.action = :delete
+
         q =     ["DELETE FROM"]
-        q.push  "#{queryable_instance.class.table_name}"
+        q.push  "#{changeset.instance.class.table_name}"
         q.push  "WHERE"
-        q.push  "#{queryable_instance.class.primary_key_field}=#{queryable_instance.pkey_value}"
+        q.push  "#{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}"
         q.push  "RETURNING *"
 
         query = connection.exec(q.join(" "))
-        query.to_hash[0]
+
+        if query.nil?
+          changeset.add_error("delete_error", "Delete Failed")
+        else
+          new_instance = changeset.instance.class.from_sql(query.to_hash[0])
+          changeset = new_instance.class.changeset(new_instance) unless new_instance.nil?
+        end
+
+        changeset
       end
 
       private def self.wheres(queryable, query)

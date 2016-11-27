@@ -2,7 +2,7 @@ module Crecto
   #
   # Changeset allows validating data, and tracking changes.
   #
-  module Changeset
+  module Changeset(T)
 
     # :nodoc:
     REQUIRED_FIELDS = {} of String => Array(Symbol)
@@ -20,7 +20,7 @@ module Crecto
     REQUIRED_LENGTHS = {} of String => Array(NamedTuple(field: Symbol, is: Int32 | Nil, min: Int32 | Nil, max: Int32 | Nil))
 
     def changeset(instance)
-      Changeset.new(instance)
+      Changeset(T).new(instance)
     end
 
     # Validate that a *field* is present.
