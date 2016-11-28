@@ -136,15 +136,7 @@ module Crecto
           elsif where.is_a?(Hash)
             where_clauses += where.keys.map do |key|
             resp = " #{queryable.table_name}.#{key}"
-            if where[key].nil?
-                resp += "= NULL"
-            elsif where[key].is_a?(String)
-              resp += "= '#{where[key]}'"
-            elsif where[key].is_a?(Int32) || where[key].is_a?(Int64)
-              resp += "= #{where[key]}"
-            else
-              resp += " in #{where[key]}"
-            end
+            resp += to_query_val(where[key], true)
           end
           end
         end
@@ -168,17 +160,30 @@ module Crecto
       private def self.instance_fields_and_values(queryable_instance)
         query_hash = queryable_instance.to_query_hash
         values = query_hash.values.map do |value|
-          if value.nil?
-            "NULL"
-          elsif value.is_a?(String)
-            "'#{value}'"
-          elsif value.is_a?(Time)
-            "'#{value.to_utc.to_s("%Y-%m-%d %H:%M:%S")}'"
-          else
-            "#{value}"
-          end
+          to_query_val(value)
         end
         {fields: query_hash.keys.join(", "), values: values.join(", ")}
+      end
+
+      private def self.to_query_val(val, operator = false)
+        resp = if val.nil?
+          "NULL"
+        elsif val.is_a?(String)
+          "'#{val}'"
+        elsif val.is_a?(Array)
+          "#{val.to_s.gsub(/^\[/, "(").gsub(/\]$/, ")").gsub(/"/, "'")}"
+        elsif val.is_a?(Time)
+          "'#{val.to_utc.to_s("%Y-%m-%d %H:%M:%S")}'"
+        else
+          "#{val}"
+        end
+
+        if operator
+          op = val.is_a?(Array) ? " in " : "="
+          resp = op + resp
+        end
+
+        resp
       end
 
     end

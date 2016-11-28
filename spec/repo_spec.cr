@@ -51,6 +51,15 @@ describe Crecto do
         users = users.as(Array)
         users.as(Array).size.should be > 0
       end
+
+      it "should accept an array" do
+        query = Crecto::Repo::Query
+          .where(name: ["fridge", "steve"])
+
+        users = Crecto::Repo.all(User, query)
+        users = users.as(Array)
+        users.size.should be > 0
+      end
     end
 
     describe "#get" do

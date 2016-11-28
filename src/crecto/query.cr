@@ -6,7 +6,7 @@ module Crecto
     #
     class Query
       property selects : Array(String)
-      property wheres = [] of Hash(Symbol, Int32) | Hash(Symbol, Int32 | String) | Hash(Symbol, Array(String | Int32)) | String
+      property wheres = [] of Hash(Symbol, Int32) | Hash(Symbol, String) | Hash(Symbol, Array(Int32)) | Hash(Symbol, Array(String)) | Hash(Symbol, Int32 | String) | String
       property joins = [] of Hash(Symbol, Hash(Symbol, String | Array(String)))
       property order_bys = [] of String
       property limit : Int32?
