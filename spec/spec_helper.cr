@@ -24,10 +24,12 @@ class UserDifferentDefaults
   created_at_field "xyz"
   updated_at_field nil
 
-  schema "users" do
+  schema "users_different_defaults" do
     field :user_id, Int32, primary_key: true
     field :name, String
   end
+
+  validate_required :name
 end
 
 class UserRequired

@@ -17,6 +17,26 @@ describe Crecto do
         changeset.instance.created_at.should_not eq(nil)
         changeset.instance.updated_at.should_not eq(nil)
       end
+
+      it "should use the correct primary key and created_at fields" do
+        u = UserDifferentDefaults.new
+        u.name = "tedd"
+
+        changeset = Crecto::Repo.insert(u)
+
+        changeset.instance.user_id.should_not eq(nil)
+        changeset.instance.xyz.should_not eq(nil)
+      end
+
+      it "should return a changeset and set the changeset action" do
+        u = UserDifferentDefaults.new
+        u.name = "test"
+
+        changeset = Crecto::Repo.insert(u)
+
+        changeset.is_a?(Crecto::Changeset::Changeset).should eq(true)
+        changeset.action.should eq(:insert)
+      end
     end
 
     describe "#all" do
@@ -63,9 +83,24 @@ describe Crecto do
         u = changeset.instance
         u.name = "new name"
         changeset = Crecto::Repo.update(u)
+        
         changeset.instance.name.should eq("new name")
         changeset.valid?.should eq(true)
         changeset.instance.updated_at.as(Time).epoch_ms.should be_close(Time.now.epoch_ms, 2000)
+      end
+
+      it "should return a changeset and set the changeset action" do
+        u = UserDifferentDefaults.new
+        u.name = "test"
+
+        changeset = Crecto::Repo.insert(u)
+        u = changeset.instance
+        u.name = "changed"
+
+        changeset = Crecto::Repo.update(u)
+
+        changeset.is_a?(Crecto::Changeset::Changeset).should eq(true)
+        changeset.action.should eq(:update)
       end
     end
 
@@ -80,7 +115,20 @@ describe Crecto do
         
         changeset = Crecto::Repo.insert(u)
         u = changeset.instance
-        Crecto::Repo.delete(u)
+        changeset = Crecto::Repo.delete(u)
+      end
+
+      it "should return a changeset and set the changeset action" do
+        u = UserDifferentDefaults.new
+        u.name = "test"
+
+        changeset = Crecto::Repo.insert(u)
+        u = changeset.instance
+
+        changeset = Crecto::Repo.delete(u)
+
+        changeset.is_a?(Crecto::Changeset::Changeset).should eq(true)
+        changeset.action.should eq(:delete)
       end
     end
   end 

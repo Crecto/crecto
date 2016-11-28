@@ -98,7 +98,6 @@ module Crecto
       end
 
       private def self.insert(connection, changeset)
-        changeset.action = :insert
         changeset.instance.updated_at_to_now
         changeset.instance.created_at_to_now
         fields_values = instance_fields_and_values(changeset.instance)
@@ -119,11 +118,11 @@ module Crecto
           changeset = new_instance.class.changeset(new_instance) unless new_instance.nil?
         end
 
+        changeset.action = :insert
         changeset
       end
 
       private def self.update(connection, changeset)
-        changeset.action = :update
         changeset.instance.updated_at_to_now
         fields_values = instance_fields_and_values(changeset.instance)
 
@@ -145,12 +144,11 @@ module Crecto
           changeset = new_instance.class.changeset(new_instance) unless new_instance.nil?
         end
 
+        changeset.action = :update
         changeset
       end
 
       private def self.delete(connection, changeset)
-        changeset.action = :delete
-
         q =     ["DELETE FROM"]
         q.push  "#{changeset.instance.class.table_name}"
         q.push  "WHERE"
@@ -166,6 +164,7 @@ module Crecto
           changeset = new_instance.class.changeset(new_instance) unless new_instance.nil?
         end
 
+        changeset.action = :delete
         changeset
       end
 

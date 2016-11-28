@@ -29,6 +29,21 @@ describe Crecto do
         u.nope.should eq(3.343)
         u.yep.should eq(false)
       end
+
+      describe "changing default values" do
+        it "should set properties for the values" do
+          u = UserDifferentDefaults.new
+
+          now = Time.now
+          u.xyz = now
+          u.to_query_hash.should eq({:xyz => now})
+          UserDifferentDefaults.primary_key_field.should eq("user_id")
+        end
+
+        it "should set the created at field" do
+          UserDifferentDefaults.created_at_field.should eq("xyz")
+        end
+      end
     end
 
     describe "#to_query_hash" do
@@ -43,14 +58,53 @@ describe Crecto do
       end 
     end
 
-    describe "changing default values" do
-      it "should set properties for the values" do
-        u = UserDifferentDefaults.new
+    describe "#pkey_value" do
+      it "should return the value of the primary key" do
+        user = UserDifferentDefaults.new
+        user.user_id = 8858
+        user.pkey_value.as(Int32).should eq(user.user_id)
+      end
+    end
 
+    describe "#update_primary_key" do
+      it "should update the value of the primary key" do
+        user = UserDifferentDefaults.new
+        user.update_primary_key(9899)
+        user.user_id.should eq(9899)
+      end
+    end
+
+    describe "#updated_at_value" do
+      it "should return the updated at value" do
         now = Time.now
+        u = User.new
+        u.updated_at = now
+        u.updated_at_value.should eq(now)
+      end
+    end
+
+    describe "#created_at_value" do
+      it "should return the created at value" do
+        now = Time.now
+        u = UserDifferentDefaults.new
         u.xyz = now
-        u.to_query_hash.should eq({:xyz => now})
-        UserDifferentDefaults.primary_key_field.should eq("user_id")
+        u.created_at_value.should eq(now)
+      end
+    end
+
+    describe "#updated_at_to_now" do
+      it "should set the updated at value to now" do
+        u = User.new
+        u.updated_at_to_now
+        u.updated_at.as(Time).epoch_ms.should be_close(Time.now.epoch_ms, 100)
+      end
+    end
+
+    describe "#created_at_to_now" do
+      it "should set the created at value to now" do
+        u = UserDifferentDefaults.new
+        u.created_at_to_now
+        u.xyz.as(Time).epoch_ms.should be_close(Time.now.epoch_ms, 2000)
       end
     end
   end
