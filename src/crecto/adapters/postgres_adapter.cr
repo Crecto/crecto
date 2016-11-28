@@ -49,10 +49,7 @@ module Crecto
       end
 
       # Query data store in relation to a *queryable_instance* of Schema
-      def self.execute_on_instance(operation, queryable_instance)
-        changeset = queryable_instance.class.changeset(queryable_instance)
-        return changeset unless changeset.valid?
-
+      def self.execute_on_instance(operation, changeset)
         connection = DB.checkout()
 
         result = case operation
@@ -65,12 +62,7 @@ module Crecto
         end
 
         DB.checkin(connection)
-        result.as(Crecto::Changeset::Changeset)
-      end
-
-      # Query data store in relation to a *changeset*
-      def self.execute_on_instance(operation, changeset : Crecto::Changeset::Changeset)
-        execute_on_instance(operation, changeset.instance)
+        result
       end
 
       private def self.get(connection, queryable, id)
@@ -79,8 +71,7 @@ module Crecto
         q.push  "WHERE #{queryable.primary_key_field}=#{id}"
         q.push  "LIMIT 1"
 
-        query = connection.exec(q.join(" "))
-        queryable.from_sql(query.to_hash[0])
+        connection.exec(q.join(" "))
       end
 
       private def self.all(connection, queryable, query)
@@ -93,13 +84,10 @@ module Crecto
         q.push  limit(query) unless query.limit.nil?
         q.push  offset(query) unless query.offset.nil?
 
-        query = connection.exec(q.join(" "))
-        query.to_hash.map{|row| queryable.from_sql(row) }
+        connection.exec(q.join(" "))
       end
 
       private def self.insert(connection, changeset)
-        changeset.instance.updated_at_to_now
-        changeset.instance.created_at_to_now
         fields_values = instance_fields_and_values(changeset.instance)
 
         q =     ["INSERT INTO"]
@@ -109,21 +97,10 @@ module Crecto
         q.push  "(#{fields_values[:values]})"
         q.push  "RETURNING *"
 
-        query = connection.exec(q.join(" "))
-
-        if query.nil?
-          changeset.add_error("insert_error", "Insert Failed")
-        else
-          new_instance = changeset.instance.class.from_sql(query.to_hash[0])
-          changeset = new_instance.class.changeset(new_instance) unless new_instance.nil?
-        end
-
-        changeset.action = :insert
-        changeset
+        connection.exec(q.join(" "))
       end
 
       private def self.update(connection, changeset)
-        changeset.instance.updated_at_to_now
         fields_values = instance_fields_and_values(changeset.instance)
 
         q =     ["UPDATE"]
@@ -136,16 +113,7 @@ module Crecto
         q.push  "#{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}"
         q.push  "RETURNING *"
 
-        query = connection.exec(q.join(" "))
-        if query.nil?
-          changeset.add_error("update_error", "Update Failed")
-        else
-          new_instance = changeset.instance.class.from_sql(query.to_hash[0])
-          changeset = new_instance.class.changeset(new_instance) unless new_instance.nil?
-        end
-
-        changeset.action = :update
-        changeset
+        connection.exec(q.join(" "))
       end
 
       private def self.delete(connection, changeset)
@@ -155,17 +123,7 @@ module Crecto
         q.push  "#{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}"
         q.push  "RETURNING *"
 
-        query = connection.exec(q.join(" "))
-
-        if query.nil?
-          changeset.add_error("delete_error", "Delete Failed")
-        else
-          new_instance = changeset.instance.class.from_sql(query.to_hash[0])
-          changeset = new_instance.class.changeset(new_instance) unless new_instance.nil?
-        end
-
-        changeset.action = :delete
-        changeset
+        connection.exec(q.join(" "))
       end
 
       private def self.wheres(queryable, query)
