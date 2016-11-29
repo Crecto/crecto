@@ -84,5 +84,29 @@ describe Crecto do
         changeset.errors[0].should eq({:field => "name", :message => "is invalid"})
       end
     end
+
+    describe "#validate" do
+      it "should not be valid" do
+        u = UserGenericValidation.new
+        changeset = UserGenericValidation.changeset(u)
+        changeset.valid?.should be_false
+      end
+
+      it "should have some errors" do
+        u = UserGenericValidation.new
+        changeset = UserGenericValidation.changeset(u)
+        changeset.errors.size.should be > 0
+        changeset.errors[0].should eq({:field => "_base", :message => "Password must exist"})
+      end
+
+      it "should not have some errors and be valid" do
+        u = UserGenericValidation.new
+        u.id = 123
+        u.password = "awesome"
+        changeset = UserGenericValidation.changeset(u)
+        changeset.errors.size.should eq(0)
+        changeset.valid?.should be_true
+      end
+    end
   end
 end
