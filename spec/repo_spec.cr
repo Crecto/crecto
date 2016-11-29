@@ -59,6 +59,13 @@ describe Crecto do
         users = Crecto::Repo.all(User, query)
         users = users.as(Array)
         users.size.should be > 0
+
+        query = Crecto::Repo::Query
+          .where(things: [123, 999])
+
+        users = Crecto::Repo.all(User, query)
+        users = users.as(Array)
+        users.size.should be > 0
       end
     end
 

@@ -21,13 +21,13 @@ module Crecto
       # :nodoc:
       property errors = [] of Hash(Symbol, String)
       # :nodoc:
-      property changes = [] of Hash(Symbol, Bool | Float64 | Int32 | Int64 | String | Time | Nil)
+      property changes = [] of Hash(Symbol, DbValue)
       # :nodoc:
-      property source : Hash(Symbol, Bool | Float64 | Int32 | Int64 | String | Time | Nil)?
+      property source : Hash(Symbol, DbValue)?
 
       private property valid = true
       private property class_key : String?
-      private property instance_hash : Hash(Symbol, Bool | Float64 | Int32 | Int64 | String | Time | Nil)
+      private property instance_hash : Hash(Symbol, DbValue)
 
       def initialize(@instance : T)
         @class_key = @instance.class.to_s

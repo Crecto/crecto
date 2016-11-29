@@ -53,10 +53,10 @@ module Crecto
       # Class variables
       @@table_name = {{table_name.id.stringify}}
       @@changeset_fields = [] of Symbol
-      @@initial_values = {} of Symbol => Int32 | Int64 | String | Float64 | Bool | Time | Nil
+      @@initial_values = {} of Symbol => DbValue
 
       # Instance properties
-      property initial_values : Hash(Symbol, Int32 | Int64 | String | Float64 | Bool | Time | Nil)?
+      property initial_values : Hash(Symbol, DbValue)?
 
       {{yield}}
 
@@ -124,7 +124,7 @@ module Crecto
 
       # Builds a hash from all `FIELDS` defined
       def to_query_hash
-        query_hash = {} of Symbol => Int32 | Int64 | String | Float64 | Bool | Time | Nil
+        query_hash = {} of Symbol => DbValue
 
         {% for field in FIELDS %}
           query_hash[{{field}}] = self.{{field.id}} if self.{{field.id}} && @@changeset_fields.includes?({{field}})
