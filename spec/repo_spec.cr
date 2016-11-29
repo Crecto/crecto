@@ -43,7 +43,7 @@ describe Crecto do
       it "should return rows" do
         query = Crecto::Repo::Query
           .where(name: "fridge")
-          .where("users.things < 124")
+          .where("users.things < ?", [124])
           .order_by("users.name ASC")
           .order_by("users.things DESC")
           .limit(1)

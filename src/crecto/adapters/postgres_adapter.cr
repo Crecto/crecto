@@ -68,23 +68,25 @@ module Crecto
       private def self.get(connection, queryable, id)
         q =     ["SELECT *"]
         q.push  "FROM #{queryable.table_name}"
-        q.push  "WHERE #{queryable.primary_key_field}=#{id}"
+        q.push  "WHERE #{queryable.primary_key_field}=$1"
         q.push  "LIMIT 1"
 
-        connection.exec(q.join(" "))
+        connection.exec(q.join(" "), [id])
       end
 
       private def self.all(connection, queryable, query)
+        params = [] of DbValue | Array(DbValue)
+
         q =     ["SELECT"]
         q.push  query.selects.join(", ")
         q.push  "FROM #{queryable.table_name}"
-        q.push  wheres(queryable, query) if query.wheres.any?
+        q.push  wheres(queryable, query, params) if query.wheres.any?
         # TODO: JOINS
         q.push  order_bys(query) if query.order_bys.any?
         q.push  limit(query) unless query.limit.nil?
         q.push  offset(query) unless query.offset.nil?
 
-        connection.exec(q.join(" "))
+        connection.exec(position_args(q.join(" ")), params)
       end
 
       private def self.insert(connection, changeset)
@@ -126,23 +128,38 @@ module Crecto
         connection.exec(q.join(" "))
       end
 
-      private def self.wheres(queryable, query)
+      private def self.wheres(queryable, query, params)
         q = ["WHERE "]
         where_clauses = [] of String
 
         query.wheres.each do |where|
-          if where.is_a?(String)
-            where_clauses.push where
+          if where.is_a?(NamedTuple)
+            where_clauses.push(add_where(where, params))
           elsif where.is_a?(Hash)
-            where_clauses += where.keys.map do |key|
-            resp = " #{queryable.table_name}.#{key}"
-            resp += to_query_val(where[key], true)
-          end
+            where_clauses += add_where(where, queryable, params)
           end
         end
         
         q.push where_clauses.join(" AND ")
         q.join("")
+      end
+
+      private def self.add_where(where : NamedTuple, params)
+        where[:params].each{|param| params.push(param) }
+        where[:clause]
+      end
+
+      private def self.add_where(where : Hash, queryable, params)
+        where.keys.map do |key|
+          [where[key]].flatten.each{|param| params.push(param) }
+
+          resp = " #{queryable.table_name}.#{key}"
+          resp += if where[key].is_a?(Array)
+            " IN (" + where[key].as(Array).map{|p| "?" }.join(", ") + ")"
+          else
+            "=?"
+          end
+        end
       end
 
       private def self.order_bys(query)
@@ -179,11 +196,21 @@ module Crecto
         end
 
         if operator
-          op = val.is_a?(Array) ? " in " : "="
+          op = val.is_a?(Array) ? " in " : " = "
           resp = op + resp
         end
 
         resp
+      end
+
+      private def self.position_args(query_string : String)
+        query = ""
+        chunks = query_string.split("?")
+        chunks.each_with_index do |chunk, i|
+          query += chunk
+          query += "$#{i + 1}" unless i == chunks.size - 1
+        end
+        query
       end
 
     end

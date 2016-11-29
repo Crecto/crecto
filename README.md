@@ -82,7 +82,7 @@ puts changeset.instance.name # "new name"
 #
 query = Crecto::Repo::Query
   .where(name: "new name")
-  .where("users.age < 124")
+  .where("users.age < ?", [124])
   .order_by("users.name ASC")
   .order_by("users.age DESC")
   .limit(1)
