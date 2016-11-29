@@ -96,10 +96,10 @@ module Crecto
         q.push  "#{changeset.instance.class.table_name}"
         q.push  "(#{fields_values[:fields]})"
         q.push  "VALUES"
-        q.push  "(#{fields_values[:values]})"
+        q.push  "(#{fields_values[:values].map{|v| "?" }.join(", ")})"
         q.push  "RETURNING *"
 
-        connection.exec(q.join(" "))
+        connection.exec(position_args(q.join(" ")), fields_values[:values])
       end
 
       private def self.update(connection, changeset)
@@ -110,12 +110,12 @@ module Crecto
         q.push  "SET"
         q.push  "(#{fields_values[:fields]})"
         q.push  "="
-        q.push  "(#{fields_values[:values]})"
+        q.push  "(#{fields_values[:values].map{|v| "?" }.join(", ")})"
         q.push  "WHERE"
         q.push  "#{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}"
         q.push  "RETURNING *"
 
-        connection.exec(q.join(" "))
+        connection.exec(position_args(q.join(" ")), fields_values[:values])
       end
 
       private def self.delete(connection, changeset)
@@ -176,31 +176,7 @@ module Crecto
 
       private def self.instance_fields_and_values(queryable_instance)
         query_hash = queryable_instance.to_query_hash
-        values = query_hash.values.map do |value|
-          to_query_val(value)
-        end
-        {fields: query_hash.keys.join(", "), values: values.join(", ")}
-      end
-
-      private def self.to_query_val(val, operator = false)
-        resp = if val.nil?
-          "NULL"
-        elsif val.is_a?(String)
-          "'#{val}'"
-        elsif val.is_a?(Array)
-          "#{val.to_s.gsub(/^\[/, "(").gsub(/\]$/, ")").gsub(/"/, "'")}"
-        elsif val.is_a?(Time)
-          "'#{val.to_utc.to_s("%Y-%m-%d %H:%M:%S")}'"
-        else
-          "#{val}"
-        end
-
-        if operator
-          op = val.is_a?(Array) ? " in " : " = "
-          resp = op + resp
-        end
-
-        resp
+        {fields: query_hash.keys.join(", "), values: query_hash.values}
       end
 
       private def self.position_args(query_string : String)
