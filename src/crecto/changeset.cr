@@ -18,6 +18,21 @@ module Crecto
     REQUIRED_RANGE_EXCLUSIONS = {} of String => Array(NamedTuple(field: Symbol, in: Range(Int32, Int32) | Range(Float64, Float64) | Range(Time, Time) | Range(Time, Time)))
     # :nodoc:
     REQUIRED_LENGTHS = {} of String => Array(NamedTuple(field: Symbol, is: Int32 | Nil, min: Int32 | Nil, max: Int32 | Nil))
+    # :nodoc:
+    macro extended
+      # :nodoc:
+      REQUIRED_GENERIC = [] of NamedTuple(message: String, validation: Proc({{ @type.id }}, Bool))
+
+      # Validates generic proc against an instance of the class
+      def self.validate(message : String, block : Proc({{ @type.id }}, Bool | Nil))
+        REQUIRED_GENERIC.push({message: message, validation: block})
+      end
+
+      # :nodoc:
+      def self.required_generics
+        REQUIRED_GENERIC
+      end
+    end
 
     def changeset(instance)
       Changeset(T).new(instance)

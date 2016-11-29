@@ -98,6 +98,26 @@ class UserLength
   validate_length :name, max: 5
 end
 
+class UserGenericValidation
+  include Crecto::Schema
+  extend Crecto::Changeset(UserGenericValidation)
+
+  schema "user_generic" do
+    field :id, Int32, primary_key: true
+    field :password, String, virtual: true
+    field :encrypted_password, String
+  end
+
+  validate "Password must exist", ->(user : UserGenericValidation) do
+    if !(user.id.nil? || user.id == "")
+      if !(user.password.nil? || user.password == "")
+        return true
+      end
+    end
+    return false
+  end
+end
+
 class Thing
   include Crecto::Schema
 
@@ -119,5 +139,5 @@ class Tester
 
 	schema "testers" do
 		field :oof, String
-	end	
+	end
 end

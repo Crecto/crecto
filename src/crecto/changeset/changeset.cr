@@ -41,6 +41,7 @@ module Crecto
         check_array_exclusions!
         check_range_exclusions!
         check_lengths!
+        check_generic_validations!
         diff_from_initial_values!
       end
 
@@ -89,7 +90,7 @@ module Crecto
           elsif inclusion[:in].is_a?(Range(Int32, Int32)) && val.is_a?(Int32)
             add_error(inclusion[:field].to_s, "is invalid") unless inclusion[:in].as(Range(Int32, Int32)).includes?(val.as(Int32))
           elsif inclusion[:in].is_a?(Range(Time, Time)) && val.is_a?(Time)
-            add_error(inclusion[:field].to_s, "is invalid") unless inclusion[:in].as(Range(Time, Time)).includes?(val.as(Time))            
+            add_error(inclusion[:field].to_s, "is invalid") unless inclusion[:in].as(Range(Time, Time)).includes?(val.as(Time))
           end
         end
       end
@@ -113,7 +114,7 @@ module Crecto
           elsif exclusion[:in].is_a?(Range(Int32, Int32)) && val.is_a?(Int32)
             add_error(exclusion[:field].to_s, "is invalid") if exclusion[:in].as(Range(Int32, Int32)).includes?(val.as(Int32))
           elsif exclusion[:in].is_a?(Range(Time, Time)) && val.is_a?(Time)
-            add_error(exclusion[:field].to_s, "is invalid") if exclusion[:in].as(Range(Time, Time)).includes?(val.as(Time))            
+            add_error(exclusion[:field].to_s, "is invalid") if exclusion[:in].as(Range(Time, Time)).includes?(val.as(Time))
           end
         end
       end
@@ -134,6 +135,14 @@ module Crecto
         @changes.clear
         @instance_hash.each do |field, value|
           @changes.push({field => value}) if @initial_values.as(Hash).fetch(field, nil) != value
+        end
+      end
+
+      private def check_generic_validations!
+        @instance.class.required_generics.each do |tuple|
+          if !tuple[:validation].call(@instance)
+            add_error("_base", tuple[:message])
+          end
         end
       end
 
