@@ -46,7 +46,7 @@ module Crecto
     # schema block macro
     macro schema(table_name, &block)
       # macro constants
-      VALID_FIELD_TYPES = [String, Int32, Float64, Bool, Time]
+      VALID_FIELD_TYPES = [String, Int64, Int32, Float64, Bool, Time]
       VALID_FIELD_OPTIONS = [:primary_key, :virtual]
       FIELDS = [] of String      
 
@@ -87,7 +87,11 @@ module Crecto
       {% FIELDS << field_name %}
 
       # set `property`
-      property {{field_name.id}} : {{field_type}}?
+      {% if field_type.id == "Int64" %}
+        property {{field_name.id}} : (Int64 | Int32 | Nil)
+      {% else %}
+        property {{field_name.id}} : {{field_type}}?
+      {% end %}
     end
 
     # Macro to change created_at field name
@@ -112,7 +116,7 @@ module Crecto
     macro setup
       extend BuildFromSQL
 
-      property {{PRIMARY_KEY_FIELD.id}} : Int32?
+      property {{PRIMARY_KEY_FIELD.id}} : (Int32 | Int64 | Nil)
 
       {% unless CREATED_AT_FIELD == nil %}
         property {{CREATED_AT_FIELD.id}} : Time?
