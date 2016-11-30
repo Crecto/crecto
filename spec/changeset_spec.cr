@@ -108,5 +108,75 @@ describe Crecto do
         changeset.valid?.should be_true
       end
     end
+
+    describe "#validates" do
+      it "should not be valid" do
+        u = UserMultipleValidations.new
+        changeset = UserMultipleValidations.changeset(u)
+        changeset.valid?.should be_false
+      end
+
+      it "should error required fields" do
+        u = UserMultipleValidations.new
+        changeset = UserMultipleValidations.changeset(u)
+        changeset.errors[0]?.should eq({:field => "first_name", :message => "is required"})
+        changeset.errors[1]?.should eq({:field => "last_name", :message => "is required"})
+      end
+
+      it "should error formated fields" do
+        u = UserMultipleValidations.new
+        u.first_name = "asdf1234"
+        u.last_name = "asdf1234"
+        changeset = UserMultipleValidations.changeset(u)
+        changeset.errors[0]?.should eq({:field => "first_name", :message => "is invalid"})
+        changeset.errors[1]?.should eq({:field => "last_name", :message => "is invalid"})
+      end
+
+      it "should error fields with bad length" do
+        u = UserMultipleValidations.new
+
+        u.first_name = "x"
+        u.last_name = "Smith"
+        changeset = UserMultipleValidations.changeset(u)
+        changeset.errors[0]?.should eq({:field => "first_name", :message => "is invalid"})
+
+        u.first_name = "qwertyuiop" # size is 10
+        changeset = UserMultipleValidations.changeset(u)
+        changeset.errors[0]?.should eq({:field => "first_name", :message => "is invalid"})
+      end
+
+      it "should error fields within exclusions" do
+        u = UserMultipleValidations.new
+        u.first_name = "foo"
+        u.last_name = "bar"
+        changeset = UserMultipleValidations.changeset(u)
+        changeset.errors[0]?.should eq({:field => "first_name", :message => "is invalid"})
+        changeset.errors[1]?.should eq({:field => "last_name", :message => "is invalid"})
+      end
+
+      it "should error fields outside of inclusions" do
+        u = UserMultipleValidations.new
+        u.first_name = "John"
+        u.last_name = "Smith"
+
+        u.rank = 1000
+        changeset = UserMultipleValidations.changeset(u)
+        changeset.errors[0]?.should eq({:field => "rank", :message => "is invalid"})
+
+        u.rank = 0
+        changeset = UserMultipleValidations.changeset(u)
+        changeset.errors[0]?.should eq({:field => "rank", :message => "is invalid"})
+      end
+
+      it "should not have errors and be valid" do
+        u = UserMultipleValidations.new
+        u.first_name = "John"
+        u.last_name = "Smith"
+        u.rank = 10
+        changeset = UserMultipleValidations.changeset(u)
+        changeset.errors.size.should eq(0)
+        changeset.valid?.should be_true
+      end
+    end
   end
 end
