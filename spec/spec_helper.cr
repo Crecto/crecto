@@ -123,13 +123,32 @@ class UserGenericValidation
   end
 
   validate "Password must exist", ->(user : UserGenericValidation) do
-    if !(user.id.nil? || user.id == "")
-      if !(user.password.nil? || user.password == "")
-        return true
-      end
-    end
-    return false
+    return false if user.id.nil? || user.id == ""
+    return true unless password = user.password
+    !password.empty?
   end
+end
+
+class UserMultipleValidations
+  include Crecto::Schema
+  extend Crecto::Changeset(UserMultipleValidations)
+
+  schema "users" do
+    field :first_name, String
+    field :last_name, String
+    field :rank, Int32
+  end
+
+  validates :first_name,
+    length: {min: 3, max: 9}
+
+  validates [:first_name, :last_name],
+    presence: true,
+    format: {pattern: /^[a-zA-Z]+$/},
+    exclusion: {in: ["foo", "bar"]}
+
+  validates :rank,
+    inclusion: {in: 1..100}
 end
 
 class Thing
@@ -149,9 +168,9 @@ class Post
 end
 
 class Tester
-	include Crecto::Schema
+  include Crecto::Schema
 
-	schema "testers" do
-		field :oof, String
-	end
+  schema "testers" do
+    field :oof, String
+  end
 end

@@ -114,7 +114,7 @@ changeset = Crecto::Repo.delete(user)
 ## Performance
 
 #### crystal:
-	
+
 * crystal 0.20.0
 
 `elapsed: 2.6528820` seconds
@@ -133,12 +133,13 @@ class User
     field :nope, Float64
     field :yep, Bool
     field :some_date, Time
-  end
+  en
 
-  validate_required :name
-  validate_format :name, /[*a-zA-Z]/
-  validate_inclusion :name, ["fridge", "mcridge"]
-  validate_length :name, min: 2, max: 10
+  validates :name,
+    presence: true,
+    inclusion: { in: ["fridge", "mcridge"] },
+    format: { pattern: /[*a-zA-Z]/ },
+    length: { min: 2, max: 10 }
 end
 
 start_time = Time.now
@@ -162,9 +163,9 @@ puts "elapsed: #{end_time - start_time}"
 ```Ruby
 class User < ApplicationRecord
   validates :name,
-    presence: true, 
-    inclusion: { in: ["fridge", "mcridge"] }, 
-    format: { with: /[*a-zA-Z]/ }, 
+    presence: true,
+    inclusion: { in: ["fridge", "mcridge"] },
+    format: { with: /[*a-zA-Z]/ },
     length: { minimum: 2, maximum: 10 }
 end
 
