@@ -35,7 +35,7 @@ require "crecto"
 #
 class User
   include Crecto::Schema
-  extend Crecto::Changeset
+  extend Crecto::Changeset(User)
 
   schema "users" do
     field :age, Int32
