@@ -17,4 +17,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Query
 * Postgres Adapter
 
-[0.2.0]: https://github.com/fridgerator/crecto/compare/v0.1.0...v0.2.0
+[0.2.0]: https://github.com/fridgerator/crecto/compare/0.1.0...v0.2.0
