@@ -187,10 +187,6 @@ puts "elapsed: #{end_time-start_time}"
 4. Push to the branch (git push origin my-new-feature)
 5. Create a new Pull Request
 
-## Contributors
-
-- [fridgerator](https://github.com/fridgerator) Nick Franken - creator, maintainer
-
 ## Thanks / Inspiration
 
 * [Ecto](https://github.com/elixir-ecto/ecto)
