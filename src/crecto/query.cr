@@ -6,7 +6,7 @@ module Crecto
     #
     class Query
       property selects : Array(String)
-      property wheres = [] of Hash(Symbol, Int32) | Hash(Symbol, String) | Hash(Symbol, Array(Int32)) | Hash(Symbol, Array(String)) | Hash(Symbol, Int32 | String) | String
+      property wheres = [] of Hash(Symbol, Int32) | Hash(Symbol, String) | Hash(Symbol, Array(Int32)) | Hash(Symbol, Array(String)) | Hash(Symbol, Int32 | String) | NamedTuple(clause: String, params: Array(DbValue))
       property joins = [] of Hash(Symbol, Hash(Symbol, String | Array(String)))
       property order_bys = [] of String
       property limit : Int32?
@@ -23,8 +23,8 @@ module Crecto
       end
 
       # Query where with a string (i.e. `.where("users.id > 10"))
-      def self.where(where_string : String)
-        self.new.where(where_string)
+      def self.where(where_string : String, params : Array(DbValue))
+        self.new.where(where_string, params)
       end
 
       # TODO: not done yet
@@ -64,8 +64,8 @@ module Crecto
         self
       end
 
-      def where(where_string : String)
-        @wheres.push where_string
+      def where(where_string : String, params : Array(DbValue))
+        @wheres.push({clause: where_string, params: params.map{|p| p.as(DbValue)}})
         self
       end
 

@@ -131,15 +131,18 @@ module Crecto
         query_hash = {} of Symbol => DbValue
 
         {% for field in FIELDS %}
-          query_hash[{{field}}] = self.{{field.id}} if self.{{field.id}} && @@changeset_fields.includes?({{field}})
+          if self.{{field.id}} && @@changeset_fields.includes?({{field}})
+            query_hash[{{field}}] = self.{{field.id}}
+            query_hash[{{field}}] = query_hash[{{field}}].as(Time).to_utc if query_hash[{{field}}].is_a?(Time)
+          end
         {% end %}
 
         {% unless CREATED_AT_FIELD == nil %}
-          query_hash[{{CREATED_AT_FIELD.id.symbolize}}] = self.{{CREATED_AT_FIELD.id}}
+          query_hash[{{CREATED_AT_FIELD.id.symbolize}}] = self.{{CREATED_AT_FIELD.id}}.nil? ? nil : self.{{CREATED_AT_FIELD.id}}.as(Time).to_utc
         {% end %}
 
         {% unless UPDATED_AT_FIELD == nil %}
-          query_hash[{{UPDATED_AT_FIELD.id.symbolize}}] = self.{{UPDATED_AT_FIELD.id}}
+          query_hash[{{UPDATED_AT_FIELD.id.symbolize}}] = self.{{UPDATED_AT_FIELD.id}}.nil? ? nil : self.{{UPDATED_AT_FIELD.id}}.as(Time).to_utc
         {% end %}
 
         query_hash
