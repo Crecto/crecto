@@ -12,7 +12,7 @@ describe Crecto do
       end
 
       it "should set the changeset fields" do
-        User.changeset_fields.should eq([:name, :things, :nope, :yep, :some_date])
+        User.changeset_fields.should eq([:name, :things, :nope, :yep, :some_date, :pageviews])
       end
 
       it "should set properties for the fields" do
@@ -22,12 +22,14 @@ describe Crecto do
         u.stuff = 543
         u.nope = 3.343
         u.yep = false
+        u.pageviews = 123451651234
 
         u.name.should eq("fridge")
         u.things.should eq(123)
         u.stuff.should eq(543)
         u.nope.should eq(3.343)
         u.yep.should eq(false)
+        u.pageviews.should eq(123451651234)
       end
 
       describe "changing default values" do
@@ -53,8 +55,9 @@ describe Crecto do
         u.things = 6644
         u.stuff = 2343 # virtual, shouldn't be in query hash
         u.nope = 34.9900
+        u.pageviews = 1234567890
 
-        u.to_query_hash.should eq({:name => "tester", :things => 6644, :nope => 34.9900, :created_at => nil, :updated_at => nil})
+        u.to_query_hash.should eq({:name => "tester", :things => 6644, :nope => 34.9900, :created_at => nil, :updated_at => nil, :pageviews => 1234567890})
       end 
     end
 
@@ -71,6 +74,12 @@ describe Crecto do
         user = UserDifferentDefaults.new
         user.update_primary_key(9899)
         user.user_id.should eq(9899)
+      end
+
+      it "should update the value of the primary key for bigger sizes" do
+        user = UserLargeDefaults.new
+        user.update_primary_key(9899)
+        user.id.should eq(9899)
       end
     end
 

@@ -10,8 +10,9 @@ describe Crecto do
         u.nope = 12.45432
         u.yep = false
         u.stuff = 9993
+        u.pageviews = 10000
         u.some_date = Time.now.at_beginning_of_hour
-        
+
         changeset = Crecto::Repo.insert(u)
         changeset.instance.id.should_not eq(nil)
         changeset.instance.created_at.should_not eq(nil)
@@ -36,6 +37,14 @@ describe Crecto do
 
         changeset.is_a?(Crecto::Changeset::Changeset).should eq(true)
         changeset.action.should eq(:insert)
+      end
+
+      it "should use different sized primary key" do
+        u = UserLargeDefaults.new
+        u.name = "whatever"
+
+        changeset = Crecto::Repo.insert(u)
+        changeset.instance.id.should_not eq(nil)
       end
     end
 
@@ -94,6 +103,7 @@ describe Crecto do
         u.nope = 12.45432
         u.yep = false
         u.stuff = 9993
+        u.pageviews = 123245667788
         
         changeset = Crecto::Repo.insert(u)
         u = changeset.instance
@@ -128,6 +138,7 @@ describe Crecto do
         u.nope = 12.45432
         u.yep = false
         u.stuff = 9993
+        u.pageviews = 1234512341234
         
         changeset = Crecto::Repo.insert(u)
         u = changeset.instance

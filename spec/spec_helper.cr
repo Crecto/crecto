@@ -12,6 +12,7 @@ class User
     field :nope, Float64
     field :yep, Bool
     field :some_date, Time
+    field :pageviews, Int64
     has_many :posts, Post
     has_one :thing, Thing
   end
@@ -30,6 +31,19 @@ class UserDifferentDefaults
   end
 
   validate_required :name
+end
+
+class UserLargeDefaults
+  include Crecto::Schema
+  extend Crecto::Changeset(UserLargeDefaults)
+
+  created_at_field nil
+  updated_at_field nil
+
+  schema "users_large_defaults" do
+    field :id, Int64, primary_key: true
+    field :name, String
+  end
 end
 
 class UserRequired

@@ -89,6 +89,8 @@ module Crecto
             add_error(inclusion[:field].to_s, "is invalid") unless inclusion[:in].as(Range(Float64, Float64)).includes?(val.as(Float64))
           elsif inclusion[:in].is_a?(Range(Int32, Int32)) && val.is_a?(Int32)
             add_error(inclusion[:field].to_s, "is invalid") unless inclusion[:in].as(Range(Int32, Int32)).includes?(val.as(Int32))
+          elsif inclusion[:in].is_a?(Range(Int64, Int64)) && val.is_a?(Int64)
+            add_error(inclusion[:field].to_s, "is invalid") unless inclusion[:in].as(Range(Int64, Int64)).includes?(val.as(Int64))
           elsif inclusion[:in].is_a?(Range(Time, Time)) && val.is_a?(Time)
             add_error(inclusion[:field].to_s, "is invalid") unless inclusion[:in].as(Range(Time, Time)).includes?(val.as(Time))
           end
@@ -113,6 +115,8 @@ module Crecto
             add_error(exclusion[:field].to_s, "is invalid") if exclusion[:in].as(Range(Float64, Float64)).includes?(val.as(Float64))
           elsif exclusion[:in].is_a?(Range(Int32, Int32)) && val.is_a?(Int32)
             add_error(exclusion[:field].to_s, "is invalid") if exclusion[:in].as(Range(Int32, Int32)).includes?(val.as(Int32))
+          elsif exclusion[:in].is_a?(Range(Int64, Int64)) && val.is_a?(Int64)
+            add_error(exclusion[:field].to_s, "is invalid") if exclusion[:in].as(Range(Int64, Int64)).includes?(val.as(Int64))
           elsif exclusion[:in].is_a?(Range(Time, Time)) && val.is_a?(Time)
             add_error(exclusion[:field].to_s, "is invalid") if exclusion[:in].as(Range(Time, Time)).includes?(val.as(Time))
           end
