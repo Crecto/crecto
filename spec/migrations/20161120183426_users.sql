@@ -46,7 +46,7 @@ CREATE UNIQUE INDEX users_different_defaults_kljl3kj on users_different_defaults
 
 CREATE TABLE users_large_defaults(
   id BIGINT NOT NULL,
-  name character varying NOT NULL,
+  name character varying NOT NULL
 );
 
 CREATE SEQUENCE users_large_defaults_id_seq
@@ -68,3 +68,5 @@ DROP INDEX users_4ijlkjdf;
 DROP TABLE users;
 DROP INDEX users_different_defaults_kljl3kj;
 DROP TABLE users_different_defaults;
+DROP INDEX users_4asdf;
+DROP TABLE users_large_defaults;
