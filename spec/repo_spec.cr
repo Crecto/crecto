@@ -85,6 +85,11 @@ describe Crecto do
         user.id.should eq(1121)
         user.some_date.should eq(Time.now.at_beginning_of_hour)
       end
+
+      it "should not return a user if not in db" do
+        user = Crecto::Repo.get(User, 1)
+        user.nil?.should be_true
+      end
     end
 
     describe "#get_by" do
@@ -92,6 +97,11 @@ describe Crecto do
         user = Crecto::Repo.get_by(User, name: "fridge", id: 1121).as(User)
         user.id.should eq(1121)
         user.name.should eq("fridge")
+      end
+
+      it "should not return a row" do
+        user = Crecto::Repo.get_by(User, id: 1)
+        user.nil?.should be_true
       end
     end
 

@@ -19,7 +19,7 @@ module Crecto
     # ```
     def self.get(queryable, id)
       query = Crecto::Adapters::Postgres.execute(:get, queryable, id)
-      queryable.from_sql(query.to_hash[0]) unless query.nil?
+      queryable.from_sql(query.to_hash[0]) unless query.nil? || query.rows.size == 0
     end
 
     # Return a single instance of `queryable` using the *query* param
@@ -29,7 +29,7 @@ module Crecto
     # ```
     def self.get_by(queryable, **opts)
       query = Crecto::Adapters::Postgres.execute(:all, queryable, Query.where(**opts).limit(1))
-      queryable.from_sql(query.to_hash[0]) unless query.nil?
+      queryable.from_sql(query.to_hash[0]) unless query.nil? || query.rows.size == 0
     end
 
     # Insert a schema instance into the data store.
