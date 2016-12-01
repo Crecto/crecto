@@ -96,7 +96,7 @@ module Crecto
         q.push  "#{changeset.instance.class.table_name}"
         q.push  "(#{fields_values[:fields]})"
         q.push  "VALUES"
-        q.push  "(#{fields_values[:values].map{|v| "?" }.join(", ")})"
+        q.push  "(#{(1..fields_values[:values].size).map{ "?" }.join(", ")})"
         q.push  "RETURNING *"
 
         connection.exec(position_args(q.join(" ")), fields_values[:values])
@@ -110,7 +110,7 @@ module Crecto
         q.push  "SET"
         q.push  "(#{fields_values[:fields]})"
         q.push  "="
-        q.push  "(#{fields_values[:values].map{|v| "?" }.join(", ")})"
+        q.push  "(#{(1..fields_values[:values].size).map{ "?" }.join(", ")})"
         q.push  "WHERE"
         q.push  "#{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}"
         q.push  "RETURNING *"
