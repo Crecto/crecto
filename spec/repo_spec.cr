@@ -189,5 +189,39 @@ describe Crecto do
         changeset.action.should eq(:delete)
       end
     end
+
+    describe "#update_all" do
+      it "should update multiple records" do
+        user = User.new
+        user.name = "updated_all"
+        user.things = 872384732
+        Crecto::Repo.insert(user).instance.as(User).id
+
+        user = User.new
+        user.name = "updated_all"
+        user.things = 98347598
+        Crecto::Repo.insert(user).instance.as(User).id
+
+        user = User.new
+        user.name = "not_updated_all"
+        user.things = 2334234
+        id3 = Crecto::Repo.insert(user).instance.as(User).id
+
+        query = Crecto::Repo::Query
+          .where(name: "updated_all")
+
+        Crecto::Repo.update_all(User, query, {:things => 42})
+
+        # should update first two
+        users = Crecto::Repo.all(User, query).as(Array)
+        users.each do |user|
+          user.things.should eq(42)
+        end
+
+        # should not update the last
+        user = Crecto::Repo.get(User, id3).as(User)
+        user.things.should eq(2334234)
+      end
+    end
   end 
 end

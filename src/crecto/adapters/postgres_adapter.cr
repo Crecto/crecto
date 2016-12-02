@@ -34,10 +34,10 @@ module Crecto
       end
 
       def self.execute(operation : Symbol, queryable, query : Crecto::Repo::Query, query_hash : Hash)
-        connection = Db.checkout()
+        connection = DB.checkout()
 
         result = case operation
-        when :udpate_al
+        when :update_all
           update(connection, queryable, query, query_hash)
         end
 
@@ -48,7 +48,7 @@ module Crecto
       #
       # Query data store using an *id*, returning a single record.
       #
-      def self.execute(operation : Symbol, queryable, id : Int32 | Int64 | String)
+      def self.execute(operation : Symbol, queryable, id : Int32 | Int64 | String | Nil)
         connection = DB.checkout()
 
         result = case operation
@@ -115,15 +115,19 @@ module Crecto
         connection.exec(position_args(q.join(" ")), fields_values[:values])
       end
 
-      private def self.update(connection, changeset)
-        fields_values = instance_fields_and_values(changeset.instance)
-
+      private def self.update_begin(table_name, fields_values)
         q =     ["UPDATE"]
-        q.push  "#{changeset.instance.class.table_name}"
+        q.push  "#{table_name}"
         q.push  "SET"
         q.push  "(#{fields_values[:fields]})"
         q.push  "="
         q.push  "(#{(1..fields_values[:values].size).map{ "?" }.join(", ")})"
+      end
+
+      private def self.update(connection, changeset)
+        fields_values = instance_fields_and_values(changeset.instance)
+
+        q = update_begin(changeset.instance.class.table_name, fields_values)
         q.push  "WHERE"
         q.push  "#{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}"
         q.push  "RETURNING *"
@@ -135,12 +139,7 @@ module Crecto
         fields_values = instance_fields_and_values(query_hash)
         params = [] of DbValue | Array(DbValue)
 
-        q =     ["UPDATE"]
-        q.push  "#{changeset.instance.class.table_name}"
-        q.push  "SET"
-        q.push  "(#{fields_values[:fields]})"
-        q.push  "="
-        q.push  "(#{(1..fields_values[:values].size).map{ "?" }.join(", ")})"
+        q = update_begin(queryable.table_name, fields_values)
         q.push  wheres(queryable, query, params)
 
         connection.exec(position_args(q.join(" ")), fields_values[:values] + params)
