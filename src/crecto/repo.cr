@@ -144,11 +144,11 @@ module Crecto
       delete(changeset.instance)
     end
 
-    # Update multipile records with a single query
+    # Delete multipile records with a single query
     #
     # ```
-    # query = Crecto::Repo::Query.where(name: "Ted", count: 0)
-    # Repo.update_all(User, query, {count: 1, date: Time.now})
+    # query = Crecto::Repo::Query.where(name: "Fred")
+    # Repo.delete_all(User, query)
     # ```
     def self.delete_all(queryable, query = Query.new)
       query = Crecto::Adapters::Postgres.execute(:delete_all, queryable, query)

@@ -236,7 +236,6 @@ describe Crecto do
       end
     end
 
-    # keep this one at the end
     describe "#delete_all" do
       it "should remove all records" do
         Crecto::Repo.delete_all(User)
