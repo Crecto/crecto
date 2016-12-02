@@ -101,9 +101,16 @@ describe Crecto do
 
     describe "#get" do
       it "should return a user" do
-        user = Crecto::Repo.get(User, 1121).as(User)
+        now = Time.now.at_beginning_of_hour
+
+        user = User.new
+        user.name = "test"
+        user.some_date = now
+        changeset = Crecto::Repo.insert(user)
+        id = changeset.instance.id
+        user = Crecto::Repo.get(User, id).as(User)
         user.is_a?(User).should eq(true)
-        user.id.should eq(1121)
+        user.id.should eq(id)
         user.some_date.should eq(Time.now.at_beginning_of_hour)
       end
 
@@ -115,8 +122,13 @@ describe Crecto do
 
     describe "#get_by" do
       it "should return a row" do
-        user = Crecto::Repo.get_by(User, name: "fridge", id: 1121).as(User)
-        user.id.should eq(1121)
+        user = User.new
+        user.name = "fridge"
+        changeset = Crecto::Repo.insert(user)
+        id = changeset.instance.id
+
+        user = Crecto::Repo.get_by(User, name: "fridge", id: id).as(User)
+        user.id.should eq(id)
         user.name.should eq("fridge")
       end
 
@@ -187,6 +199,57 @@ describe Crecto do
 
         changeset.is_a?(Crecto::Changeset::Changeset).should eq(true)
         changeset.action.should eq(:delete)
+      end
+    end
+
+    describe "#update_all" do
+      it "should update multiple records" do
+        user = User.new
+        user.name = "updated_all"
+        user.things = 872384732
+        Crecto::Repo.insert(user).instance.as(User).id
+
+        user = User.new
+        user.name = "updated_all"
+        user.things = 98347598
+        Crecto::Repo.insert(user).instance.as(User).id
+
+        user = User.new
+        user.name = "not_updated_all"
+        user.things = 2334234
+        id3 = Crecto::Repo.insert(user).instance.as(User).id
+
+        query = Crecto::Repo::Query
+          .where(name: "updated_all")
+
+        Crecto::Repo.update_all(User, query, {:things => 42})
+
+        # should update first two
+        users = Crecto::Repo.all(User, query).as(Array)
+        users.each do |user|
+          user.things.should eq(42)
+        end
+
+        # should not update the last
+        user = Crecto::Repo.get(User, id3).as(User)
+        user.things.should eq(2334234)
+      end
+    end
+
+    describe "#delete_all" do
+      it "should remove all records" do
+        Crecto::Repo.delete_all(User)
+        Crecto::Repo.delete_all(UserDifferentDefaults)
+        Crecto::Repo.delete_all(UserLargeDefaults)
+
+        users = Crecto::Repo.all(User).as(Array)
+        users.size.should eq 0
+
+        users = Crecto::Repo.all(UserDifferentDefaults).as(Array)
+        users.size.should eq 0
+
+        users = Crecto::Repo.all(UserLargeDefaults).as(Array)
+        users.size.should eq 0        
       end
     end
   end 

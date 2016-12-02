@@ -1,8 +1,11 @@
 module Crecto
   module Schema
     module BuildFromSQL
+      def from_sql(hash : Nil)
+        nil
+      end
+
       def from_sql(hash)
-        return nil if hash.nil?
         object = {{@type.id}}.new
 
         {% for prop in @type.instance_vars %}
@@ -14,6 +17,7 @@ module Crecto
         object.initial_values = object.to_query_hash
         object
       end
+
     end
   end
 end

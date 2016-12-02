@@ -16,6 +16,8 @@ class User
     has_many :posts, Post
     has_one :thing, Thing
   end
+
+  validate_required :name
 end
 
 class UserDifferentDefaults
