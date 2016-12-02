@@ -76,6 +76,27 @@ describe Crecto do
         users = users.as(Array)
         users.size.should be > 0
       end
+
+      describe "#or_where" do
+        it "should return the correct set" do
+          user = User.new
+          user.name = "or_where_user"
+          user.things = 123
+          Crecto::Repo.insert(user)
+
+          query = Crecto::Repo::Query
+            .or_where(name: "or_where_user", things: 999)
+
+          users = Crecto::Repo.all(User, query)
+          users.as(Array).size.should be > 0
+
+          query = Crecto::Repo::Query
+            .or_where(name: "dlkjf9f9ddf", things: 123)
+
+          users = Crecto::Repo.all(User, query)
+          users.as(Array).size.should be > 0
+        end
+      end
     end
 
     describe "#get" do

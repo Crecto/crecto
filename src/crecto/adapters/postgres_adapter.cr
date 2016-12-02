@@ -93,6 +93,7 @@ module Crecto
         q.push  query.selects.join(", ")
         q.push  "FROM #{queryable.table_name}"
         q.push  wheres(queryable, query, params) if query.wheres.any?
+        q.push  or_wheres(queryable, query, params) if query.or_wheres.any?
         # TODO: JOINS
         q.push  order_bys(query) if query.order_bys.any?
         q.push  limit(query) unless query.limit.nil?
@@ -168,6 +169,18 @@ module Crecto
         end
         
         q.push where_clauses.join(" AND ")
+        q.join("")
+      end
+
+      private def self.or_wheres(queryable, query, params)
+        q = ["WHERE "]
+        where_clauses = [] of String
+
+        query.or_wheres.each do |where|
+          where_clauses += add_where(where.as(Hash), queryable, params)
+        end
+        
+        q.push where_clauses.join(" OR")
         q.join("")
       end
 
