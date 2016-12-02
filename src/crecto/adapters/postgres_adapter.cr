@@ -21,74 +21,68 @@ module Crecto
       #
       # Query data store using a *query*
       #
-      def self.execute(operation : Symbol, queryable, query : Crecto::Repo::Query)
-        connection = DB.checkout()
-
-        result = case operation
+      def self.run(operation : Symbol, queryable, query : Crecto::Repo::Query)
+        case operation
         when :all
-          all(connection, queryable, query)
+          all(queryable, query)
         when :delete_all
-          delete(connection, queryable, query)
+          delete(queryable, query)
         end
-
-        DB.checkin(connection)
-        result
       end
 
-      def self.execute(operation : Symbol, queryable, query : Crecto::Repo::Query, query_hash : Hash)
-        connection = DB.checkout()
-
-        result = case operation
+      def self.run(operation : Symbol, queryable, query : Crecto::Repo::Query, query_hash : Hash)
+        case operation
         when :update_all
-          update(connection, queryable, query, query_hash)
+          update(queryable, query, query_hash)
         end
-
-        DB.checkin(connection)
-        result
       end
 
       #
       # Query data store using an *id*, returning a single record.
       #
-      def self.execute(operation : Symbol, queryable, id : Int32 | Int64 | String | Nil)
-        connection = DB.checkout()
-
-        result = case operation
+      def self.run(operation : Symbol, queryable, id : Int32 | Int64 | String | Nil)
+        case operation
         when :get
-          get(connection, queryable, id)
+          get(queryable, id)
         end
-
-        DB.checkin(connection)
-        result
       end
 
       # Query data store in relation to a *queryable_instance* of Schema
-      def self.execute_on_instance(operation, changeset)
-        connection = DB.checkout()
-
-        result = case operation
+      def self.run_on_instance(operation, changeset)
+        case operation
         when :insert
-          insert(connection, changeset)
+          insert(changeset)
         when :update
-          update(connection, changeset)
+          update(changeset)
         when :delete
-          delete(connection, changeset)
+          delete(changeset)
         end
+      end
 
+      def self.execute(query_string, params)
+        connection = DB.checkout()
+        result = connection.exec(query_string, params)
         DB.checkin(connection)
         result
       end
 
-      private def self.get(connection, queryable, id)
+      def self.execute(query_string)
+        connection = DB.checkout()
+        result = connection.exec(query_string)
+        DB.checkin(connection)
+        result
+      end
+
+      private def self.get(queryable, id)
         q =     ["SELECT *"]
         q.push  "FROM #{queryable.table_name}"
         q.push  "WHERE #{queryable.primary_key_field}=$1"
         q.push  "LIMIT 1"
 
-        connection.exec(q.join(" "), [id])
+        execute(q.join(" "), [id])
       end
 
-      private def self.all(connection, queryable, query)
+      private def self.all(queryable, query)
         params = [] of DbValue | Array(DbValue)
 
         q =     ["SELECT"]
@@ -101,10 +95,10 @@ module Crecto
         q.push  limit(query) unless query.limit.nil?
         q.push  offset(query) unless query.offset.nil?
 
-        connection.exec(position_args(q.join(" ")), params)
+        execute(position_args(q.join(" ")), params)
       end
 
-      private def self.insert(connection, changeset)
+      private def self.insert(changeset)
         fields_values = instance_fields_and_values(changeset.instance)
 
         q =     ["INSERT INTO"]
@@ -114,7 +108,7 @@ module Crecto
         q.push  "(#{(1..fields_values[:values].size).map{ "?" }.join(", ")})"
         q.push  "RETURNING *"
 
-        connection.exec(position_args(q.join(" ")), fields_values[:values])
+        execute(position_args(q.join(" ")), fields_values[:values])
       end
 
       private def self.update_begin(table_name, fields_values)
@@ -126,7 +120,7 @@ module Crecto
         q.push  "(#{(1..fields_values[:values].size).map{ "?" }.join(", ")})"
       end
 
-      private def self.update(connection, changeset)
+      private def self.update(changeset)
         fields_values = instance_fields_and_values(changeset.instance)
 
         q = update_begin(changeset.instance.class.table_name, fields_values)
@@ -134,10 +128,10 @@ module Crecto
         q.push  "#{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}"
         q.push  "RETURNING *"
 
-        connection.exec(position_args(q.join(" ")), fields_values[:values])
+        execute(position_args(q.join(" ")), fields_values[:values])
       end
 
-      private def self.update(connection, queryable, query, query_hash)
+      private def self.update(queryable, query, query_hash)
         fields_values = instance_fields_and_values(query_hash)
         params = [] of DbValue | Array(DbValue)
 
@@ -145,7 +139,7 @@ module Crecto
         q.push  wheres(queryable, query, params) if query.wheres.any?
         q.push  or_wheres(queryable, query, params) if query.or_wheres.any?
 
-        connection.exec(position_args(q.join(" ")), fields_values[:values] + params)
+        execute(position_args(q.join(" ")), fields_values[:values] + params)
       end
 
       private def self.delete_begin(table_name)
@@ -153,23 +147,23 @@ module Crecto
         q.push  "#{table_name}"
       end
 
-      private def self.delete(connection, changeset)
+      private def self.delete(changeset)
         q = delete_begin(changeset.instance.class.table_name)
         q.push  "WHERE"
         q.push  "#{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}"
         q.push  "RETURNING *"
 
-        connection.exec(q.join(" "))
+        execute(q.join(" "))
       end
 
-      private def self.delete(connection, queryable, query)
+      private def self.delete(queryable, query)
         params = [] of DbValue | Array(DbValue)
 
         q = delete_begin(queryable.table_name)
         q.push wheres(queryable, query, params) if query.wheres.any?
         q.push or_wheres(queryable, query, params) if query.or_wheres.any?
 
-        connection.exec(position_args(q.join(" ")), params)
+        execute(position_args(q.join(" ")), params)
       end
 
       private def self.wheres(queryable, query, params)
