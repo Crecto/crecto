@@ -28,6 +28,9 @@ Make sure you have `Set ENV['PG_URL']` set
 
 ## Usage
 
+```crystal
+require "crecto"
+
 #
 # Define table name, fields and validations in your class
 #
