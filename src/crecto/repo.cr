@@ -8,7 +8,7 @@ module Crecto
     # users = Repo.all(User, query)
     # ```
     def self.all(queryable, query = Query.new)
-      query = Crecto::Adapters::Postgres.execute(:all, queryable, query)
+      query = Crecto::Adapters::Postgres.run(:all, queryable, query)
       query.to_hash.map{|row| queryable.from_sql(row) } unless query.nil?
     end 
 
@@ -18,7 +18,7 @@ module Crecto
     # user = Repo.get(User, 1)
     # ```
     def self.get(queryable, id)
-      query = Crecto::Adapters::Postgres.execute(:get, queryable, id)
+      query = Crecto::Adapters::Postgres.run(:get, queryable, id)
       queryable.from_sql(query.to_hash[0]) unless query.nil? || query.rows.size == 0
     end
 
@@ -28,7 +28,7 @@ module Crecto
     # user = Repo.get_by(User, name: "fred", age: 21)
     # ```
     def self.get_by(queryable, **opts)
-      query = Crecto::Adapters::Postgres.execute(:all, queryable, Query.where(**opts).limit(1))
+      query = Crecto::Adapters::Postgres.run(:all, queryable, Query.where(**opts).limit(1))
       queryable.from_sql(query.to_hash[0]) unless query.nil? || query.rows.size == 0
     end
 
@@ -45,7 +45,7 @@ module Crecto
       changeset.instance.updated_at_to_now
       changeset.instance.created_at_to_now
 
-      query = Crecto::Adapters::Postgres.execute_on_instance(:insert, changeset)
+      query = Crecto::Adapters::Postgres.run_on_instance(:insert, changeset)
 
       if query.nil?
         changeset.add_error("insert_error", "Insert Failed")
@@ -81,7 +81,7 @@ module Crecto
 
       changeset.instance.updated_at_to_now
 
-      query = Crecto::Adapters::Postgres.execute_on_instance(:update, changeset)
+      query = Crecto::Adapters::Postgres.run_on_instance(:update, changeset)
 
       if query.nil?
         changeset.add_error("update_error", "Update Failed")
@@ -110,7 +110,7 @@ module Crecto
     # Repo.update_all(User, query, {count: 1, date: Time.now})
     # ```
     def self.update_all(queryable, query, update_hash)
-      query = Crecto::Adapters::Postgres.execute(:update_all, queryable, query, update_hash)
+      query = Crecto::Adapters::Postgres.run(:update_all, queryable, query, update_hash)
     end
 
     # Delete a shema instance from the data store.
@@ -122,7 +122,7 @@ module Crecto
       changeset = queryable_instance.class.changeset(queryable_instance)
       return changeset unless changeset.valid?
 
-      query = Crecto::Adapters::Postgres.execute_on_instance(:delete, changeset)
+      query = Crecto::Adapters::Postgres.run_on_instance(:delete, changeset)
 
       if query.nil?
         changeset.add_error("delete_error", "Delete Failed")
@@ -151,7 +151,7 @@ module Crecto
     # Repo.delete_all(User, query)
     # ```
     def self.delete_all(queryable, query = Query.new)
-      query = Crecto::Adapters::Postgres.execute(:delete_all, queryable, query)
+      query = Crecto::Adapters::Postgres.run(:delete_all, queryable, query)
     end
 
     # Not done yet, placeohlder for associations
