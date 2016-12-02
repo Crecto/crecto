@@ -12,15 +12,16 @@ dependencies:
     github: fridgerator/crecto
 ```
 
+Make sure you have `Set ENV['PG_URL']` set
+
 ## TODO
 
 #### Roadmap (in no particular order)
 
-- [ ] OR WHERE
 - [ ] DELETE ALL (with an array or no arguments will clear the table)
 - [ ] UPDATE ALL
-- [ ] Benchmark vs Active Record
-- [ ] Choose adapter in config
+- [ ] MySQL adapter
+  - [ ] Choose adapter in config
 - [ ] Associations
 - [ ] Preload
 - [ ] Joins

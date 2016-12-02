@@ -1,12 +1,16 @@
 module Crecto
   module Repo
+
+    alias OrWhereType = Hash(Symbol, Int32) | Hash(Symbol, String) | Hash(Symbol, Array(Int32)) | Hash(Symbol, Array(String)) | Hash(Symbol, Int32 | String) | NamedTuple(clause: String, params: Array(DbValue))
+    
     # Queries are used to retrieve and manipulate data from a repository.  Syntax is much like that of ActiveRecord:
     #
     # `Query.select('id').where(name: "fred").join(Post, where: {name: "this post"}).order_by("users.name").limit(1).offset(4)`
     #
     class Query
       property selects : Array(String)
-      property wheres = [] of Hash(Symbol, Int32) | Hash(Symbol, String) | Hash(Symbol, Array(Int32)) | Hash(Symbol, Array(String)) | Hash(Symbol, Int32 | String) | NamedTuple(clause: String, params: Array(DbValue))
+      property wheres = [] of OrWhereType
+      property or_wheres = [] of OrWhereType
       property joins = [] of Hash(Symbol, Hash(Symbol, String | Array(String)))
       property order_bys = [] of String
       property limit : Int32?
@@ -20,6 +24,11 @@ module Crecto
       # Key => Value pair(s) used in query `WHERE`
       def self.where(**wheres)
         self.new.where(**wheres)
+      end
+
+      # Key => Value pair(s) used in query `OR WHERE`
+      def self.or_where(**or_wheres)
+        self.new.or_where(**or_wheres)
       end
 
       # Query where with a string (i.e. `.where("users.id > 10"))
@@ -61,6 +70,12 @@ module Crecto
       def where(**wheres)
         wheres = wheres.to_h
         @wheres.push wheres
+        self
+      end
+
+      def or_where(**or_wheres)
+        or_wheres = or_wheres.to_h
+        @or_wheres.push or_wheres
         self
       end
 
