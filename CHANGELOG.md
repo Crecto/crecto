@@ -3,6 +3,11 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+* Check for result.rows.size in queries - [@neovintage](https://github.com/neovintage)
+* `or_where` queries
+* `update_all` queries
+
 ## [0.2.0] 2016-11-30
 * Added this changelog
 * Paramterized queries to prevent SQL Injection
