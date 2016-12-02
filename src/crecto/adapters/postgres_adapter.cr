@@ -27,6 +27,8 @@ module Crecto
         result = case operation
         when :all
           all(connection, queryable, query)
+        when :delete_all
+          delete(connection, queryable, query)
         end
 
         DB.checkin(connection)
@@ -140,19 +142,34 @@ module Crecto
         params = [] of DbValue | Array(DbValue)
 
         q = update_begin(queryable.table_name, fields_values)
-        q.push  wheres(queryable, query, params)
+        q.push  wheres(queryable, query, params) if query.wheres.any?
+        q.push  or_wheres(queryable, query, params) if query.or_wheres.any?
 
         connection.exec(position_args(q.join(" ")), fields_values[:values] + params)
       end
 
-      private def self.delete(connection, changeset)
+      private def self.delete_begin(table_name)
         q =     ["DELETE FROM"]
-        q.push  "#{changeset.instance.class.table_name}"
+        q.push  "#{table_name}"
+      end
+
+      private def self.delete(connection, changeset)
+        q = delete_begin(changeset.instance.class.table_name)
         q.push  "WHERE"
         q.push  "#{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}"
         q.push  "RETURNING *"
 
         connection.exec(q.join(" "))
+      end
+
+      private def self.delete(connection, queryable, query)
+        params = [] of DbValue | Array(DbValue)
+
+        q = delete_begin(queryable.table_name)
+        q.push wheres(queryable, query, params) if query.wheres.any?
+        q.push or_wheres(queryable, query, params) if query.or_wheres.any?
+
+        connection.exec(position_args(q.join(" ")), params)
       end
 
       private def self.wheres(queryable, query, params)

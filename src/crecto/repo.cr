@@ -103,6 +103,16 @@ module Crecto
       update(changeset.instance)
     end
 
+    # Update multipile records with a single query
+    #
+    # ```
+    # query = Crecto::Repo::Query.where(name: "Ted", count: 0)
+    # Repo.update_all(User, query, {count: 1, date: Time.now})
+    # ```
+    def self.update_all(queryable, query, update_hash)
+      query = Crecto::Adapters::Postgres.execute(:update_all, queryable, query, update_hash)
+    end
+
     # Delete a shema instance from the data store.
     #
     # ```
@@ -140,8 +150,8 @@ module Crecto
     # query = Crecto::Repo::Query.where(name: "Ted", count: 0)
     # Repo.update_all(User, query, {count: 1, date: Time.now})
     # ```
-    def self.update_all(queryable, query, update_hash)
-      query = Crecto::Adapters::Postgres.execute(:update_all, queryable, query, update_hash)
+    def self.delete_all(queryable, query = Query.new)
+      query = Crecto::Adapters::Postgres.execute(:delete_all, queryable, query)
     end
 
     # Not done yet, placeohlder for associations

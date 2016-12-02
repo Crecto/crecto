@@ -1,7 +1,7 @@
 module Crecto
   module Repo
 
-    alias OrWhereType = Hash(Symbol, Int32) | Hash(Symbol, String) | Hash(Symbol, Array(Int32)) | Hash(Symbol, Array(String)) | Hash(Symbol, Int32 | String) | NamedTuple(clause: String, params: Array(DbValue))
+    alias WhereType = Hash(Symbol, Int32) | Hash(Symbol, String) | Hash(Symbol, Array(Int32)) | Hash(Symbol, Array(String)) | Hash(Symbol, Int32 | String) | Hash(Symbol, Int32 | Int64 | String | Nil) | NamedTuple(clause: String, params: Array(DbValue))
     
     # Queries are used to retrieve and manipulate data from a repository.  Syntax is much like that of ActiveRecord:
     #
@@ -9,8 +9,8 @@ module Crecto
     #
     class Query
       property selects : Array(String)
-      property wheres = [] of OrWhereType
-      property or_wheres = [] of OrWhereType
+      property wheres = [] of WhereType
+      property or_wheres = [] of WhereType
       property joins = [] of Hash(Symbol, Hash(Symbol, String | Array(String)))
       property order_bys = [] of String
       property limit : Int32?
