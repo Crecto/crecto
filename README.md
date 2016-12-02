@@ -18,13 +18,11 @@ Make sure you have `Set ENV['PG_URL']` set
 
 #### Roadmap (in no particular order)
 
-- [ ] DELETE ALL (with an array or no arguments will clear the table)
-- [ ] UPDATE ALL
 - [ ] MySQL adapter
   - [ ] Choose adapter in config
 - [ ] Associations
-- [ ] Preload
-- [ ] Joins
+  - [ ] Preload
+  - [ ] Joins
 
 ## Usage
 
