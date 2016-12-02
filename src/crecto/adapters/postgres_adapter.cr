@@ -33,6 +33,18 @@ module Crecto
         result
       end
 
+      def self.execute(operation : Symbol, queryable, query : Crecto::Repo::Query, query_hash : Hash)
+        connection = Db.checkout()
+
+        result = case operation
+        when :udpate_al
+          update(connection, queryable, query, query_hash)
+        end
+
+        DB.checkin(connection)
+        result
+      end
+
       #
       # Query data store using an *id*, returning a single record.
       #
@@ -118,6 +130,21 @@ module Crecto
         connection.exec(position_args(q.join(" ")), fields_values[:values])
       end
 
+      private def self.update(connection, queryable, query, query_hash)
+        fields_values = instance_fields_and_values(query_hash)
+        params = [] of DbValue | Array(DbValue)
+
+        q =     ["UPDATE"]
+        q.push  "#{changeset.instance.class.table_name}"
+        q.push  "SET"
+        q.push  "(#{fields_values[:fields]})"
+        q.push  "="
+        q.push  "(#{(1..fields_values[:values].size).map{ "?" }.join(", ")})"
+        q.push  wheres(queryable, query, params)
+
+        connection.exec(position_args(q.join(" ")), fields_values[:values] + params)
+      end
+
       private def self.delete(connection, changeset)
         q =     ["DELETE FROM"]
         q.push  "#{changeset.instance.class.table_name}"
@@ -174,9 +201,12 @@ module Crecto
         "OFFSET #{query.offset}"
       end
 
-      private def self.instance_fields_and_values(queryable_instance)
-        query_hash = queryable_instance.to_query_hash
+      private def self.instance_fields_and_values(query_hash : Hash)
         {fields: query_hash.keys.join(", "), values: query_hash.values}
+      end
+
+      private def self.instance_fields_and_values(queryable_instance)
+        instance_fields_and_values(queryable_instance.to_query_hash)
       end
 
       private def self.position_args(query_string : String)

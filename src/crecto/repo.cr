@@ -134,6 +134,16 @@ module Crecto
       delete(changeset.instance)
     end
 
+    # Update multipile records with a single query
+    #
+    # ```
+    # query = Crecto::Repo::Query.where(name: "Ted", count: 0)
+    # Repo.update_all(User, query, {count: 1, date: Time.now})
+    # ```
+    def self.update_all(queryable, query, update_hash)
+      query = Crecto::Adapters::Postgres.execute(:update, queryable, query, update_hash)
+    end
+
     # Not done yet, placeohlder for associations
     def self.preload
     end
