@@ -13,8 +13,8 @@ class User
     field :yep, Bool
     field :some_date, Time
     field :pageviews, Int64
-    has_many :posts, Post
-    has_one :thing, Thing
+    has_many :posts, Post, foreign_key: :user_id
+    has_many :addresses, Address, foreign_key: :user_id
   end
 
   validate_required :name
@@ -153,26 +153,22 @@ class UserMultipleValidations
     inclusion: {in: 1..100}
 end
 
-class Thing
+class Address
   include Crecto::Schema
+  extend Crecto::Changeset(Address)
 
-  schema "things" do
-    belongs_to :user, User, foreign_key: "owner_id"
+  schema "addresses" do
+    field :user_id, Int32
+    belongs_to :user, User
   end
 end
 
 class Post
   include Crecto::Schema
+  extend Crecto::Changeset(Post)
 
   schema "posts" do
-    belongs_to :user, User
-  end
-end
-
-class Tester
-  include Crecto::Schema
-
-  schema "testers" do
-    field :oof, String
+    field :user_id, Int32
+    belongs_to :user, User, foreign_key: :user_id
   end
 end

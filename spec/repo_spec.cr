@@ -236,11 +236,59 @@ describe Crecto do
       end
     end
 
+    describe "has_many" do
+      it "should load associations" do
+        user = User.new
+        user.name = "fridge"
+        user = Crecto::Repo.insert(user).instance
+
+        post = Post.new
+        post.user_id = user.id.as(Int32)
+        Crecto::Repo.insert(post)
+        Crecto::Repo.insert(post)
+
+        address = Address.new
+        address.user_id = user.id.as(Int32)
+        Crecto::Repo.insert(address)
+
+        posts = Crecto::Repo.assoc(user, :posts).as(Array)
+        posts.size.should eq(2)
+        posts[0].user_id.should eq(user.id)
+
+        addresses = Crecto::Repo.assoc(user, :addresses).as(Array)
+        addresses.size.should eq(1)
+        addresses[0].user_id.should eq(user.id)
+      end
+    end
+
+    describe "belongs_to" do
+      it "should load the association" do
+        user = User.new
+        user.name = "fridge"
+        user = Crecto::Repo.insert(user).instance
+
+        post = Post.new
+        post.user_id = user.id.as(Int32)
+        post = Crecto::Repo.insert(post).instance
+
+        users = Crecto::Repo.assoc(post, :user).as(Array)
+        users[0].id.should eq(post.user_id)
+      end
+    end
+
     describe "#delete_all" do
       it "should remove all records" do
+        Crecto::Repo.delete_all(Post)
+        Crecto::Repo.delete_all(Address)
         Crecto::Repo.delete_all(User)
         Crecto::Repo.delete_all(UserDifferentDefaults)
         Crecto::Repo.delete_all(UserLargeDefaults)
+
+        posts = Crecto::Repo.all(Post).as(Array)
+        posts.size.should eq 0
+
+        addresses = Crecto::Repo.all(Address).as(Array)
+        addresses.size.should eq 0
 
         users = Crecto::Repo.all(User).as(Array)
         users.size.should eq 0
@@ -252,5 +300,6 @@ describe Crecto do
         users.size.should eq 0        
       end
     end
+
   end 
 end

@@ -34,9 +34,6 @@ module Crecto
   # * `updated_at_field nil` - dont use the updated_at timestamp
   #
   module Schema
-    include Crecto::Schema::HasMany
-    include Crecto::Schema::HasOne
-    include Crecto::Schema::BelongsTo
 
     # Class constants
     CREATED_AT_FIELD = "created_at"
@@ -45,10 +42,14 @@ module Crecto
 
     # schema block macro
     macro schema(table_name, &block)
+      include Crecto::Schema::HasMany
+      include Crecto::Schema::HasOne
+      include Crecto::Schema::BelongsTo
+
       # macro constants
       VALID_FIELD_TYPES = [String, Int64, Int32, Float64, Bool, Time]
       VALID_FIELD_OPTIONS = [:primary_key, :virtual]
-      FIELDS = [] of String      
+      FIELDS = [] of String
 
       # Class variables
       @@table_name = {{table_name.id.stringify}}
@@ -150,7 +151,7 @@ module Crecto
 
       # Returns the value of the primary key field
       def pkey_value
-        self.{{PRIMARY_KEY_FIELD.id}}
+        self.{{PRIMARY_KEY_FIELD.id}}.as(Int32)
       end
 
       def update_primary_key(val)
@@ -194,7 +195,6 @@ module Crecto
       def self.changeset_fields
         @@changeset_fields
       end
-
 
       # Class method to get the table name
       def self.table_name

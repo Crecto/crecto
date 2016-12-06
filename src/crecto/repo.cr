@@ -7,10 +7,18 @@ module Crecto
     # query = Query.where(name: "fred")
     # users = Repo.all(User, query)
     # ```
-    def self.all(queryable, query = Query.new)
-      query = Crecto::Adapters::Postgres.run(:all, queryable, query)
-      query.to_hash.map{|row| queryable.from_sql(row) } unless query.nil?
-    end 
+    def self.all(queryable, query : Query = Query.new, **opts)
+      q = Crecto::Adapters::Postgres.run(:all, queryable, query)
+      q.to_hash.map{|row| queryable.from_sql(row) } unless q.nil?
+    end
+
+    macro assoc(queryable_instance, association)
+      q = Crecto::Adapters::Postgres.run(:all, {{queryable_instance.id}}.class_for_association_{{association.id}}, Crecto::Repo::Query.where({{queryable_instance.id}}.foreign_key_for_association_{{association.id}}, {{queryable_instance}}.value_for_association_{{association.id}}))
+      unless q.nil?
+        {{association.id}} = q.to_hash.map{|row| {{queryable_instance.id}}.class_for_association_{{association.id}}.from_sql(row) }
+        {{queryable_instance}}.{{association.id}} = {{association.id}}
+      end
+    end
 
     # Return a single insance of `queryable` by primary key with *id*.
     #
