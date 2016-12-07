@@ -99,6 +99,42 @@ describe Crecto do
       end
     end
 
+    describe "#query" do
+      it "should accept a query" do
+        query = Crecto::Repo.query("select * from users")
+        query.is_a?(PG::Result).should be_true
+        query.should_not be_nil
+        if !query.nil?
+          query.rows.size.should be > 0
+        end
+      end
+
+      it "should accept a query with parameters" do
+        user = User.new
+        user.name = "awesome-dude"
+        Crecto::Repo.insert(user)
+
+        query = Crecto::Repo.query("select * from users where name = ?", ["awesome-dude"])
+        query.should_not be_nil
+        query.is_a?(PG::Result).should be_true
+        if !query.nil?
+          query.rows.size.should eq(1)
+        end
+      end
+
+      it "should accept a query and cast result" do
+        query = Crecto::Repo.query(User, "select * from users")
+        query.as(Array).size.should be > 0
+        query[0].is_a?(User).should be_true
+      end
+
+      it "should accept a query with parameters and cast result" do
+        query = Crecto::Repo.query(User, "select * from users where name = ?", ["awesome-dude"])
+        query.as(Array).size.should eq(1)
+        query[0].is_a?(User).should be_true
+      end
+    end
+
     describe "#get" do
       it "should return a user" do
         now = Time.now.at_beginning_of_hour
