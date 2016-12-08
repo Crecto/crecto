@@ -39,6 +39,7 @@ module Crecto
     CREATED_AT_FIELD = "created_at"
     UPDATED_AT_FIELD = "updated_at"
     PRIMARY_KEY_FIELD = "id"
+    ASSOCIATIONS = Array(NamedTuple(association_type: Symbol, key: Symbol, klass: Model.class, foreign_key: Symbol, foreign_key_value: Proc(Model, (Int32 | Int64 | Nil)), set_association: Proc(Model, Array(Model), Nil) )).new
 
     # schema block macro
     macro schema(table_name, &block)
@@ -199,6 +200,26 @@ module Crecto
       # Class method to get the table name
       def self.table_name
         @@table_name
+      end
+
+      def self.klass_for_association(association : Symbol) : Crecto::Model.class
+        ASSOCIATIONS.select{|a| a[:key] == association}[0][:klass]
+      end
+
+      def self.foreign_key_for_association(association : Symbol) : Symbol
+        ASSOCIATIONS.select{|a| a[:key] == association}[0][:foreign_key]
+      end
+
+      def self.foreign_key_value_for_association(association : Symbol, item) : (Int32 | Int64 | Nil)
+        ASSOCIATIONS.select{|a| a[:key] == association}[0][:foreign_key_value].call(item)
+      end
+
+      def self.set_value_for_association(association : Symbol, item, items)
+        ASSOCIATIONS.select{|a| a[:key] == association}[0][:set_association].call(item, items)
+      end
+
+      def self.association_type_for_association(association : Symbol)
+        ASSOCIATIONS.select{|a| a[:key] == association}[0][:association_type]
       end
 
     end

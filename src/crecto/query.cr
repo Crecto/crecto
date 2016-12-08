@@ -36,6 +36,10 @@ module Crecto
         self.new.where(where_sym, param)
       end
 
+      def self.where(where_sym : Symbol, params : Array(DbValue))
+        self.new.where(where_sym, params)
+      end
+
       # Key => Value pair(s) used in query `OR WHERE`
       def self.or_where(**or_wheres)
         self.new.or_where(**or_wheres)
@@ -85,6 +89,11 @@ module Crecto
 
       def where(where_sym : Symbol, param : DbValue)
         @wheres.push(Hash.zip([where_sym], [param]))
+        self
+      end
+
+      def where(where_sym : Symbol, params : Array(DbValue))
+        @wheres.push({where_sym => params})
         self
       end
 

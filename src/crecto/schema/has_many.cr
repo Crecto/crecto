@@ -6,23 +6,20 @@ module Crecto
       macro has_many(association_name, klass, **opts)        
         property {{association_name.id}} : Array({{klass}})?
 
-        def class_for_association_{{association_name.id}}
-          {{klass}}
-        end
+        {% foreign_key = @type.id.stringify.downcase + "_id" %}
 
-        def foreign_key_for_association_{{association_name.id}}
-          foreign_key = {{@type.id.symbolize.downcase}}_id
+        {% if opts[:foreign_key] %}
+          {% foreign_key = opts[:foreign_key] %}
+        {% end %}
 
-          {% if opts[:foreign_key] %}
-            foreign_key = {{opts[:foreign_key]}}
-          {% end %}
-
-          foreign_key
-        end
-
-        def value_for_association_{{association_name.id}}
-          pkey_value
-        end
+        ASSOCIATIONS.push({
+          association_type: :has_many,
+          key: {{association_name}},
+          klass: {{klass}},
+          foreign_key: {{foreign_key.symbolize}},
+          foreign_key_value: ->(item : Crecto::Model){ item.as({{klass}}).{{foreign_key.id}}.as(Int32 | Int64 | Nil) },
+          set_association: ->(self_item : Crecto::Model,items : Array(Crecto::Model)){ self_item.as({{@type}}).{{association_name.id}} = items.map{|i| i.as({{klass}}) };nil }
+        })
       end
     end
   end

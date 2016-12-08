@@ -251,13 +251,13 @@ describe Crecto do
         address.user_id = user.id.as(Int32)
         Crecto::Repo.insert(address)
 
-        posts = Crecto::Repo.assoc(user, :posts).as(Array)
+        posts = Crecto::Repo.all(user, :posts).as(Array)
         posts.size.should eq(2)
-        posts[0].user_id.should eq(user.id)
+        posts[0].as(Post).user_id.should eq(user.id)
 
-        addresses = Crecto::Repo.assoc(user, :addresses).as(Array)
+        addresses = Crecto::Repo.all(user, :addresses).as(Array)
         addresses.size.should eq(1)
-        addresses[0].user_id.should eq(user.id)
+        addresses[0].as(Address).user_id.should eq(user.id)
       end
     end
 
@@ -271,8 +271,23 @@ describe Crecto do
         post.user_id = user.id.as(Int32)
         post = Crecto::Repo.insert(post).instance
 
-        users = Crecto::Repo.assoc(post, :user).as(Array)
-        users[0].id.should eq(post.user_id)
+        users = Crecto::Repo.all(post, :user).as(Array)
+        users[0].as(User).id.should eq(post.user_id)
+      end
+    end
+
+    describe "preload" do
+      it "should preload the association" do
+        user = User.new
+        user.name = "tester"
+        user = Crecto::Repo.insert(user).instance
+
+        post = Post.new
+        post.user_id = user.id.as(Int32)
+        Crecto::Repo.insert(post)
+        Crecto::Repo.insert(post)
+
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.new, preload: [:posts]).as(Array)
       end
     end
 

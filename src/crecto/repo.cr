@@ -7,17 +7,55 @@ module Crecto
     # query = Query.where(name: "fred")
     # users = Repo.all(User, query)
     # ```
-    def self.all(queryable, query : Query = Query.new, **opts)
+    def self.all(queryable, query : Query? = Query.new, **opts)
+
       q = Crecto::Adapters::Postgres.run(:all, queryable, query)
-      q.to_hash.map{|row| queryable.from_sql(row) } unless q.nil?
+      return nil if q.nil?
+
+      results = q.to_hash.map{|row| queryable.from_sql(row) }.as(Array)
+
+      if preload = opts[:preload]?
+        add_preloads(results, queryable, preload)
+      end
+
+      results
     end
 
-    macro assoc(queryable_instance, association)
-      q = Crecto::Adapters::Postgres.run(:all, {{queryable_instance.id}}.class_for_association_{{association.id}}, Crecto::Repo::Query.where({{queryable_instance.id}}.foreign_key_for_association_{{association.id}}, {{queryable_instance}}.value_for_association_{{association.id}}))
-      unless q.nil?
-        {{association.id}} = q.to_hash.map{|row| {{queryable_instance.id}}.class_for_association_{{association.id}}.from_sql(row) }
-        {{queryable_instance}}.{{association.id}} = {{association.id}}
+    def self.all(queryable_instance, association_name : Symbol)
+      query = Crecto::Repo::Query.where(queryable_instance.class.foreign_key_for_association(association_name), queryable_instance.pkey_value)
+      all(queryable_instance.class.klass_for_association(association_name), query)
+    end
+
+    private def self.add_preloads(results, queryable, preloads)
+      preloads.each do |preload|
+        case queryable.association_type_for_association(preload)
+        when :has_many
+          has_many_preload(results, queryable, preload)
+        when :belongs_to
+          belongs_to_preload(results, queryable, preload)
+        end
       end
+    end
+
+    private def self.has_many_preload(results, queryable, preload)
+      ids = results.map(&.pkey_value)
+      query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(preload), ids)
+      k = queryable.klass_for_association(preload)
+      relation_items = all(k, query)
+      unless relation_items.nil?
+        relation_items = relation_items.group_by{|t| queryable.foreign_key_value_for_association(preload, t) }
+
+        results.each do |result|
+          if relation_items.has_key?(result.id)
+            items = relation_items[result.id]
+            queryable.set_value_for_association(preload, result, items)
+          end
+        end
+      end
+    end
+
+    private def self.belongs_to_preload(results, queryable, preload)
+
     end
 
     # Return a single insance of `queryable` by primary key with *id*.
