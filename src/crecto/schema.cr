@@ -39,7 +39,7 @@ module Crecto
     CREATED_AT_FIELD = "created_at"
     UPDATED_AT_FIELD = "updated_at"
     PRIMARY_KEY_FIELD = "id"
-    ASSOCIATIONS = Array(NamedTuple(association_type: Symbol, key: Symbol, klass: Model.class, foreign_key: Symbol, foreign_key_value: Proc(Model, (Int32 | Int64 | Nil)), set_association: Proc(Model, Array(Model), Nil) )).new
+    ASSOCIATIONS = Array(NamedTuple(association_type: Symbol, key: Symbol, klass: Model.class, foreign_key: Symbol, foreign_key_value: Proc(Model, PkeyValue), set_association: Proc(Model, Array(Model), Nil) )).new
 
     # schema block macro
     macro schema(table_name, &block)
@@ -90,7 +90,7 @@ module Crecto
 
       # set `property`
       {% if field_type.id == "Int64" %}
-        property {{field_name.id}} : (Int64 | Int32 | Nil)
+        property {{field_name.id}} : PkeyValue
       {% else %}
         property {{field_name.id}} : {{field_type}}?
       {% end %}
@@ -118,7 +118,7 @@ module Crecto
     macro setup
       extend BuildFromSQL
 
-      property {{PRIMARY_KEY_FIELD.id}} : (Int32 | Int64 | Nil)
+      property {{PRIMARY_KEY_FIELD.id}} : PkeyValue
 
       {% unless CREATED_AT_FIELD == nil %}
         property {{CREATED_AT_FIELD.id}} : Time?
@@ -152,7 +152,7 @@ module Crecto
 
       # Returns the value of the primary key field
       def pkey_value
-        self.{{PRIMARY_KEY_FIELD.id}}.as(Int32)
+        self.{{PRIMARY_KEY_FIELD.id}}.as(PkeyValue)
       end
 
       def update_primary_key(val)
@@ -210,7 +210,7 @@ module Crecto
         ASSOCIATIONS.select{|a| a[:key] == association}[0][:foreign_key]
       end
 
-      def self.foreign_key_value_for_association(association : Symbol, item) : (Int32 | Int64 | Nil)
+      def self.foreign_key_value_for_association(association : Symbol, item) : PkeyValue
         ASSOCIATIONS.select{|a| a[:key] == association}[0][:foreign_key_value].call(item)
       end
 

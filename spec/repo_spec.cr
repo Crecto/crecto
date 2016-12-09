@@ -262,7 +262,7 @@ describe Crecto do
     end
 
     describe "belongs_to" do
-      it "should load the association" do
+      it "should set the belongs_to property" do
         user = User.new
         user.name = "fridge"
         user = Crecto::Repo.insert(user).instance
@@ -270,9 +270,9 @@ describe Crecto do
         post = Post.new
         post.user_id = user.id.as(Int32)
         post = Crecto::Repo.insert(post).instance
+        post.user = user
 
-        users = Crecto::Repo.all(post, :user).as(Array)
-        users[0].as(User).id.should eq(post.user_id)
+        post.user.should eq(user)
       end
     end
 
@@ -287,7 +287,8 @@ describe Crecto do
         Crecto::Repo.insert(post)
         Crecto::Repo.insert(post)
 
-        users = Crecto::Repo.all(User, Crecto::Repo::Query.new, preload: [:posts]).as(Array)
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id), preload: [:posts]).as(Array)
+        users[0].posts.as(Array).size.should eq(2)
       end
     end
 

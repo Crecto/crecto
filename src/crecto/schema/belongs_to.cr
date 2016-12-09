@@ -4,7 +4,7 @@ module Crecto
       VALID_BELONGS_TO_OPTIONS = [:foreign_key]
 
       macro belongs_to(association_name, klass, **opts)
-        property {{association_name.id}} : Array({{klass}})?
+        property {{association_name.id}} : {{klass}}?
 
         {% foreign_key = "id" %}
 
@@ -18,7 +18,7 @@ module Crecto
           klass: {{klass}},
           foreign_key: {{foreign_key.symbolize}},
           foreign_key_value: ->(item : Crecto::Model){ item.as({{klass}}).{{foreign_key.id}} },
-          set_association: ->(self_item : Crecto::Model,items : Array(Crecto::Model)){ self_item.as({{@type}}).{{association_name.id}} = items.map{|i| i.as({{klass}}) };nil }
+          set_association: ->(self_item : Crecto::Model, items : Array(Crecto::Model)){ self_item.as({{@type}}).{{association_name.id}} = items[0].as({{klass}});nil }
         })
       end
     end
