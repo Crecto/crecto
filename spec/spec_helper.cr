@@ -141,6 +141,6 @@ end
 class Thing < Crecto::Model
   schema "things" do
     field :user_different_defaults_id, Int32
-    belongs_to :user, User, foreign_key: :user_different_defaults_id
+    belongs_to :user, UserDifferentDefaults, foreign_key: :user_different_defaults_id
   end
 end

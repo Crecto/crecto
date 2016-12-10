@@ -245,7 +245,7 @@ describe Crecto do
         post = Post.new
         post.user_id = user.id.as(Int32)
         Crecto::Repo.insert(post)
-        Crecto::Repo.insert(post)
+        post = Crecto::Repo.insert(post).instance
 
         address = Address.new
         address.user_id = user.id.as(Int32)

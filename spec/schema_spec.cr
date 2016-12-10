@@ -116,5 +116,46 @@ describe Crecto do
         u.xyz.as(Time).epoch_ms.should be_close(Time.now.epoch_ms, 2000)
       end
     end
+
+    describe "#klass_for_association" do
+      it "should return the correct class" do
+        User.klass_for_association(:posts).should eq(Post)
+        User.klass_for_association(:addresses).should eq(Address)
+        UserDifferentDefaults.klass_for_association(:things).should eq(Thing)
+        Address.klass_for_association(:user).should eq(User)
+        Post.klass_for_association(:user).should eq(User)
+      end
+    end
+
+    describe "#foreign_key_for_association" do
+      it "should return the correct foreign key symbol" do
+        User.foreign_key_for_association(:posts).should eq(:user_id)
+        User.foreign_key_for_association(:addresses).should eq(:user_id)
+        Post.foreign_key_for_association(:user).should eq(:user_id)
+      end
+    end
+
+    describe "#foreign_key_value_for_association" do
+      it "should return the correct foreign key value for associations" do
+        user = User.new
+        user.name = "tester"
+        user = Crecto::Repo.insert(user).instance
+
+        post = Post.new
+        post.user_id = user.id.as(Int32)
+        post = Crecto::Repo.insert(post).instance
+
+        User.foreign_key_value_for_association(:posts, post).should eq(post.user_id)
+        Post.foreign_key_value_for_association(:user, post).should eq(user.id)
+      end
+    end
+
+    describe "#association_type_for_association" do
+      it "should return the association type symbol" do
+        User.association_type_for_association(:posts).should eq(:has_many)
+        User.association_type_for_association(:addresses).should eq(:has_many)
+        Post.association_type_for_association(:user).should eq(:belongs_to)
+      end
+    end
   end
 end

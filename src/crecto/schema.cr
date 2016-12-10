@@ -202,24 +202,34 @@ module Crecto
         @@table_name
       end
 
-      def self.klass_for_association(association : Symbol) : Crecto::Model.class
-        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}[0][:klass]
+      # Get the Class for the assocation name
+      # i.e. :posts => Post
+      def self.klass_for_association(association : Symbol)
+        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:klass]
       end
 
+      # Get the foreign key for the association
+      # i.e. :posts => :user_id
       def self.foreign_key_for_association(association : Symbol) : Symbol
-        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}[0][:foreign_key]
+        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:foreign_key]
       end
 
-      def self.foreign_key_value_for_association(association : Symbol, item) : PkeyValue
-        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}[0][:foreign_key_value].call(item)
+      # Get the foreign key value from the relation object
+      # i.e. :posts, post => post.user_id
+      def self.foreign_key_value_for_association(association : Symbol, item)
+        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:foreign_key_value].call(item)
       end
 
+      # Set the value for the association
+      # i.e. :posts, user, [posts] => user.posts = [posts]
       def self.set_value_for_association(association : Symbol, item, items)
-        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}[0][:set_association].call(item, items)
+        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:set_association].call(item, items)
       end
 
+      # Get the association type for the association
+      # i.e. :posts => :has_many
       def self.association_type_for_association(association : Symbol)
-        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}[0][:association_type]
+        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:association_type]
       end
 
     end
