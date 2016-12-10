@@ -14,6 +14,12 @@ module Crecto
           end 
         %}
 
+        def {{association_name.id}}=(val : {{klass}}?)
+          @{{association_name.id}} = val
+          return if val.nil?
+          @{{foreign_key.id}} = val.pkey_value.as(Int32)
+        end
+
         ASSOCIATIONS.push({
           association_type: :belongs_to,
           key: {{association_name}},

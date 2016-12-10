@@ -23,6 +23,8 @@ Make sure you have `Set ENV['PG_URL']` set
 - [ ] Choose adapter in config
 - [x] Associations
 - [x] Preload
+- [ ] Need to be able to get parent relation from repo (`Repo.all/get(post, :user)`)
+- [x] Need to be able to set parent object, instead of setting id manually before inserting
 - [ ] Joins
 
 ## Usage
@@ -116,7 +118,7 @@ user.as(User) unless user.nil?
 # Delete
 #
 changeset = Crecto::Repo.delete(user)
-```
+
 #
 # Associations
 #
@@ -132,6 +134,7 @@ users[0].posts # has_many relation is preloaded
 
 posts = Crecto::Repo.all(Post, Crecto::Query.new, preload: [:user])
 posts[0].user # belongs_to relation preloaded
+```
 
 ## Performance
 

@@ -303,6 +303,16 @@ describe Crecto do
         posts = Crecto::Repo.all(Post, Crecto::Repo::Query.where(id: post.id), preload: [:user]).as(Array)
         posts[0].user.as(User).id.should eq(user.id)
       end
+
+      it "should set the foreign key when setting the object" do
+        user = User.new
+        user.name = "tester"
+        user = Crecto::Repo.insert(user).instance
+
+        post = Post.new
+        post.user = user
+        post.user_id.should eq(user.id)
+      end
     end
 
     describe "#delete_all" do
