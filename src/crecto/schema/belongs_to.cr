@@ -6,18 +6,21 @@ module Crecto
       macro belongs_to(association_name, klass, **opts)
         property {{association_name.id}} : {{klass}}?
 
-        {% foreign_key = "id" %}
+        {% 
+          foreign_key = klass.id.stringify.underscore.downcase + "_id"
 
-        {% if opts[:foreign_key] %}
-          {% foreign_key = opts[:foreign_key] %}
-        {% end %}
+          if opts[:foreign_key]
+            foreign_key = opts[:foreign_key]
+          end 
+        %}
 
         ASSOCIATIONS.push({
           association_type: :belongs_to,
           key: {{association_name}},
+          this_klass: {{@type}},
           klass: {{klass}},
           foreign_key: {{foreign_key.symbolize}},
-          foreign_key_value: ->(item : Crecto::Model){ item.as({{klass}}).{{foreign_key.id}} },
+          foreign_key_value: ->(item : Crecto::Model){ item.as({{@type}}).{{foreign_key.id}}.as(PkeyValue) },
           set_association: ->(self_item : Crecto::Model, items : Array(Crecto::Model)){ self_item.as({{@type}}).{{association_name.id}} = items[0].as({{klass}});nil }
         })
       end

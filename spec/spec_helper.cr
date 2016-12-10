@@ -24,6 +24,7 @@ class UserDifferentDefaults < Crecto::Model
   schema "users_different_defaults" do
     field :user_id, Int32, primary_key: true
     field :name, String
+    has_many :things, Thing
   end
 
   validate_required :name
@@ -134,5 +135,12 @@ class Post < Crecto::Model
   schema "posts" do
     field :user_id, Int32
     belongs_to :user, User
+  end
+end
+
+class Thing < Crecto::Model
+  schema "things" do
+    field :user_different_defaults_id, Int32
+    belongs_to :user, User, foreign_key: :user_different_defaults_id
   end
 end

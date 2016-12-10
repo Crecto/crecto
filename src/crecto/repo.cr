@@ -40,14 +40,13 @@ module Crecto
     private def self.has_many_preload(results, queryable, preload)
       ids = results.map(&.pkey_value)
       query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(preload), ids)
-      k = queryable.klass_for_association(preload)
-      relation_items = all(k, query)
+      relation_items = all(queryable.klass_for_association(preload), query)
       unless relation_items.nil?
         relation_items = relation_items.group_by{|t| queryable.foreign_key_value_for_association(preload, t) }
 
         results.each do |result|
-          if relation_items.has_key?(result.id)
-            items = relation_items[result.id]
+          if relation_items.has_key?(result.pkey_value)
+            items = relation_items[result.pkey_value]
             queryable.set_value_for_association(preload, result, items)
           end
         end
@@ -55,7 +54,21 @@ module Crecto
     end
 
     private def self.belongs_to_preload(results, queryable, preload)
+      ids = results.map{|r| queryable.foreign_key_value_for_association(preload, r)}
+      query = Crecto::Repo::Query.where(id: ids)
+      relation_items = all(queryable.klass_for_association(preload), query)
 
+      unless relation_items.nil?
+        relation_items = relation_items.group_by{|t| t.pkey_value }
+
+        results.each do |result|
+          fkey = queryable.foreign_key_value_for_association(preload, result)
+          if relation_items.has_key?(fkey)
+            items = relation_items[fkey]
+            queryable.set_value_for_association(preload, result, items)
+          end
+        end
+      end
     end
 
     # Return a single insance of `queryable` by primary key with *id*.
