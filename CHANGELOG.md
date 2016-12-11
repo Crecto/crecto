@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * `or_where` queries
 * `update_all` queries
 * `delete_all` queries
+* raw (aribtrary) sql queries (i.e. `Crecto::Repo.query("select * from users")`) - [@neovintage](https://github.com/neovintage)
 
 ## [0.2.0] 2016-11-30
 * Added this changelog
