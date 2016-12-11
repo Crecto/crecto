@@ -47,6 +47,16 @@ module Crecto
         end
       end
 
+      # 
+      # Query data store using *sql*, returning multiple rows
+      #
+      def self.run(operation : Symbol, sql : String, params : Array(DbValue))
+        case operation
+        when :sql
+          execute(position_args(sql), params)
+        end
+      end
+
       # Query data store in relation to a *queryable_instance* of Schema
       def self.run_on_instance(operation, changeset)
         case operation
