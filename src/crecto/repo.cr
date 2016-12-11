@@ -213,6 +213,38 @@ module Crecto
       query = Crecto::Adapters::Postgres.run(:delete_all, queryable, query)
     end
 
+    # Run aribtrary sql queries. `query` will cast the output as that
+    # object. In this example, `query` will try to cast the 
+    # output as `User`. If query results happen to error nil is 
+    # returned
+    #
+    # ```
+    # Repo.query(User, "select * from users where id > ?", [30])
+    # ```
+    def self.query(queryable, sql : String, params = [] of DbValue)
+      query = Crecto::Adapters::Postgres.run(:sql, sql, params)
+
+      if !query.nil?
+        return query.to_hash.map do |row|
+          queryable.from_sql(row)
+        end
+      else
+        return [] of DbValue
+      end
+    end
+
+    # Run aribtrary sql. `query` will pass a PG::ResultSet as
+    # the return value once the query has been executed. Arguments
+    # are defined as `?` and are interpolated to escape whats being
+    # passed. `query` can run without parameters as well.
+    #
+    # ```
+    # query = Crecto::Repo.query("select * from users where id = ?", [30])
+    # ```
+    def self.query(sql : String, params = [] of DbValue)
+      Crecto::Adapters::Postgres.run(:sql, sql, params)
+    end
+
     # Not done yet, placeohlder for associations
     def self.preload
     end
