@@ -3,7 +3,6 @@ services:
   - postgresql
 before_script:
   - psql -c 'create database crecto_test;' -U postgres
-  - mkdir -p db/migrations && cp spec/migrations/20161120183426_users.sql db/migrations/
-  - ./spec/migrate up
+  - psql $PG_URL < spec/migrations/pg_users.sql
 env:
   - PG_URL=postgres://postgres@localhost:5432/crecto_test

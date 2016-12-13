@@ -1,5 +1,11 @@
--- +micrate Up
 BEGIN;
+
+DROP INDEX IF EXISTS users_4ijlkjdf;
+DROP TABLE IF EXISTS users;
+DROP INDEX IF EXISTS users_different_defaults_kljl3kj;
+DROP TABLE IF EXISTS users_different_defaults;
+DROP INDEX IF EXISTS users_4asdf;
+DROP TABLE IF EXISTS users_large_defaults;
 
 CREATE TABLE users(
   id INTEGER NOT NULL,
@@ -62,11 +68,3 @@ ALTER TABLE ONLY users_large_defaults ALTER COLUMN id SET DEFAULT nextval('users
 CREATE UNIQUE INDEX users_4asdf ON users_large_defaults (id);
 
 COMMIT;
-
--- +micrate Down
-DROP INDEX users_4ijlkjdf;
-DROP TABLE users;
-DROP INDEX users_different_defaults_kljl3kj;
-DROP TABLE users_different_defaults;
-DROP INDEX users_4asdf;
-DROP TABLE users_large_defaults;

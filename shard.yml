@@ -13,6 +13,3 @@ dependencies:
 
   pool:
     github: ysbaddaden/pool
-
-  micrate:
-    github: juanedi/micrate
