@@ -11,10 +11,7 @@ dependencies:
     github: crystal-lang/crystal-db
     version: 0.2.2
 
-  micrate:
-    github: juanedi/micrate
-
 development_dependencies:
   pg:
-      github: will/crystal-pg
-      version: 0.12.0
+    github: will/crystal-pg
+    version: 0.12.0
