@@ -1,5 +1,4 @@
 require "pg"
-require "pool/connection"
 
 module Crecto
   module Adapters
@@ -11,11 +10,15 @@ module Crecto
     #
     # Other adapters should follow this same pattern
     module Postgres
-      ENV["DB_POOL_CAPACITY"] ||= "25"
-      ENV["DB_POOL_TIMEOUT"] ||= "0.01"
+      ENV["CRECTO_MAX_POOL_SIZE"] ||= "25"
+      ENV["CRECTO_INITIAL_POOL_SIZE"] ||= "1"
+      ENV["CRECTO_POOL_TIMEOUT"] ||= "5.0"
 
-      DB = ConnectionPool.new(ENV["DB_POOL_CAPACITY"].to_i, ENV["DB_POOL_TIMEOUT"].to_f) do
-        PG.connect(ENV["PG_URL"])
+      POOL = DB::Pool.new(
+        max_pool_size: ENV["CRECTO_MAX_POOL_SIZE"].to_i,
+        initial_pool_size: ENV["CRECTO_INITIAL_POOL_SIZE"].to_i,
+        checkout_timeout: ENV["CRECTO_POOL_TIMEOUT"].to_f) do
+        DB.open(ENV["PG_URL"])
       end
 
       #
@@ -70,16 +73,16 @@ module Crecto
       end
 
       def self.execute(query_string, params)
-        connection = DB.checkout()
-        result = connection.exec(query_string, params)
-        DB.checkin(connection)
+        connection = POOL.checkout
+        result = connection.query(query_string, params)
+        POOL.release connection
         result
       end
 
       def self.execute(query_string)
-        connection = DB.checkout()
-        result = connection.exec(query_string)
-        DB.checkin(connection)
+        connection = POOL.checkout
+        result = connection.query(query_string)
+        POOL.release connection
         result
       end
 

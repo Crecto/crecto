@@ -12,7 +12,7 @@ class User
     field :nope, Float64
     field :yep, Bool
     field :some_date, Time
-    field :pageviews, Int64
+    field :pageviews, Int32 | Int64
     has_many :posts, Post
     has_one :thing, Thing
   end
