@@ -19,7 +19,8 @@ module Crecto
     # ```
     def self.get(queryable, id)
       query = Crecto::Adapters::Postgres.run(:get, queryable, id).as(DB::ResultSet)
-      queryable.from_rs(query).first
+      results = queryable.from_rs(query)
+      results.first if results.any?
     end
 
     # Return a single instance of `queryable` using the *query* param
@@ -29,7 +30,8 @@ module Crecto
     # ```
     def self.get_by(queryable, **opts)
       query = Crecto::Adapters::Postgres.run(:all, queryable, Query.where(**opts).limit(1)).as(DB::ResultSet)
-      queryable.from_rs(query).first
+      results = queryable.from_rs(query)
+      results.first if results.any?
     end
 
     # Insert a schema instance into the data store.
@@ -50,8 +52,8 @@ module Crecto
       if query.nil?
         changeset.add_error("insert_error", "Insert Failed")
       else
-        new_instance = changeset.instance.class.from_rs(query)
-        changeset = new_instance.first.class.changeset(new_instance.first) if new_instance.any?
+        new_instance = changeset.instance.class.from_rs(query).first
+        changeset = new_instance.class.changeset(new_instance) if new_instance
       end
 
       changeset.action = :insert

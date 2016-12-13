@@ -116,7 +116,7 @@ module Crecto
       end
 
 
-      {% mapping = FIELDS.map{|field| field[:name].id.stringify + ": " + field[:type].stringify + "?" } %}
+      {% mapping = FIELDS.map{|field| field[:name].id.stringify + ": {type: " + (field[:type] == "Int64" ? "Int32 | Int64" : field[:type].id.stringify) + ", nilable: true}" } %}
       {% mapping.push(PRIMARY_KEY_FIELD.id.stringify + ": Int32?") %}
 
       {% unless CREATED_AT_FIELD == nil %}
