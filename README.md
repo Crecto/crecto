@@ -1,8 +1,10 @@
-# Crecto [![Build Status](https://travis-ci.org/fridgerator/crecto.svg?branch=master)](https://travis-ci.org/fridgerator/crecto)
-
-[![Join the chat at https://gitter.im/crecto/Lobby](https://badges.gitter.im/crecto/Lobby.svg)](https://gitter.im/crecto/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+# Crecto
 
 Database wrapper for Crystal.  Inspired by [Ecto](https://github.com/elixir-ecto/ecto) for Elixir language.
+
+---
+
+[![Build Status](https://travis-ci.org/fridgerator/crecto.svg?branch=master)](https://travis-ci.org/fridgerator/crecto) [![Join the chat at https://gitter.im/crecto/Lobby](https://badges.gitter.im/crecto/Lobby.svg)](https://gitter.im/crecto/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## Installation
 
@@ -14,7 +16,13 @@ dependencies:
     github: fridgerator/crecto
 ```
 
-Make sure you have `Set ENV['PG_URL']` set
+Include a database adapter (currently only postgres has been tested)
+
+#### Postgres
+
+Include [crystal-pg](https://github.com/will/crystal-pg) in your project
+
+Make sure you have `ENV['PG_URL']` set
 
 ## TODO
 

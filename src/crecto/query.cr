@@ -1,7 +1,7 @@
 module Crecto
   module Repo
 
-    alias WhereType = Hash(Symbol, Int32) | Hash(Symbol, String) | Hash(Symbol, Array(Int32)) | Hash(Symbol, Array(String)) | Hash(Symbol, Int32 | String) | Hash(Symbol, Int32 | Int64 | String | Nil) | NamedTuple(clause: String, params: Array(DbValue))
+    alias WhereType = (Hash(Symbol, Array(Int32)) | Hash(Symbol, Array(String)) | Hash(Symbol, Int32 | Int64 | String | Nil) | Hash(Symbol, Int32 | String | Nil) | Hash(Symbol, Int32 | String) | Hash(Symbol, Int32) | Hash(Symbol, String) | NamedTuple(clause: String, params: Array(Bool | Float64 | Int32 | Int64 | String | Time | Nil)))
     
     # Queries are used to retrieve and manipulate data from a repository.  Syntax is much like that of ActiveRecord:
     #
