@@ -43,7 +43,7 @@ class UserLargeDefaults
   updated_at_field nil
 
   schema "users_large_defaults" do
-    field :id, Int64, primary_key: true
+    field :id, Int32 | Int64, primary_key: true
     field :name, String
   end
 end

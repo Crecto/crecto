@@ -117,14 +117,14 @@ module Crecto
 
 
       {% mapping = FIELDS.map{|field| field[:name].id.stringify + ": {type: " + (field[:type] == "Int64" ? "Int32 | Int64" : field[:type].id.stringify) + ", nilable: true}" } %}
-      {% mapping.push(PRIMARY_KEY_FIELD.id.stringify + ": Int32?") %}
+      {% mapping.push(PRIMARY_KEY_FIELD.id.stringify + ": {type: Int32 | Int64, nilable: true}") %}
 
       {% unless CREATED_AT_FIELD == nil %}
-        {% mapping.push(CREATED_AT_FIELD.id.stringify + ": Time?") %}
+        {% mapping.push(CREATED_AT_FIELD.id.stringify + ": {type: Time, nilable: true}") %}
       {% end %}
 
       {% unless UPDATED_AT_FIELD == nil %}
-        {% mapping.push(UPDATED_AT_FIELD.id.stringify + ": Time?") %}
+        {% mapping.push(UPDATED_AT_FIELD.id.stringify + ": {type: Time, nilable: true}") %}
       {% end %}
 
       DB.mapping({ {{mapping.uniq.join(", ").id}} })
