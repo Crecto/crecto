@@ -102,11 +102,8 @@ describe Crecto do
     describe "#query" do
       it "should accept a query" do
         query = Crecto::Repo.query("select * from users")
-        query.is_a?(PG::Result).should be_true
+        query.is_a?(PG::ResultSet).should be_true
         query.should_not be_nil
-        if !query.nil?
-          query.rows.size.should be > 0
-        end
       end
 
       it "should accept a query with parameters" do
@@ -116,16 +113,12 @@ describe Crecto do
 
         query = Crecto::Repo.query("select * from users where name = ?", ["awesome-dude"])
         query.should_not be_nil
-        query.is_a?(PG::Result).should be_true
-        if !query.nil?
-          query.rows.size.should eq(1)
-        end
+        query.is_a?(PG::ResultSet).should be_true
       end
 
       it "should accept a query and cast result" do
-        query = Crecto::Repo.query(User, "select * from users")
-        query.as(Array).size.should be > 0
-        query[0].is_a?(User).should be_true
+        users = Crecto::Repo.query(User, "select * from users")
+        users.size.should be > 0
       end
 
       it "should accept a query with parameters and cast result" do

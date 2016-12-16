@@ -9,7 +9,7 @@ class User < Crecto::Model
     field :nope, Float64
     field :yep, Bool
     field :some_date, Time
-    field :pageviews, Int64
+    field :pageviews, Int32 | Int64
     has_many :posts, Post, foreign_key: :user_id
     has_many :addresses, Address, foreign_key: :user_id
   end
@@ -35,7 +35,7 @@ class UserLargeDefaults < Crecto::Model
   updated_at_field nil
 
   schema "users_large_defaults" do
-    field :id, Int64, primary_key: true
+    field :id, Int32 | Int64, primary_key: true
     field :name, String
   end
 end

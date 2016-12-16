@@ -12,7 +12,7 @@ module Crecto
       q = Crecto::Adapters::Postgres.run(:all, queryable, query)
       return nil if q.nil?
 
-      results = q.to_hash.map{|row| queryable.from_sql(row) }.as(Array)
+      results = queryable.from_rs(q)
 
       if preload = opts[:preload]?
         add_preloads(results, queryable, preload)
@@ -36,6 +36,11 @@ module Crecto
         end
       end
     end
+
+    def self.all(queryable, query = Query.new)
+      query = Crecto::Adapters::Postgres.run(:all, queryable, query).as(DB::ResultSet)
+      queryable.from_rs(query)
+    end 
 
     private def self.has_many_preload(results, queryable, preload)
       ids = results.map(&.pkey_value)
@@ -77,8 +82,9 @@ module Crecto
     # user = Repo.get(User, 1)
     # ```
     def self.get(queryable, id)
-      query = Crecto::Adapters::Postgres.run(:get, queryable, id)
-      queryable.from_sql(query.to_hash[0]) unless query.nil? || query.rows.size == 0
+      query = Crecto::Adapters::Postgres.run(:get, queryable, id).as(DB::ResultSet)
+      results = queryable.from_rs(query)
+      results.first if results.any?
     end
 
     # Return a single instance of `queryable` using the *query* param
@@ -87,8 +93,9 @@ module Crecto
     # user = Repo.get_by(User, name: "fred", age: 21)
     # ```
     def self.get_by(queryable, **opts)
-      query = Crecto::Adapters::Postgres.run(:all, queryable, Query.where(**opts).limit(1))
-      queryable.from_sql(query.to_hash[0]) unless query.nil? || query.rows.size == 0
+      query = Crecto::Adapters::Postgres.run(:all, queryable, Query.where(**opts).limit(1)).as(DB::ResultSet)
+      results = queryable.from_rs(query)
+      results.first if results.any?
     end
 
     # Insert a schema instance into the data store.
@@ -109,8 +116,8 @@ module Crecto
       if query.nil?
         changeset.add_error("insert_error", "Insert Failed")
       else
-        new_instance = changeset.instance.class.from_sql(query.to_hash[0])
-        changeset = new_instance.class.changeset(new_instance) unless new_instance.nil?
+        new_instance = changeset.instance.class.from_rs(query).first
+        changeset = new_instance.class.changeset(new_instance) if new_instance
       end
 
       changeset.action = :insert
@@ -145,8 +152,8 @@ module Crecto
       if query.nil?
         changeset.add_error("update_error", "Update Failed")
       else
-        new_instance = changeset.instance.class.from_sql(query.to_hash[0])
-        changeset = new_instance.class.changeset(new_instance) unless new_instance.nil?
+        new_instance = changeset.instance.class.from_rs(query).first
+        changeset = new_instance.class.changeset(new_instance) if new_instance
       end
 
       changeset.action = :update
@@ -186,8 +193,8 @@ module Crecto
       if query.nil?
         changeset.add_error("delete_error", "Delete Failed")
       else
-        new_instance = changeset.instance.class.from_sql(query.to_hash[0])
-        changeset = new_instance.class.changeset(new_instance) unless new_instance.nil?
+        new_instance = changeset.instance.class.from_rs(query).first
+        changeset = new_instance.class.changeset(new_instance) if new_instance
       end
 
       changeset.action = :delete
@@ -222,15 +229,8 @@ module Crecto
     # Repo.query(User, "select * from users where id > ?", [30])
     # ```
     def self.query(queryable, sql : String, params = [] of DbValue)
-      query = Crecto::Adapters::Postgres.run(:sql, sql, params)
-
-      if !query.nil?
-        return query.to_hash.map do |row|
-          queryable.from_sql(row)
-        end
-      else
-        return [] of DbValue
-      end
+      query = Crecto::Adapters::Postgres.run(:sql, sql, params).as(PG::ResultSet)
+      queryable.from_rs(query)
     end
 
     # Run aribtrary sql. `query` will pass a PG::ResultSet as

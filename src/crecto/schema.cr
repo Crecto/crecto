@@ -39,7 +39,16 @@ module Crecto
     CREATED_AT_FIELD = "created_at"
     UPDATED_AT_FIELD = "updated_at"
     PRIMARY_KEY_FIELD = "id"
-    ASSOCIATIONS = Array(NamedTuple(association_type: Symbol, key: Symbol, this_klass: Model.class, klass: Model.class, foreign_key: Symbol, foreign_key_value: Proc(Model, PkeyValue), set_association: Proc(Model, Array(Model), Nil) )).new
+    ASSOCIATIONS = Array(
+      NamedTuple(
+        association_type: Symbol,
+        key: Symbol, 
+        this_klass: Model.class,
+        klass: Model.class,
+        foreign_key: Symbol,
+        foreign_key_value: Proc(Model, PkeyValue),
+        set_association: Proc(Model, Array(Model), Nil)
+      )).new
 
     # schema block macro
     macro schema(table_name, &block)
@@ -48,9 +57,9 @@ module Crecto
       include Crecto::Schema::BelongsTo
 
       # macro constants
-      VALID_FIELD_TYPES = [String, Int64, Int32, Float64, Bool, Time]
+      VALID_FIELD_TYPES = [String, Int64, Int32, Float64, Bool, Time, Int32 | Int64]
       VALID_FIELD_OPTIONS = [:primary_key, :virtual]
-      FIELDS = [] of String
+      FIELDS = [] of NamedTuple(name: Symbol, type: String)
 
       # Class variables
       @@table_name = {{table_name.id.stringify}}
@@ -75,25 +84,23 @@ module Crecto
       {% end %}
 
       # check `primary_key` and `virtual` options
-      virtual = false
+      {% virtual = false %}
+      {% primary_key = false %}
       {% if opts[:primary_key] %}
         PRIMARY_KEY_FIELD = {{field_name.id.stringify}}
+        {% primary_key = true %}
       {% elsif opts[:virtual] %}
-        virtual = true
+        {% virtual = true %}
       {% end %}
 
       check_type!({{field_name}}, {{field_type}})
 
       # cache fields in class variable and macro variable
-      @@changeset_fields << {{field_name}} unless virtual
-      {% FIELDS << field_name %}
-
-      # set `property`
-      {% if field_type.id == "Int64" %}
-        property {{field_name.id}} : PkeyValue
-      {% else %}
-        property {{field_name.id}} : {{field_type}}?
+      {% unless virtual %}
+        @@changeset_fields << {{field_name}}
       {% end %}
+
+      {% FIELDS.push({name: field_name, type: field_type}) unless primary_key %}
     end
 
     # Macro to change created_at field name
@@ -116,26 +123,30 @@ module Crecto
 
     # Setup extended methods
     macro setup
-      extend BuildFromSQL
+      def initialize
+      end
 
-      property {{PRIMARY_KEY_FIELD.id}} : PkeyValue
+      {% mapping = FIELDS.map{|field| field[:name].id.stringify + ": {type: " + (field[:type] == "Int64" ? "Int32 | Int64" : field[:type].id.stringify) + ", nilable: true}" } %}
+      {% mapping.push(PRIMARY_KEY_FIELD.id.stringify + ": {type: Int32 | Int64, nilable: true}") %}
 
       {% unless CREATED_AT_FIELD == nil %}
-        property {{CREATED_AT_FIELD.id}} : Time?
+        {% mapping.push(CREATED_AT_FIELD.id.stringify + ": {type: Time, nilable: true}") %}
       {% end %}
 
       {% unless UPDATED_AT_FIELD == nil %}
-        property {{UPDATED_AT_FIELD.id}} : Time?
+        {% mapping.push(UPDATED_AT_FIELD.id.stringify + ": {type: Time, nilable: true}") %}
       {% end %}
+
+      DB.mapping({ {{mapping.uniq.join(", ").id}} })
 
       # Builds a hash from all `FIELDS` defined
       def to_query_hash
         query_hash = {} of Symbol => DbValue
 
         {% for field in FIELDS %}
-          if self.{{field.id}} && @@changeset_fields.includes?({{field}})
-            query_hash[{{field}}] = self.{{field.id}}
-            query_hash[{{field}}] = query_hash[{{field}}].as(Time).to_utc if query_hash[{{field}}].is_a?(Time)
+          if self.{{field[:name].id}} && @@changeset_fields.includes?({{field[:name]}})
+            query_hash[{{field[:name]}}] = self.{{field[:name].id}}
+            query_hash[{{field[:name]}}] = query_hash[{{field[:name]}}].as(Time).to_utc if query_hash[{{field[:name]}}].is_a?(Time)
           end
         {% end %}
 
