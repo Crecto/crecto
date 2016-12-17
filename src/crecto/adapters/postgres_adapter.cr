@@ -14,12 +14,7 @@ module Crecto
       ENV["CRECTO_INITIAL_POOL_SIZE"] ||= "1"
       ENV["CRECTO_POOL_TIMEOUT"] ||= "5.0"
 
-      POOL = DB::Pool.new(
-        max_pool_size: ENV["CRECTO_MAX_POOL_SIZE"].to_i,
-        initial_pool_size: ENV["CRECTO_INITIAL_POOL_SIZE"].to_i,
-        checkout_timeout: ENV["CRECTO_POOL_TIMEOUT"].to_f) do
-        DB.open(ENV["PG_URL"])
-      end
+      CRECTO_DB = DB.open(ENV["PG_URL"])
 
       #
       # Query data store using a *query*
@@ -73,17 +68,11 @@ module Crecto
       end
 
       def self.execute(query_string, params)
-        connection = POOL.checkout
-        result = connection.query(query_string, params)
-        POOL.release connection
-        result
+        CRECTO_DB.query(query_string, params)
       end
 
       def self.execute(query_string)
-        connection = POOL.checkout
-        result = connection.query(query_string)
-        POOL.release connection
-        result
+        CRECTO_DB.query(query_string)
       end
 
       private def self.get(queryable, id)
