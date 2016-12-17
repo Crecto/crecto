@@ -28,11 +28,13 @@ Make sure you have `ENV['PG_URL']` set
 
 #### Roadmap (in no particular order)
 
+- [ ] `select` in query
 - [ ] MySQL adapter
-  - [ ] Choose adapter in config
-- [ ] Associations
-  - [ ] Preload
-  - [ ] Joins
+- [ ] SQLite adapter
+- [ ] Choose adapter in config
+- [x] Associations
+- [x] Preload
+- [ ] Joins
 
 ## Usage
 
@@ -42,19 +44,26 @@ require "crecto"
 #
 # Define table name, fields and validations in your class
 #
-class User
-  include Crecto::Schema
-  extend Crecto::Changeset(User)
+class User < Crecto::Model
 
   schema "users" do
     field :age, Int32
     field :name, String
     field :is_admin, Bool
     field :temporary_info, Float64, virtual: true
+    has_many :posts
   end
 
   validate_required [:name, :age]
   validate_format :name, /[*a-zA-Z]/
+end
+
+class Post < Crecto::Model
+  
+  schema "posts" do
+    field :user_id, PkValue
+    belongs_to :user
+  end
 end
 
 user = User.new
@@ -97,27 +106,43 @@ query = Crecto::Repo::Query
   .limit(1)
 
 #
-# all
+# All
 #
 users = Crecto::Repo.all(User, query)
 users.as(Array) unless users.nil?
 
 #
-# get by primary key
+# Get by primary key
 #
 user = Crecto::Repo.get(User, 1)
 user.as(User) unless user.nil?
 
 #
-# get by fields
+# Get by fields
 #
 Crecto::Repo.get_by(User, name: "new name", id: 1121)
 user.as(User) unless user.nil?
 
 #
-# delete
+# Delete
 #
 changeset = Crecto::Repo.delete(user)
+
+#
+# Associations
+#
+
+user = Crecto::Repo.get(User, id).as(User)
+posts = Crecto::Repo.all(user, :posts)
+
+#
+# Preload associations
+#
+users = Crecto::Repo.all(User, Crecto::Query.new, preload: [:posts])
+users[0].posts # has_many relation is preloaded
+
+posts = Crecto::Repo.all(Post, Crecto::Query.new, preload: [:user])
+posts[0].user # belongs_to relation preloaded
 ```
 
 ## Performance
@@ -131,9 +156,7 @@ changeset = Crecto::Repo.delete(user)
 ```Crystal
 require "crecto"
 
-class User
-  include Crecto::Schema
-  extend Crecto::Changeset(User)
+class User < Crecto::Model
 
   schema "users" do
     field :name, String

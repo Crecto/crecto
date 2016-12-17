@@ -205,7 +205,7 @@ module Crecto
         where.keys.map do |key|
           [where[key]].flatten.each{|param| params.push(param) }
 
-          resp = " #{queryable.table_name}.#{key}"
+          resp = " #{queryable.table_name}.#{key.to_s}"
           resp += if where[key].is_a?(Array)
             " IN (" + where[key].as(Array).map{|p| "?" }.join(", ") + ")"
           else

@@ -1,7 +1,7 @@
 module Crecto
   module Repo
 
-    alias WhereType = (Hash(Symbol, Array(Int32)) | Hash(Symbol, Array(String)) | Hash(Symbol, Int32 | Int64 | String | Nil) | Hash(Symbol, Int32 | String | Nil) | Hash(Symbol, Int32 | String) | Hash(Symbol, Int32) | Hash(Symbol, String) | NamedTuple(clause: String, params: Array(Bool | Float64 | Int32 | Int64 | String | Time | Nil)))
+    alias WhereType = Hash(Symbol, PkeyValue) | Hash(Symbol, DbValue) | Hash(Symbol, Array(DbValue)) | Hash(Symbol, Array(PkeyValue)) | Hash(Symbol, Array(Int32)) | Hash(Symbol, Array(Int64)) | Hash(Symbol, Array(String)) | Hash(Symbol, Int32 | String) | Hash(Symbol, Int32) | Hash(Symbol, Int64) | Hash(Symbol, String) | Hash(Symbol, Int32 | Int64 | String | Nil) | NamedTuple(clause: String, params: Array(DbValue | PkeyValue))
     
     # Queries are used to retrieve and manipulate data from a repository.  Syntax is much like that of ActiveRecord:
     #
@@ -26,14 +26,23 @@ module Crecto
         self.new.where(**wheres)
       end
 
+      # Query where with a string (i.e. `.where("users.id > 10"))
+      def self.where(where_string : String, params : Array(DbValue | PkeyValue))
+        self.new.where(where_string, params)
+      end
+
+      # Query where with a Symbol and DbValue
+      def self.where(where_sym : Symbol, param : DbValue)
+        self.new.where(where_sym, param)
+      end
+
+      def self.where(where_sym : Symbol, params : Array(DbValue | PkeyValue))
+        self.new.where(where_sym, params)
+      end
+
       # Key => Value pair(s) used in query `OR WHERE`
       def self.or_where(**or_wheres)
         self.new.or_where(**or_wheres)
-      end
-
-      # Query where with a string (i.e. `.where("users.id > 10"))
-      def self.where(where_string : String, params : Array(DbValue))
-        self.new.where(where_string, params)
       end
 
       # TODO: not done yet
@@ -69,18 +78,32 @@ module Crecto
       # :nodoc:
       def where(**wheres)
         wheres = wheres.to_h
-        @wheres.push wheres
+        # w = {} of Symbol => DbValue | PkeyValue | Array(DbValue | PkeyValue)
+        # w[wheres.first_key] = wheres.first_value.as(DbValue | PkeyValue | Array(DbValue | PkeyValue))
+        @wheres.push(Hash.zip(wheres.keys, wheres.values))
+        self
+      end
+
+      def where(where_string : String, params : Array(DbValue))
+        @wheres.push({clause: where_string, params: params.map{|p| p.as(DbValue)}})
+        self
+      end
+
+      def where(where_sym : Symbol, param : DbValue)
+        @wheres.push(Hash.zip([where_sym], [param]))
+        self
+      end
+
+      def where(where_sym : Symbol, params : Array(DbValue))
+        w = {} of Symbol => Array(DbValue)
+        w[where_sym] = params.map{|x| x.as(DbValue) }
+        @wheres.push(w)
         self
       end
 
       def or_where(**or_wheres)
         or_wheres = or_wheres.to_h
         @or_wheres.push or_wheres
-        self
-      end
-
-      def where(where_string : String, params : Array(DbValue))
-        @wheres.push({clause: where_string, params: params.map{|p| p.as(DbValue)}})
         self
       end
 
@@ -110,4 +133,3 @@ module Crecto
     end
   end
 end
-

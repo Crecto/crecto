@@ -1,10 +1,7 @@
 require "spec"
 require "../src/crecto"
 
-class User
-  include Crecto::Schema
-  extend Crecto::Changeset(User)
-
+class User < Crecto::Model
   schema "users" do
     field :name, String
     field :things, Int32
@@ -13,32 +10,27 @@ class User
     field :yep, Bool
     field :some_date, Time
     field :pageviews, Int32 | Int64
-    has_many :posts, Post
-    has_one :thing, Thing
+    has_many :posts, Post, foreign_key: :user_id
+    has_many :addresses, Address, foreign_key: :user_id
   end
 
   validate_required :name
 end
 
-class UserDifferentDefaults
-  include Crecto::Schema
-  extend Crecto::Changeset(UserDifferentDefaults)
-
+class UserDifferentDefaults < Crecto::Model
   created_at_field "xyz"
   updated_at_field nil
 
   schema "users_different_defaults" do
     field :user_id, Int32, primary_key: true
     field :name, String
+    has_many :things, Thing
   end
 
   validate_required :name
 end
 
-class UserLargeDefaults
-  include Crecto::Schema
-  extend Crecto::Changeset(UserLargeDefaults)
-
+class UserLargeDefaults < Crecto::Model
   created_at_field nil
   updated_at_field nil
 
@@ -48,10 +40,7 @@ class UserLargeDefaults
   end
 end
 
-class UserRequired
-  include Crecto::Schema
-  extend Crecto::Changeset(UserRequired)
-
+class UserRequired < Crecto::Model
   schema "users_required" do
     field :name, String
     field :age, Int32
@@ -62,10 +51,7 @@ class UserRequired
   validate_required [:age, :is_admin]
 end
 
-class UserFormat
-  include Crecto::Schema
-  extend Crecto::Changeset(UserFormat)
-
+class UserFormat < Crecto::Model
   schema "users_required" do
     field :name, String
     field :age, Int32
@@ -75,10 +61,7 @@ class UserFormat
   validate_format :name, /[*a-zA-Z]/
 end
 
-class UserInclusion
-  include Crecto::Schema
-  extend Crecto::Changeset(UserInclusion)
-
+class UserInclusion < Crecto::Model
   schema "users_required" do
     field :name, String
     field :age, Int32
@@ -88,10 +71,7 @@ class UserInclusion
   validate_inclusion :name, ["bill", "ted"]
 end
 
-class UserExclusion
-  include Crecto::Schema
-  extend Crecto::Changeset(UserExclusion)
-
+class UserExclusion < Crecto::Model
   schema "users_required" do
     field :name, String
     field :age, Int32
@@ -101,10 +81,7 @@ class UserExclusion
   validate_exclusion :name, ["bill", "ted"]
 end
 
-class UserLength
-  include Crecto::Schema
-  extend Crecto::Changeset(UserLength)
-
+class UserLength < Crecto::Model
   schema "users_required" do
     field :name, String
     field :age, Int32
@@ -114,10 +91,7 @@ class UserLength
   validate_length :name, max: 5
 end
 
-class UserGenericValidation
-  include Crecto::Schema
-  extend Crecto::Changeset(UserGenericValidation)
-
+class UserGenericValidation < Crecto::Model
   schema "user_generic" do
     field :id, Int32, primary_key: true
     field :password, String, virtual: true
@@ -131,10 +105,7 @@ class UserGenericValidation
   end
 end
 
-class UserMultipleValidations
-  include Crecto::Schema
-  extend Crecto::Changeset(UserMultipleValidations)
-
+class UserMultipleValidations < Crecto::Model
   schema "users" do
     field :first_name, String
     field :last_name, String
@@ -153,26 +124,23 @@ class UserMultipleValidations
     inclusion: {in: 1..100}
 end
 
-class Thing
-  include Crecto::Schema
-
-  schema "things" do
-    belongs_to :user, User, foreign_key: "owner_id"
-  end
-end
-
-class Post
-  include Crecto::Schema
-
-  schema "posts" do
+class Address < Crecto::Model
+  schema "addresses" do
+    field :user_id, Int32
     belongs_to :user, User
   end
 end
 
-class Tester
-  include Crecto::Schema
+class Post < Crecto::Model
+  schema "posts" do
+    field :user_id, Int32
+    belongs_to :user, User
+  end
+end
 
-  schema "testers" do
-    field :oof, String
+class Thing < Crecto::Model
+  schema "things" do
+    field :user_different_defaults_id, Int32
+    belongs_to :user, UserDifferentDefaults, foreign_key: :user_different_defaults_id
   end
 end

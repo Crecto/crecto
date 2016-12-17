@@ -4,11 +4,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+
+
+# [0.3.0] 2016-12-17
 * Check for result.rows.size in queries - [@neovintage](https://github.com/neovintage)
 * `or_where` queries
 * `update_all` queries
 * `delete_all` queries
 * raw (aribtrary) sql queries (i.e. `Crecto::Repo.query("select * from users")`) - [@neovintage](https://github.com/neovintage)
+* now using [`crystal-db`](https://github.com/crystal-lang/crystal-db)
+* `has_many` associations, with preload
+* `belongs_to` assocaitions
 
 ## [0.2.0] 2016-11-30
 * Added this changelog
@@ -24,4 +30,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Query
 * Postgres Adapter
 
+[0.3.0]: https://github.com/fridgerator/crecto/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/fridgerator/crecto/compare/0.1.0...v0.2.0

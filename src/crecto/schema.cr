@@ -34,17 +34,28 @@ module Crecto
   # * `updated_at_field nil` - dont use the updated_at timestamp
   #
   module Schema
-    include Crecto::Schema::HasMany
-    include Crecto::Schema::HasOne
-    include Crecto::Schema::BelongsTo
 
     # Class constants
     CREATED_AT_FIELD = "created_at"
     UPDATED_AT_FIELD = "updated_at"
     PRIMARY_KEY_FIELD = "id"
+    ASSOCIATIONS = Array(
+      NamedTuple(
+        association_type: Symbol,
+        key: Symbol, 
+        this_klass: Model.class,
+        klass: Model.class,
+        foreign_key: Symbol,
+        foreign_key_value: Proc(Model, PkeyValue),
+        set_association: Proc(Model, Array(Model), Nil)
+      )).new
 
     # schema block macro
     macro schema(table_name, &block)
+      include Crecto::Schema::HasMany
+      include Crecto::Schema::HasOne
+      include Crecto::Schema::BelongsTo
+
       # macro constants
       VALID_FIELD_TYPES = [String, Int64, Int32, Float64, Bool, Time, Int32 | Int64]
       VALID_FIELD_OPTIONS = [:primary_key, :virtual]
@@ -115,7 +126,6 @@ module Crecto
       def initialize
       end
 
-
       {% mapping = FIELDS.map{|field| field[:name].id.stringify + ": {type: " + (field[:type] == "Int64" ? "Int32 | Int64" : field[:type].id.stringify) + ", nilable: true}" } %}
       {% mapping.push(PRIMARY_KEY_FIELD.id.stringify + ": {type: Int32 | Int64, nilable: true}") %}
 
@@ -153,7 +163,7 @@ module Crecto
 
       # Returns the value of the primary key field
       def pkey_value
-        self.{{PRIMARY_KEY_FIELD.id}}
+        self.{{PRIMARY_KEY_FIELD.id}}.as(PkeyValue)
       end
 
       def update_primary_key(val)
@@ -198,10 +208,39 @@ module Crecto
         @@changeset_fields
       end
 
-
       # Class method to get the table name
       def self.table_name
         @@table_name
+      end
+
+      # Get the Class for the assocation name
+      # i.e. :posts => Post
+      def self.klass_for_association(association : Symbol)
+        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:klass]
+      end
+
+      # Get the foreign key for the association
+      # i.e. :posts => :user_id
+      def self.foreign_key_for_association(association : Symbol) : Symbol
+        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:foreign_key]
+      end
+
+      # Get the foreign key value from the relation object
+      # i.e. :posts, post => post.user_id
+      def self.foreign_key_value_for_association(association : Symbol, item)
+        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:foreign_key_value].call(item)
+      end
+
+      # Set the value for the association
+      # i.e. :posts, user, [posts] => user.posts = [posts]
+      def self.set_value_for_association(association : Symbol, item, items)
+        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:set_association].call(item, items)
+      end
+
+      # Get the association type for the association
+      # i.e. :posts => :has_many
+      def self.association_type_for_association(association : Symbol)
+        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:association_type]
       end
 
     end
