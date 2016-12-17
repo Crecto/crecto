@@ -34,8 +34,6 @@ Make sure you have `ENV['PG_URL']` set
 - [ ] Choose adapter in config
 - [x] Associations
 - [x] Preload
-- [ ] Need to be able to get parent relation from repo (`Repo.all/get(post, :user)`)
-- [x] Need to be able to set parent object, instead of setting id manually before inserting
 - [ ] Joins
 
 ## Usage
