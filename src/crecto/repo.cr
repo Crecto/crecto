@@ -52,7 +52,7 @@ module Crecto
         results.each do |result|
           if relation_items.has_key?(result.pkey_value)
             items = relation_items[result.pkey_value]
-            queryable.set_value_for_association(preload, result, items)
+            queryable.set_value_for_association(preload, result, items.map{|i| i.as(Crecto::Model) })
           end
         end
       end
@@ -70,7 +70,7 @@ module Crecto
           fkey = queryable.foreign_key_value_for_association(preload, result)
           if relation_items.has_key?(fkey)
             items = relation_items[fkey]
-            queryable.set_value_for_association(preload, result, items)
+            queryable.set_value_for_association(preload, result, items.map{|i| i.as(Crecto::Model) })
           end
         end
       end
