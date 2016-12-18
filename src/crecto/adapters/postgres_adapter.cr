@@ -1,4 +1,3 @@
-require "pg"
 
 module Crecto
   module Adapters
@@ -10,11 +9,7 @@ module Crecto
     #
     # Other adapters should follow this same pattern
     module Postgres
-      ENV["CRECTO_MAX_POOL_SIZE"] ||= "25"
-      ENV["CRECTO_INITIAL_POOL_SIZE"] ||= "1"
-      ENV["CRECTO_POOL_TIMEOUT"] ||= "5.0"
-
-      CRECTO_DB = DB.open(ENV["PG_URL"])
+      CRECTO_DB = DB.open(ENV["CRECTO_DB_URL"])
 
       #
       # Query data store using a *query*
