@@ -130,7 +130,7 @@ describe Crecto do
 
     describe "#get" do
       it "should return a user" do
-        now = Time.now.at_beginning_of_hour
+        now = Time.now
 
         user = User.new
         user.name = "test"
@@ -140,7 +140,7 @@ describe Crecto do
         user = Crecto::Repo.get(User, id).as(User)
         user.is_a?(User).should eq(true)
         user.id.should eq(id)
-        user.some_date.should eq(Time.now.at_beginning_of_hour)
+        user.some_date.as(Time).to_local.epoch_ms.should be_close(now.epoch_ms, 2000)
       end
 
       it "should not return a user if not in db" do
@@ -182,7 +182,7 @@ describe Crecto do
         changeset = Crecto::Repo.update(u)
         changeset.instance.name.should eq("new name")
         changeset.valid?.should eq(true)
-        changeset.instance.updated_at.as(Time).epoch_ms.should be_close(Time.now.epoch_ms, 2000)
+        changeset.instance.updated_at.as(Time).to_local.epoch_ms.should be_close(Time.now.epoch_ms, 2000)
       end
 
       it "should return a changeset and set the changeset action" do

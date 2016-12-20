@@ -29,7 +29,7 @@ Make sure you have `ENV['PG_URL']` set
 #### Roadmap (in no particular order)
 
 - [ ] `select` in query
-- [ ] MySQL adapter
+- [x] MySQL adapter
 - [ ] SQLite adapter
 - [ ] Choose adapter in config
 - [x] Associations

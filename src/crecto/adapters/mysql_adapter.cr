@@ -62,25 +62,21 @@ module Crecto
 
       def self.execute_query(query_string, params)
         @@CRECTO_DB = DB.open(ENV["MYSQL_URL"]) if @@CRECTO_DB.nil?
-        puts query_string
         @@CRECTO_DB.as(DB::Database).query(query_string, params)
       end
 
       def self.execute_query(query_string)
         @@CRECTO_DB = DB.open(ENV["MYSQL_URL"]) if @@CRECTO_DB.nil?
-        puts query_string
         @@CRECTO_DB.as(DB::Database).query(query_string)
       end
 
       def self.execute_exec(query_string, params)
         @@CRECTO_DB = DB.open(ENV["MYSQL_URL"]) if @@CRECTO_DB.nil?
-        puts query_string
         @@CRECTO_DB.as(DB::Database).exec(query_string, params)
       end
 
       def self.execute_exec(query_string)
         @@CRECTO_DB = DB.open(ENV["MYSQL_URL"]) if @@CRECTO_DB.nil?
-        puts query_string
         @@CRECTO_DB.as(DB::Database).exec(query_string)
       end
 
@@ -118,8 +114,6 @@ module Crecto
         q.push "VALUES"
         q.push "(#{(1..fields_values[:values].size).map { "?" }.join(", ")})"
 
-        puts q.join(" ")
-        puts fields_values[:values]
         execute_exec(q.join(" "), fields_values[:values])
         execute_query("SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field} = LAST_INSERT_ID()")
       end
