@@ -204,11 +204,11 @@ describe Crecto do
       it "should delete the model" do
         u = User.new
         u.name = "fridge"
-        # u.things = 123
+        u.things = 123
         u.nope = 12.45432
         u.yep = false
-        # u.stuff = 9993
-        # u.pageviews = 1234512341234
+        u.stuff = 9993
+        u.pageviews = 1234512341234
         changeset = Crecto::Repo.insert(u)
         u = changeset.instance
         changeset = Crecto::Repo.delete(u)
