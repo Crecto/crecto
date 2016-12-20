@@ -58,7 +58,7 @@ describe Crecto do
         u.pageviews = 1234567890
 
         u.to_query_hash.should eq({:name => "tester", :things => 6644, :nope => 34.9900, :created_at => nil, :updated_at => nil, :pageviews => 1234567890})
-      end 
+      end
     end
 
     describe "#pkey_value" do

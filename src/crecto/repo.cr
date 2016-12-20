@@ -1,6 +1,14 @@
 module Crecto
   # A repository maps to an underlying data store, controlled by the adapter.
   module Repo
+    # Set Adapter
+    ADAPTER = if DB.drivers.keys.includes?("mysql")
+                Crecto::Adapters::Mysql
+              else
+                DB.drivers.keys.includes?("postgres") || DB.drivers.keys.includes?("postgresql")
+                Crecto::Adapters::Postgres
+              end
+
     # Return a list of `queryable` instances using the *query* param
     #
     # ```
@@ -8,11 +16,10 @@ module Crecto
     # users = Repo.all(User, query)
     # ```
     def self.all(queryable, query : Query? = Query.new, **opts)
-
-      q = Crecto::Adapters::Postgres.run(:all, queryable, query)
+      q = ADAPTER.run(:all, queryable, query)
       return nil if q.nil?
 
-      results = queryable.from_rs(q)
+      results = queryable.from_rs(q.as(DB::ResultSet))
 
       if preload = opts[:preload]?
         add_preloads(results, queryable, preload)
@@ -38,39 +45,39 @@ module Crecto
     end
 
     def self.all(queryable, query = Query.new)
-      query = Crecto::Adapters::Postgres.run(:all, queryable, query).as(DB::ResultSet)
+      query = ADAPTER.run(:all, queryable, query).as(DB::ResultSet)
       queryable.from_rs(query)
-    end 
+    end
 
     private def self.has_many_preload(results, queryable, preload)
       ids = results.map(&.pkey_value)
       query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(preload), ids)
       relation_items = all(queryable.klass_for_association(preload), query)
       unless relation_items.nil?
-        relation_items = relation_items.group_by{|t| queryable.foreign_key_value_for_association(preload, t) }
+        relation_items = relation_items.group_by { |t| queryable.foreign_key_value_for_association(preload, t) }
 
         results.each do |result|
           if relation_items.has_key?(result.pkey_value)
             items = relation_items[result.pkey_value]
-            queryable.set_value_for_association(preload, result, items.map{|i| i.as(Crecto::Model) })
+            queryable.set_value_for_association(preload, result, items.map { |i| i.as(Crecto::Model) })
           end
         end
       end
     end
 
     private def self.belongs_to_preload(results, queryable, preload)
-      ids = results.map{|r| queryable.foreign_key_value_for_association(preload, r)}
+      ids = results.map { |r| queryable.foreign_key_value_for_association(preload, r) }
       query = Crecto::Repo::Query.where(id: ids)
       relation_items = all(queryable.klass_for_association(preload), query)
 
       unless relation_items.nil?
-        relation_items = relation_items.group_by{|t| t.pkey_value }
+        relation_items = relation_items.group_by { |t| t.pkey_value }
 
         results.each do |result|
           fkey = queryable.foreign_key_value_for_association(preload, result)
           if relation_items.has_key?(fkey)
             items = relation_items[fkey]
-            queryable.set_value_for_association(preload, result, items.map{|i| i.as(Crecto::Model) })
+            queryable.set_value_for_association(preload, result, items.map { |i| i.as(Crecto::Model) })
           end
         end
       end
@@ -82,7 +89,7 @@ module Crecto
     # user = Repo.get(User, 1)
     # ```
     def self.get(queryable, id)
-      query = Crecto::Adapters::Postgres.run(:get, queryable, id).as(DB::ResultSet)
+      query = ADAPTER.run(:get, queryable, id).as(DB::ResultSet)
       results = queryable.from_rs(query)
       results.first if results.any?
     end
@@ -93,7 +100,7 @@ module Crecto
     # user = Repo.get_by(User, name: "fred", age: 21)
     # ```
     def self.get_by(queryable, **opts)
-      query = Crecto::Adapters::Postgres.run(:all, queryable, Query.where(**opts).limit(1)).as(DB::ResultSet)
+      query = ADAPTER.run(:all, queryable, Query.where(**opts).limit(1)).as(DB::ResultSet)
       results = queryable.from_rs(query)
       results.first if results.any?
     end
@@ -111,12 +118,12 @@ module Crecto
       changeset.instance.updated_at_to_now
       changeset.instance.created_at_to_now
 
-      query = Crecto::Adapters::Postgres.run_on_instance(:insert, changeset)
+      query = ADAPTER.run_on_instance(:insert, changeset)
 
       if query.nil?
         changeset.add_error("insert_error", "Insert Failed")
       else
-        new_instance = changeset.instance.class.from_rs(query).first
+        new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first
         changeset = new_instance.class.changeset(new_instance) if new_instance
       end
 
@@ -135,7 +142,6 @@ module Crecto
       insert(changeset.instance)
     end
 
-
     # Update a shema instance in the data store.
     #
     # ```
@@ -147,12 +153,12 @@ module Crecto
 
       changeset.instance.updated_at_to_now
 
-      query = Crecto::Adapters::Postgres.run_on_instance(:update, changeset)
+      query = ADAPTER.run_on_instance(:update, changeset)
 
       if query.nil?
         changeset.add_error("update_error", "Update Failed")
       else
-        new_instance = changeset.instance.class.from_rs(query).first
+        new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first
         changeset = new_instance.class.changeset(new_instance) if new_instance
       end
 
@@ -176,7 +182,7 @@ module Crecto
     # Repo.update_all(User, query, {count: 1, date: Time.now})
     # ```
     def self.update_all(queryable, query, update_hash)
-      query = Crecto::Adapters::Postgres.run(:update_all, queryable, query, update_hash)
+      query = ADAPTER.run(:update_all, queryable, query, update_hash)
     end
 
     # Delete a shema instance from the data store.
@@ -188,12 +194,12 @@ module Crecto
       changeset = queryable_instance.class.changeset(queryable_instance)
       return changeset unless changeset.valid?
 
-      query = Crecto::Adapters::Postgres.run_on_instance(:delete, changeset)
+      query = ADAPTER.run_on_instance(:delete, changeset)
 
       if query.nil?
         changeset.add_error("delete_error", "Delete Failed")
       else
-        new_instance = changeset.instance.class.from_rs(query).first
+        new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first
         changeset = new_instance.class.changeset(new_instance) if new_instance
       end
 
@@ -217,19 +223,19 @@ module Crecto
     # Repo.delete_all(User, query)
     # ```
     def self.delete_all(queryable, query = Query.new)
-      query = Crecto::Adapters::Postgres.run(:delete_all, queryable, query)
+      query = ADAPTER.run(:delete_all, queryable, query)
     end
 
     # Run aribtrary sql queries. `query` will cast the output as that
-    # object. In this example, `query` will try to cast the 
-    # output as `User`. If query results happen to error nil is 
+    # object. In this example, `query` will try to cast the
+    # output as `User`. If query results happen to error nil is
     # returned
     #
     # ```
     # Repo.query(User, "select * from users where id > ?", [30])
     # ```
     def self.query(queryable, sql : String, params = [] of DbValue)
-      query = Crecto::Adapters::Postgres.run(:sql, sql, params).as(PG::ResultSet)
+      query = ADAPTER.run(:sql, sql, params).as(DB::ResultSet)
       queryable.from_rs(query)
     end
 
@@ -242,7 +248,7 @@ module Crecto
     # query = Crecto::Repo.query("select * from users where id = ?", [30])
     # ```
     def self.query(sql : String, params = [] of DbValue)
-      Crecto::Adapters::Postgres.run(:sql, sql, params)
+      ADAPTER.run(:sql, sql, params)
     end
 
     # Not done yet, placeohlder for associations

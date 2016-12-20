@@ -34,21 +34,17 @@ module Crecto
   # * `updated_at_field nil` - dont use the updated_at timestamp
   #
   module Schema
-
     # Class constants
-    CREATED_AT_FIELD = "created_at"
-    UPDATED_AT_FIELD = "updated_at"
+    CREATED_AT_FIELD  = "created_at"
+    UPDATED_AT_FIELD  = "updated_at"
     PRIMARY_KEY_FIELD = "id"
-    ASSOCIATIONS = Array(
-      NamedTuple(
-        association_type: Symbol,
-        key: Symbol, 
-        this_klass: Model.class,
-        klass: Model.class,
-        foreign_key: Symbol,
-        foreign_key_value: Proc(Model, PkeyValue),
-        set_association: Proc(Model, Array(Model), Nil)
-      )).new
+    ASSOCIATIONS      = Array(NamedTuple(association_type: Symbol,
+    key: Symbol,
+    this_klass: Model.class,
+    klass: Model.class,
+    foreign_key: Symbol,
+    foreign_key_value: Proc(Model, PkeyValue),
+    set_association: Proc(Model, Array(Model), Nil))).new
 
     # schema block macro
     macro schema(table_name, &block)
@@ -57,7 +53,7 @@ module Crecto
       include Crecto::Schema::BelongsTo
 
       # macro constants
-      VALID_FIELD_TYPES = [String, Int64, Int32, Float64, Bool, Time, Int32 | Int64]
+      VALID_FIELD_TYPES = [String, Int64, Int32, Float32, Float64, Bool, Time, Int32 | Int64, Float32 | Float64]
       VALID_FIELD_OPTIONS = [:primary_key, :virtual]
       FIELDS = [] of NamedTuple(name: Symbol, type: String)
 
@@ -126,7 +122,7 @@ module Crecto
       def initialize
       end
 
-      {% mapping = FIELDS.map{|field| field[:name].id.stringify + ": {type: " + (field[:type] == "Int64" ? "Int32 | Int64" : field[:type].id.stringify) + ", nilable: true}" } %}
+      {% mapping = FIELDS.map { |field| field[:name].id.stringify + ": {type: " + (field[:type] == "Int64" ? "Int32 | Int64" : field[:type].id.stringify) + ", nilable: true}" } %}
       {% mapping.push(PRIMARY_KEY_FIELD.id.stringify + ": {type: Int32 | Int64, nilable: true}") %}
 
       {% unless CREATED_AT_FIELD == nil %}
@@ -180,13 +176,13 @@ module Crecto
 
       def updated_at_to_now
         {% unless UPDATED_AT_FIELD == nil %}
-          self.{{UPDATED_AT_FIELD.id}} = Time.now
+          self.{{UPDATED_AT_FIELD.id}} = Time.utc_now
         {% end %}
       end
 
       def created_at_to_now
         {% unless CREATED_AT_FIELD == nil %}
-          self.{{CREATED_AT_FIELD.id}} = Time.now
+          self.{{CREATED_AT_FIELD.id}} = Time.utc_now
         {% end %}
       end
 

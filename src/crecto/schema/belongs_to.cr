@@ -6,12 +6,12 @@ module Crecto
       macro belongs_to(association_name, klass, **opts)
         property {{association_name.id}} : {{klass}}?
 
-        {% 
+        {%
           foreign_key = klass.id.stringify.underscore.downcase + "_id"
 
           if opts[:foreign_key]
             foreign_key = opts[:foreign_key]
-          end 
+          end
         %}
 
         def {{association_name.id}}=(val : {{klass}}?)
