@@ -15,7 +15,6 @@ module Crecto
     # * `source` - Hash of the original data
     #
     class Changeset(T)
-
       # :nodoc:
       property action : Symbol?
       # :nodoc:
@@ -154,7 +153,6 @@ module Crecto
         errors.push({field: key, message: val}.to_h)
         @valid = false
       end
-
     end
   end
 end

@@ -102,7 +102,7 @@ describe Crecto do
     describe "#query" do
       it "should accept a query" do
         query = Crecto::Repo.query("select * from users")
-        query.is_a?(PG::ResultSet).should be_true
+        query.is_a?(DB::ResultSet).should be_true
         query.should_not be_nil
       end
 
@@ -113,7 +113,7 @@ describe Crecto do
 
         query = Crecto::Repo.query("select * from users where name = ?", ["awesome-dude"])
         query.should_not be_nil
-        query.is_a?(PG::ResultSet).should be_true
+        query.is_a?(DB::ResultSet).should be_true
       end
 
       it "should accept a query and cast result" do
@@ -130,7 +130,7 @@ describe Crecto do
 
     describe "#get" do
       it "should return a user" do
-        now = Time.now.at_beginning_of_hour
+        now = Time.now
 
         user = User.new
         user.name = "test"
@@ -140,7 +140,7 @@ describe Crecto do
         user = Crecto::Repo.get(User, id).as(User)
         user.is_a?(User).should eq(true)
         user.id.should eq(id)
-        user.some_date.should eq(Time.now.at_beginning_of_hour)
+        user.some_date.as(Time).to_local.epoch_ms.should be_close(now.epoch_ms, 2000)
       end
 
       it "should not return a user if not in db" do
@@ -176,15 +176,13 @@ describe Crecto do
         u.yep = false
         u.stuff = 9993
         u.pageviews = 123245667788
-        
         changeset = Crecto::Repo.insert(u)
         u = changeset.instance
         u.name = "new name"
         changeset = Crecto::Repo.update(u)
-        
         changeset.instance.name.should eq("new name")
         changeset.valid?.should eq(true)
-        changeset.instance.updated_at.as(Time).epoch_ms.should be_close(Time.now.epoch_ms, 2000)
+        changeset.instance.updated_at.as(Time).to_local.epoch_ms.should be_close(Time.now.epoch_ms, 2000)
       end
 
       it "should return a changeset and set the changeset action" do
@@ -211,7 +209,6 @@ describe Crecto do
         u.yep = false
         u.stuff = 9993
         u.pageviews = 1234512341234
-        
         changeset = Crecto::Repo.insert(u)
         u = changeset.instance
         changeset = Crecto::Repo.delete(u)
@@ -365,9 +362,8 @@ describe Crecto do
         users.size.should eq 0
 
         users = Crecto::Repo.all(UserLargeDefaults).as(Array)
-        users.size.should eq 0        
+        users.size.should eq 0
       end
     end
-
-  end 
+  end
 end

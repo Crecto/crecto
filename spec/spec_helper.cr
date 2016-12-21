@@ -1,12 +1,13 @@
+require "pg"
 require "spec"
 require "../src/crecto"
 
 class User < Crecto::Model
   schema "users" do
     field :name, String
-    field :things, Int32
+    field :things, Int32 | Int64
     field :stuff, Int32, virtual: true
-    field :nope, Float64
+    field :nope, Float32 | Float64
     field :yep, Bool
     field :some_date, Time
     field :pageviews, Int32 | Int64

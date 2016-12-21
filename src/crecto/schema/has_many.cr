@@ -3,7 +3,8 @@ module Crecto
     module HasMany
       VALID_HAS_MANY_OPTIONS = [:foreign_key]
 
-      macro has_many(association_name, klass, **opts)        
+      macro has_many(association_name, klass, **opts)
+
         property {{association_name.id}} : Array({{klass}})?
 
         {%

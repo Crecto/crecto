@@ -6,7 +6,7 @@ module Crecto
     # Uses [crystal-pg](https://github.com/will/crystal-pg) for now.
     #
     # Other adapters should follow this same pattern
-    module Postgres
+    module Mysql
       @@CRECTO_DB : DB::Database?
 
       #
@@ -44,7 +44,7 @@ module Crecto
       def self.run(operation : Symbol, sql : String, params : Array(DbValue))
         case operation
         when :sql
-          execute(position_args(sql), params)
+          execute_query(sql, params)
         end
       end
 
@@ -60,23 +60,33 @@ module Crecto
         end
       end
 
-      def self.execute(query_string, params)
-        @@CRECTO_DB = DB.open(ENV["PG_URL"]) if @@CRECTO_DB.nil?
+      def self.execute_query(query_string, params)
+        @@CRECTO_DB = DB.open(ENV["MYSQL_URL"]) if @@CRECTO_DB.nil?
         @@CRECTO_DB.as(DB::Database).query(query_string, params)
       end
 
-      def self.execute(query_string)
-        @@CRECTO_DB = DB.open(ENV["PG_URL"]) if @@CRECTO_DB.nil?
+      def self.execute_query(query_string)
+        @@CRECTO_DB = DB.open(ENV["MYSQL_URL"]) if @@CRECTO_DB.nil?
         @@CRECTO_DB.as(DB::Database).query(query_string)
+      end
+
+      def self.execute_exec(query_string, params)
+        @@CRECTO_DB = DB.open(ENV["MYSQL_URL"]) if @@CRECTO_DB.nil?
+        @@CRECTO_DB.as(DB::Database).exec(query_string, params)
+      end
+
+      def self.execute_exec(query_string)
+        @@CRECTO_DB = DB.open(ENV["MYSQL_URL"]) if @@CRECTO_DB.nil?
+        @@CRECTO_DB.as(DB::Database).exec(query_string)
       end
 
       private def self.get(queryable, id)
         q = ["SELECT *"]
         q.push "FROM #{queryable.table_name}"
-        q.push "WHERE #{queryable.primary_key_field}=$1"
+        q.push "WHERE #{queryable.primary_key_field}=?"
         q.push "LIMIT 1"
 
-        execute(q.join(" "), [id])
+        execute_query(q.join(" "), [id])
       end
 
       private def self.all(queryable, query)
@@ -92,7 +102,7 @@ module Crecto
         q.push limit(query) unless query.limit.nil?
         q.push offset(query) unless query.offset.nil?
 
-        execute(position_args(q.join(" ")), params)
+        execute_query(q.join(" "), params)
       end
 
       private def self.insert(changeset)
@@ -100,21 +110,20 @@ module Crecto
 
         q = ["INSERT INTO"]
         q.push "#{changeset.instance.class.table_name}"
-        q.push "(#{fields_values[:fields]})"
+        q.push "(#{fields_values[:fields].join(", ")})"
         q.push "VALUES"
         q.push "(#{(1..fields_values[:values].size).map { "?" }.join(", ")})"
-        q.push "RETURNING *"
 
-        execute(position_args(q.join(" ")), fields_values[:values])
+        execute_exec(q.join(" "), fields_values[:values])
+        execute_query("SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field} = LAST_INSERT_ID()")
       end
 
       private def self.update_begin(table_name, fields_values)
         q = ["UPDATE"]
         q.push "#{table_name}"
         q.push "SET"
-        q.push "(#{fields_values[:fields]})"
-        q.push "="
-        q.push "(#{(1..fields_values[:values].size).map { "?" }.join(", ")})"
+        q.push fields_values[:fields].map { |field_value| "#{field_value}=?" }.join(", ")
+        q
       end
 
       private def self.update(changeset)
@@ -123,9 +132,9 @@ module Crecto
         q = update_begin(changeset.instance.class.table_name, fields_values)
         q.push "WHERE"
         q.push "#{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}"
-        q.push "RETURNING *"
 
-        execute(position_args(q.join(" ")), fields_values[:values])
+        execute_exec(q.join(" "), fields_values[:values])
+        execute_query("SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field} = #{changeset.instance.pkey_value}")
       end
 
       private def self.update(queryable, query, query_hash)
@@ -136,7 +145,7 @@ module Crecto
         q.push wheres(queryable, query, params) if query.wheres.any?
         q.push or_wheres(queryable, query, params) if query.or_wheres.any?
 
-        execute(position_args(q.join(" ")), fields_values[:values] + params)
+        execute_exec(q.join(" "), fields_values[:values] + params)
       end
 
       private def self.delete_begin(table_name)
@@ -148,9 +157,10 @@ module Crecto
         q = delete_begin(changeset.instance.class.table_name)
         q.push "WHERE"
         q.push "#{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}"
-        q.push "RETURNING *"
 
-        execute(q.join(" "))
+        sel = execute_query("SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}")
+        execute_exec(q.join(" "))
+        sel
       end
 
       private def self.delete(queryable, query)
@@ -160,7 +170,7 @@ module Crecto
         q.push wheres(queryable, query, params) if query.wheres.any?
         q.push or_wheres(queryable, query, params) if query.or_wheres.any?
 
-        execute(position_args(q.join(" ")), params)
+        execute_exec(q.join(" "), params)
       end
 
       private def self.wheres(queryable, query, params)
@@ -220,21 +230,11 @@ module Crecto
       end
 
       private def self.instance_fields_and_values(query_hash : Hash)
-        {fields: query_hash.keys.join(", "), values: query_hash.values}
+        {fields: query_hash.keys, values: query_hash.values.map { |v| v.is_a?(Time) ? v.to_s.split(" ")[0..1].join(" ") : v }}
       end
 
       private def self.instance_fields_and_values(queryable_instance)
         instance_fields_and_values(queryable_instance.to_query_hash)
-      end
-
-      private def self.position_args(query_string : String)
-        query = ""
-        chunks = query_string.split("?")
-        chunks.each_with_index do |chunk, i|
-          query += chunk
-          query += "$#{i + 1}" unless i == chunks.size - 1
-        end
-        query
       end
     end
   end

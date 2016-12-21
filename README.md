@@ -16,20 +16,26 @@ dependencies:
     github: fridgerator/crecto
 ```
 
-Include a database adapter (currently only postgres has been tested)
+Include a database adapter (currently only postgres and mysql have been tested)
 
 #### Postgres
 
 Include [crystal-pg](https://github.com/will/crystal-pg) in your project
 
-Make sure you have `ENV['PG_URL']` set
+Make sure you have `ENV["PG_URL"]` set
+
+#### Mysql
+
+Include [crystal-mysql](https://github.com/crystal-lang/crystal-mysql) in your project
+
+Make sure you have `ENV["MYSQL_URL"]` set
 
 ## TODO
 
 #### Roadmap (in no particular order)
 
 - [ ] `select` in query
-- [ ] MySQL adapter
+- [x] MySQL adapter
 - [ ] SQLite adapter
 - [ ] Choose adapter in config
 - [x] Associations
