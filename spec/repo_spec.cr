@@ -341,6 +341,25 @@ describe Crecto do
       end
     end
 
+    describe "#joins" do
+      it "should enforce a join in the associaton" do
+        user = User.new
+        user.name = "tester"
+        user = Crecto::Repo.insert(user).instance
+
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:posts)).as(Array)
+        users.empty?.should eq true
+
+        post = Post.new
+        post.user = user
+        post = Crecto::Repo.insert(post).instance
+
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:posts)).as(Array)
+        users.any?.should eq true
+      end
+    end
+
+    # keep this at the end
     describe "#delete_all" do
       it "should remove all records" do
         Crecto::Repo.delete_all(Post)

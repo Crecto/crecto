@@ -46,7 +46,15 @@ module Crecto
       end
 
       # TODO: not done yet
-      def self.join(klass, joins)
+      def self.join(join_associations : Array(Symbol))
+        self.new.join(join_associations)
+      end
+
+      def self.join(join_association : Symbol)
+        self.new.join(join_association)
+      end
+
+      def self.join(join_associations : Array(Symbol))
         self.new.join(klass, joins)
       end
 
@@ -116,8 +124,13 @@ module Crecto
       end
 
       # :nodoc:
-      def join(klass, joins)
-        @join = {klass: klass, joins: joins}
+      def join(join_associations : Array(Symbol))
+        @joins += join_associations
+        self
+      end
+
+      def join(join_association : Symbol)
+        @joins.push(join_association)
         self
       end
 
