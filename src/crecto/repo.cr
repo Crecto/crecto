@@ -21,8 +21,8 @@ module Crecto
 
       results = queryable.from_rs(q.as(DB::ResultSet))
 
-      if preload = opts[:preload]?
-        add_preloads(results, queryable, preload)
+      if query.preloads.any?
+        add_preloads(results, queryable, query.preloads)
       end
 
       results

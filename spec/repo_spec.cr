@@ -313,7 +313,7 @@ describe Crecto do
         Crecto::Repo.insert(post)
         Crecto::Repo.insert(post)
 
-        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id), preload: [:posts]).as(Array)
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).preload(:posts)).as(Array)
         users[0].posts.as(Array).size.should eq(2)
       end
 
@@ -326,7 +326,7 @@ describe Crecto do
         post.user_id = user.id.as(Int32)
         post = Crecto::Repo.insert(post).instance
 
-        posts = Crecto::Repo.all(Post, Crecto::Repo::Query.where(id: post.id), preload: [:user]).as(Array)
+        posts = Crecto::Repo.all(Post, Crecto::Repo::Query.where(id: post.id).preload(:user)).as(Array)
         posts[0].user.as(User).id.should eq(user.id)
       end
 
