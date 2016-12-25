@@ -122,7 +122,7 @@ module Crecto
       def initialize
       end
 
-      {% mapping = FIELDS.map { |field| field[:name].id.stringify + ": {type: " + (field[:type] == "Int64" ? "DbBigInt" : field[:type].id.stringify) + ", nilable: true}" } %}
+      {% mapping = FIELDS.map { |field| field[:name].id.stringify + ": {type: " + (field[:type].id == "Int64" ? "DbBigInt" : field[:type].id.stringify) + ", nilable: true}" } %}
       {% mapping.push(PRIMARY_KEY_FIELD.id.stringify + ": {type: DbBigInt, nilable: true}") %}
 
       {% unless CREATED_AT_FIELD == nil %}
