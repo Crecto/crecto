@@ -11,6 +11,15 @@ DROP TABLE IF EXISTS posts;
 DROP INDEX IF EXISTS addresses_dfd7fs7ss;
 DROP TABLE IF EXISTS addresses;
 
+DROP INDEX IF EXISTS addresses_dfd7fs7ss;
+DROP TABLE IF EXISTS addresses;
+
+DROP INDEX IF EXISTS user_projects_dd8dfss;
+DROP TABLE IF EXISTS user_projects;
+
+DROP INDEX IF EXISTS projects_88fsssfsf;
+DROP TABLE IF EXISTS projects;
+
 CREATE TABLE users(
   id INTEGER NOT NULL,
   name character varying NOT NULL,
@@ -108,5 +117,44 @@ ALTER SEQUENCE addresses_id_seq OWNED BY addresses.id;
 ALTER TABLE ONLY addresses ADD CONSTRAINT addresses_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY addresses ALTER COLUMN id SET DEFAULT nextval('addresses_id_seq'::regclass);
 CREATE UNIQUE INDEX addresses_dfd7fs7ss ON addresses (id);
+
+CREATE TABLE projects(
+  id INTEGER NOT NULL,
+  created_at timestamp without time zone,
+  updated_at timestamp without time zone
+);
+
+CREATE SEQUENCE projects_id_seq
+  START WITH 1121
+  INCREMENT BY 1
+  NO MINVALUE
+  NO MAXVALUE
+  CACHE 1;
+
+ALTER SEQUENCE projects_id_seq OWNED BY projects.id;
+ALTER TABLE ONLY projects ADD CONSTRAINT projects_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY projects ALTER COLUMN id SET DEFAULT nextval('projects_id_seq'::regclass);
+CREATE UNIQUE INDEX projects_88fsssfsf ON projects (id);
+
+
+CREATE TABLE user_projects(
+  id INTEGER NOT NULL,
+  user_id INTEGER references users(id),
+  project_id INTEGER references projects(id),
+  created_at timestamp without time zone,
+  updated_at timestamp without time zone
+);
+
+CREATE SEQUENCE user_projects_id_seq
+  START WITH 1121
+  INCREMENT BY 1
+  NO MINVALUE
+  NO MAXVALUE
+  CACHE 1;
+
+ALTER SEQUENCE user_projects_id_seq OWNED BY user_projects.id;
+ALTER TABLE ONLY user_projects ADD CONSTRAINT user_projects_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY user_projects ALTER COLUMN id SET DEFAULT nextval('user_projects_id_seq'::regclass);
+CREATE UNIQUE INDEX user_projects_dd8dfss ON user_projects (id);
 
 COMMIT;

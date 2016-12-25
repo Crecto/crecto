@@ -359,6 +359,16 @@ describe Crecto do
       end
     end
 
+    describe "joins through" do
+      it "should load the association accross join table" do
+        user = User.new
+        user.name = "tester"
+        user = Crecto::Repo.insert(user).instance
+
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:projects)).as(Array)
+      end
+    end
+
     # keep this at the end
     describe "#delete_all" do
       it "should remove all records" do
