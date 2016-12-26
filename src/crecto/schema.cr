@@ -44,7 +44,8 @@ module Crecto
     klass: Model.class,
     foreign_key: Symbol,
     foreign_key_value: Proc(Model, PkeyValue),
-    set_association: Proc(Model, Array(Model), Nil))).new
+    set_association: Proc(Model, Array(Model), Nil),
+    through: Symbol?)).new
 
     # schema block macro
     macro schema(table_name, &block)
@@ -237,6 +238,11 @@ module Crecto
       # i.e. :posts => :has_many
       def self.association_type_for_association(association : Symbol)
         ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:association_type]
+      end
+
+      # Get the through association symbol
+      def self.through_key_for_association(association : Symbol) : Symbol?
+        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:through]
       end
 
     end

@@ -317,6 +317,22 @@ describe Crecto do
         users[0].posts.as(Array).size.should eq(2)
       end
 
+      it "should preload the has_many through association" do
+        user = User.new
+        user.name = "tester"
+        user = Crecto::Repo.insert(user).instance
+
+        project = Project.new
+        project = Crecto::Repo.insert(project).instance
+
+        user_project = UserProject.new
+        user_project.project = project
+        user_project.user = user
+        user_project = Crecto::Repo.insert(user_project).instance
+
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).preload(:projects)).as(Array)
+      end
+
       it "should preload the belongs_to association" do
         user = User.new
         user.name = "tester"
@@ -355,7 +371,7 @@ describe Crecto do
         post = Crecto::Repo.insert(post).instance
 
         users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:posts)).as(Array)
-        users.any?.should eq true
+        users.size.should eq 1
       end
     end
 
@@ -366,17 +382,37 @@ describe Crecto do
         user = Crecto::Repo.insert(user).instance
 
         users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:projects)).as(Array)
+        users.size.should eq 0
+
+        project = Project.new
+        project = Crecto::Repo.insert(project).instance
+
+        user_project = UserProject.new
+        user_project.project = project
+        user_project.user = user
+        user_project = Crecto::Repo.insert(user_project).instance
+
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:projects)).as(Array)
+        users.size.should eq 1
       end
     end
 
     # keep this at the end
     describe "#delete_all" do
       it "should remove all records" do
+        Crecto::Repo.delete_all(UserProject)
+        Crecto::Repo.delete_all(Project)
         Crecto::Repo.delete_all(Post)
         Crecto::Repo.delete_all(Address)
         Crecto::Repo.delete_all(User)
         Crecto::Repo.delete_all(UserDifferentDefaults)
         Crecto::Repo.delete_all(UserLargeDefaults)
+
+        user_projects = Crecto::Repo.all(UserProject).as(Array)
+        user_projects.size.should eq 0
+
+        projects = Crecto::Repo.all(Project).as(Array)
+        projects.size.should eq 0
 
         posts = Crecto::Repo.all(Post).as(Array)
         posts.size.should eq 0

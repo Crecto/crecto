@@ -8,6 +8,7 @@ module Crecto
         property {{association_name.id}} : Array({{klass}})?
 
         {%
+          through = opts[:through] || nil
           foreign_key = @type.id.stringify.underscore.downcase + "_id"
 
           if opts[:foreign_key]
@@ -31,7 +32,8 @@ module Crecto
           set_association: ->(self_item : Crecto::Model, items : Array(Crecto::Model)){
             self_item.as({{@type}}).{{association_name.id}} = items.map{|i| i.as({{klass}}) }
             nil
-          }
+          },
+          through: {{through}}
         })
       end
     end
