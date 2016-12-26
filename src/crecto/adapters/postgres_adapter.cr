@@ -164,7 +164,7 @@ module Crecto
       end
 
       private def self.wheres(queryable, query, params)
-        q = ["WHERE "]
+        q = ["WHERE"]
         where_clauses = [] of String
 
         query.wheres.each do |where|
@@ -179,7 +179,7 @@ module Crecto
       end
 
       private def self.or_wheres(queryable, query, params)
-        q = ["WHERE "]
+        q = ["WHERE"]
         where_clauses = [] of String
 
         query.or_wheres.each do |where|
@@ -243,7 +243,7 @@ module Crecto
         q.push "INNER JOIN"
         q.push association_klass.table_name
         q.push "ON"
-        q.push association_klass.table_name + "." + queryable.primary_key_field
+        q.push association_klass.table_name + "." + association_klass.primary_key_field
         q.push "="
         q.push join_klass.table_name + "." + join_klass.foreign_key_for_association(:project).to_s
         q.join(" ")

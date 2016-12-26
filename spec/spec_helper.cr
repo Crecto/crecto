@@ -23,6 +23,7 @@ end
 class Project < Crecto::Model
   schema "projects" do
     field :name, String
+    has_many :user_projects, UserProject
   end
 end
 
