@@ -57,11 +57,25 @@ module Crecto
         join_table_items = all(queryable.klass_for_association(queryable.through_key_for_association(preload).as(Symbol)), join_query)
         unless join_table_items.nil?
           join_ids = join_table_items.map { |i| queryable.klass_for_association(preload).foreign_key_value_for_association(queryable.through_key_for_association(preload).as(Symbol), i) }
+          # puts join_ids
           association_query = Crecto::Repo::Query.where(queryable.klass_for_association(preload).primary_key_field_symbol, join_ids)
           # Projects
           relation_items = all(queryable.klass_for_association(preload), association_query)
 
-          # set shit here
+          # UserProject grouped by user_id
+          join_table_items = join_table_items.group_by { |t| queryable.foreign_key_value_for_association(queryable.through_key_for_association(preload).as(Symbol), t) }
+
+          results.each do |result|
+            if join_table_items.has_key?(result.pkey_value)
+              join_items = join_table_items[result.pkey_value]
+              queryable.set_value_for_association(queryable.through_key_for_association(preload).as(Symbol), result, join_items.map { |i| i.as(Crecto::Model) })
+
+              unless relation_items.nil?
+                queryable_relation_items = relation_items.select { |i| join_ids.includes?(i.pkey_value) }
+                queryable.set_value_for_association(preload, result, queryable_relation_items.map { |i| i.as(Crecto::Model) })
+              end
+            end
+          end
         end
       else
         ids = results.map(&.pkey_value)

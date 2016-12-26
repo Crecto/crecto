@@ -331,6 +331,9 @@ describe Crecto do
         user_project = Crecto::Repo.insert(user_project).instance
 
         users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).preload(:projects)).as(Array)
+        user = users[0]
+        user.user_projects.as(Array).size.should eq 1
+        user.projects.as(Array).size.should eq 1
       end
 
       it "should preload the belongs_to association" do
