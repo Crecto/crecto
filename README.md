@@ -40,7 +40,7 @@ Make sure you have `ENV["MYSQL_URL"]` set
 - [ ] Choose adapter in config
 - [x] Associations
 - [x] Preload
-- [ ] Joins
+- [x] Joins
 
 ## Usage
 
