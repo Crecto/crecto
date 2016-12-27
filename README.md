@@ -34,10 +34,9 @@ Make sure you have `ENV["MYSQL_URL"]` set
 
 #### Roadmap (in no particular order)
 
-- [ ] `select` in query
+- [ ] specify `select` in query
 - [x] MySQL adapter
 - [ ] SQLite adapter
-- [ ] Choose adapter in config
 - [x] Associations
 - [x] Preload
 - [x] Joins
