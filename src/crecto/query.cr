@@ -45,7 +45,6 @@ module Crecto
         self.new.or_where(**or_wheres)
       end
 
-      # TODO: not done yet
       def self.join(join_associations : Array(Symbol))
         self.new.join(join_associations)
       end
