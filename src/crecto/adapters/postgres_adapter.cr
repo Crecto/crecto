@@ -245,7 +245,7 @@ module Crecto
         q.push "ON"
         q.push association_klass.table_name + "." + association_klass.primary_key_field
         q.push "="
-        q.push join_klass.table_name + "." + join_klass.foreign_key_for_association(:project).to_s
+        q.push join_klass.table_name + "." + join_klass.foreign_key_for_association(association_klass).to_s
         q.join(" ")
       end
 

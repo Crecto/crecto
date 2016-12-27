@@ -229,6 +229,10 @@ module Crecto
         ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:foreign_key]
       end
 
+      def self.foreign_key_for_association(klass : Crecto::Model.class)
+        ASSOCIATIONS.select{|a| a[:klass] == klass && a[:this_klass] == self}.first[:foreign_key]
+      end
+
       # Get the foreign key value from the relation object
       # i.e. :posts, post => post.user_id
       def self.foreign_key_value_for_association(association : Symbol, item)
