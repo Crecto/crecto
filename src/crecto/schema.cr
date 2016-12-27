@@ -35,16 +35,18 @@ module Crecto
   #
   module Schema
     # Class constants
-    CREATED_AT_FIELD  = "created_at"
-    UPDATED_AT_FIELD  = "updated_at"
-    PRIMARY_KEY_FIELD = "id"
-    ASSOCIATIONS      = Array(NamedTuple(association_type: Symbol,
+    CREATED_AT_FIELD         = "created_at"
+    UPDATED_AT_FIELD         = "updated_at"
+    PRIMARY_KEY_FIELD        = "id"
+    PRIMARY_KEY_FIELD_SYMBOL = :id
+    ASSOCIATIONS             = Array(NamedTuple(association_type: Symbol,
     key: Symbol,
     this_klass: Model.class,
     klass: Model.class,
     foreign_key: Symbol,
     foreign_key_value: Proc(Model, PkeyValue),
-    set_association: Proc(Model, Array(Model), Nil))).new
+    set_association: Proc(Model, Array(Model), Nil),
+    through: Symbol?)).new
 
     # schema block macro
     macro schema(table_name, &block)
@@ -84,6 +86,7 @@ module Crecto
       {% primary_key = false %}
       {% if opts[:primary_key] %}
         PRIMARY_KEY_FIELD = {{field_name.id.stringify}}
+        PRIMARY_KEY_FIELD_SYMBOL = {{field_name.id.symbolize}}
         {% primary_key = true %}
       {% elsif opts[:virtual] %}
         {% virtual = true %}
@@ -191,6 +194,11 @@ module Crecto
         PRIMARY_KEY_FIELD
       end
 
+      # Return the primary key field as a Symbol
+      def self.primary_key_field_symbol
+        PRIMARY_KEY_FIELD_SYMBOL
+      end
+
       def self.created_at_field
         CREATED_AT_FIELD
       end
@@ -221,10 +229,14 @@ module Crecto
         ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:foreign_key]
       end
 
+      def self.foreign_key_for_association(klass : Crecto::Model.class)
+        ASSOCIATIONS.select{|a| a[:klass] == klass && a[:this_klass] == self}.first[:foreign_key]
+      end
+
       # Get the foreign key value from the relation object
       # i.e. :posts, post => post.user_id
       def self.foreign_key_value_for_association(association : Symbol, item)
-        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:foreign_key_value].call(item)
+        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:foreign_key_value].call(item).as(PkeyValue)
       end
 
       # Set the value for the association
@@ -237,6 +249,12 @@ module Crecto
       # i.e. :posts => :has_many
       def self.association_type_for_association(association : Symbol)
         ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:association_type]
+      end
+
+      # Get the through association symbol
+      # i.e. :posts => :user_posts (if has_many through)
+      def self.through_key_for_association(association : Symbol) : Symbol?
+        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:through]
       end
 
     end

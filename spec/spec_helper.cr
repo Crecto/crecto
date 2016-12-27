@@ -12,10 +12,28 @@ class User < Crecto::Model
     field :some_date, Time
     field :pageviews, Int32 | Int64
     has_many :posts, Post, foreign_key: :user_id
-    has_many :addresses, Address, foreign_key: :user_id
+    has_many :addresses, Address
+    has_many :user_projects, UserProject
+    has_many :projects, Project, through: :user_projects
   end
 
   validate_required :name
+end
+
+class Project < Crecto::Model
+  schema "projects" do
+    field :name, String
+    has_many :user_projects, UserProject
+  end
+end
+
+class UserProject < Crecto::Model
+  schema "user_projects" do
+    field :user_id, Int32
+    field :project_id, Int32
+    belongs_to :user, User
+    belongs_to :project, Project
+  end
 end
 
 class UserDifferentDefaults < Crecto::Model

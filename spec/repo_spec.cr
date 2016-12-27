@@ -144,7 +144,7 @@ describe Crecto do
       end
 
       it "should not return a user if not in db" do
-        user = Crecto::Repo.get(User, 1)
+        user = Crecto::Repo.get(User, 99999)
         user.nil?.should be_true
       end
     end
@@ -162,7 +162,7 @@ describe Crecto do
       end
 
       it "should not return a row" do
-        user = Crecto::Repo.get_by(User, id: 1)
+        user = Crecto::Repo.get_by(User, id: 99999)
         user.nil?.should be_true
       end
     end
@@ -313,8 +313,27 @@ describe Crecto do
         Crecto::Repo.insert(post)
         Crecto::Repo.insert(post)
 
-        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id), preload: [:posts]).as(Array)
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).preload(:posts)).as(Array)
         users[0].posts.as(Array).size.should eq(2)
+      end
+
+      it "should preload the has_many through association" do
+        user = User.new
+        user.name = "tester"
+        user = Crecto::Repo.insert(user).instance
+
+        project = Project.new
+        project = Crecto::Repo.insert(project).instance
+
+        user_project = UserProject.new
+        user_project.project = project
+        user_project.user = user
+        user_project = Crecto::Repo.insert(user_project).instance
+
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).preload(:projects)).as(Array)
+        user = users[0]
+        user.user_projects.as(Array).size.should eq 1
+        user.projects.as(Array).size.should eq 1
       end
 
       it "should preload the belongs_to association" do
@@ -326,7 +345,7 @@ describe Crecto do
         post.user_id = user.id.as(Int32)
         post = Crecto::Repo.insert(post).instance
 
-        posts = Crecto::Repo.all(Post, Crecto::Repo::Query.where(id: post.id), preload: [:user]).as(Array)
+        posts = Crecto::Repo.all(Post, Crecto::Repo::Query.where(id: post.id).preload(:user)).as(Array)
         posts[0].user.as(User).id.should eq(user.id)
       end
 
@@ -341,13 +360,62 @@ describe Crecto do
       end
     end
 
+    describe "#joins" do
+      it "should enforce a join in the associaton" do
+        user = User.new
+        user.name = "tester"
+        user = Crecto::Repo.insert(user).instance
+
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:posts)).as(Array)
+        users.empty?.should eq true
+
+        post = Post.new
+        post.user = user
+        post = Crecto::Repo.insert(post).instance
+
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:posts)).as(Array)
+        users.size.should eq 1
+      end
+    end
+
+    describe "joins through" do
+      it "should load the association accross join table" do
+        user = User.new
+        user.name = "tester"
+        user = Crecto::Repo.insert(user).instance
+
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:projects)).as(Array)
+        users.size.should eq 0
+
+        project = Project.new
+        project = Crecto::Repo.insert(project).instance
+
+        user_project = UserProject.new
+        user_project.project = project
+        user_project.user = user
+        user_project = Crecto::Repo.insert(user_project).instance
+
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:projects)).as(Array)
+        users.size.should eq 1
+      end
+    end
+
+    # keep this at the end
     describe "#delete_all" do
       it "should remove all records" do
+        Crecto::Repo.delete_all(UserProject)
+        Crecto::Repo.delete_all(Project)
         Crecto::Repo.delete_all(Post)
         Crecto::Repo.delete_all(Address)
         Crecto::Repo.delete_all(User)
         Crecto::Repo.delete_all(UserDifferentDefaults)
         Crecto::Repo.delete_all(UserLargeDefaults)
+
+        user_projects = Crecto::Repo.all(UserProject).as(Array)
+        user_projects.size.should eq 0
+
+        projects = Crecto::Repo.all(Project).as(Array)
+        projects.size.should eq 0
 
         posts = Crecto::Repo.all(Post).as(Array)
         posts.size.should eq 0

@@ -10,7 +10,8 @@ module Crecto
       property selects : Array(String)
       property wheres = [] of WhereType
       property or_wheres = [] of WhereType
-      property joins = [] of Hash(Symbol, Hash(Symbol, String | Array(String)))
+      property joins = [] of Symbol
+      property preloads = [] of Symbol
       property order_bys = [] of String
       property limit : Int32?
       property offset : Int32?
@@ -44,9 +45,24 @@ module Crecto
         self.new.or_where(**or_wheres)
       end
 
-      # TODO: not done yet
-      def self.join(klass, joins)
+      def self.join(join_associations : Array(Symbol))
+        self.new.join(join_associations)
+      end
+
+      def self.join(join_association : Symbol)
+        self.new.join(join_association)
+      end
+
+      def self.join(join_associations : Array(Symbol))
         self.new.join(klass, joins)
+      end
+
+      def self.preload(preload_associations : Array(Symbol))
+        self.new.preload(preload_associations)
+      end
+
+      def self.preload(preload_association : Symbol)
+        self.new.preload(preload_association)
       end
 
       # Field to order by
@@ -107,8 +123,23 @@ module Crecto
       end
 
       # :nodoc:
-      def join(klass, joins)
-        @join = {klass: klass, joins: joins}
+      def join(join_associations : Array(Symbol))
+        @joins += join_associations
+        self
+      end
+
+      def join(join_association : Symbol)
+        @joins.push(join_association)
+        self
+      end
+
+      def preload(preload_associations : Array(Symbol))
+        @preloads += preload_associations
+        self
+      end
+
+      def preload(preload_association : Symbol)
+        @preloads.push(preload_association)
         self
       end
 

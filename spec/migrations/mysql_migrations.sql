@@ -5,6 +5,8 @@ DROP TABLE IF EXISTS users_different_defaults;
 DROP TABLE IF EXISTS users_large_defaults;
 DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS addresses;
+DROP TABLE IF EXISTS user_projects;
+DROP TABLE IF EXISTS projects;
 
 CREATE TABLE users(
   id INTEGER NOT NULL AUTO_INCREMENT,
@@ -58,5 +60,25 @@ CREATE TABLE addresses(
 );
 
 CREATE UNIQUE INDEX addresses_dfd7fs7ss ON addresses (id);
+
+CREATE TABLE projects(
+  id INTEGER NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (id),
+  created_at DATETIME,
+  updated_at DATETIME
+);
+
+CREATE UNIQUE INDEX projects_88fsssfsf ON projects (id);
+
+CREATE TABLE user_projects(
+  id INTEGER NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (id),
+  user_id INTEGER references users(id),
+  project_id INTEGER references projects(id),
+  created_at DATETIME,
+  updated_at DATETIME
+);
+
+CREATE UNIQUE INDEX user_projects_dd8dfss ON user_projects (id);
 
 COMMIT;

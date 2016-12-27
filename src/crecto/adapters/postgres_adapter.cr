@@ -83,11 +83,11 @@ module Crecto
         params = [] of DbValue | Array(DbValue)
 
         q = ["SELECT"]
-        q.push query.selects.join(", ")
+        q.push query.selects.map { |s| "#{queryable.table_name}.#{s}" }.join(", ")
         q.push "FROM #{queryable.table_name}"
+        q.push joins(queryable, query, params) if query.joins.any?
         q.push wheres(queryable, query, params) if query.wheres.any?
         q.push or_wheres(queryable, query, params) if query.or_wheres.any?
-        # TODO: JOINS
         q.push order_bys(query) if query.order_bys.any?
         q.push limit(query) unless query.limit.nil?
         q.push offset(query) unless query.offset.nil?
@@ -164,7 +164,7 @@ module Crecto
       end
 
       private def self.wheres(queryable, query, params)
-        q = ["WHERE "]
+        q = ["WHERE"]
         where_clauses = [] of String
 
         query.wheres.each do |where|
@@ -179,7 +179,7 @@ module Crecto
       end
 
       private def self.or_wheres(queryable, query, params)
-        q = ["WHERE "]
+        q = ["WHERE"]
         where_clauses = [] of String
 
         query.or_wheres.each do |where|
@@ -205,6 +205,48 @@ module Crecto
                     "=?"
                   end
         end
+      end
+
+      private def self.joins(queryable, query, params)
+        joins = query.joins.map do |join|
+          if queryable.through_key_for_association(join)
+            join_through(queryable, join)
+          else
+            join_single(queryable, join)
+          end
+        end
+        joins.join(" ")
+      end
+
+      private def self.join_single(queryable, join)
+        association_klass = queryable.klass_for_association(join)
+
+        q = ["INNER JOIN"]
+        q.push association_klass.table_name
+        q.push "ON"
+        q.push association_klass.table_name + "." + queryable.foreign_key_for_association(join).to_s
+        q.push "="
+        q.push queryable.table_name + '.' + queryable.primary_key_field
+        q.join(" ")
+      end
+
+      private def self.join_through(queryable, join)
+        association_klass = queryable.klass_for_association(join)
+        join_klass = queryable.klass_for_association(queryable.through_key_for_association(join).as(Symbol))
+
+        q = ["INNER JOIN"]
+        q.push join_klass.table_name
+        q.push "ON"
+        q.push join_klass.table_name + "." + queryable.foreign_key_for_association(join).to_s
+        q.push "="
+        q.push queryable.table_name + "." + queryable.primary_key_field
+        q.push "INNER JOIN"
+        q.push association_klass.table_name
+        q.push "ON"
+        q.push association_klass.table_name + "." + association_klass.primary_key_field
+        q.push "="
+        q.push join_klass.table_name + "." + join_klass.foreign_key_for_association(association_klass).to_s
+        q.join(" ")
       end
 
       private def self.order_bys(query)

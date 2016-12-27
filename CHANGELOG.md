@@ -5,6 +5,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 * Mysql Adapter
+* moved association `preload` to `Query` instead of `Repo.all` option
+* joins queries and `has_many through` associations
 
 # [0.3.0] 2016-12-17
 * Check for result.rows.size in queries - [@neovintage](https://github.com/neovintage)
