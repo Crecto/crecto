@@ -219,15 +219,44 @@ module Crecto
 
       private def self.joins(queryable, query, params)
         joins = query.joins.map do |join|
-          q = ["INNER JOIN"]
-          q.push queryable.klass_for_association(join).table_name
-          q.push "ON"
-          q.push queryable.klass_for_association(join).table_name + "." + queryable.foreign_key_for_association(join).to_s
-          q.push "="
-          q.push queryable.table_name + '.' + queryable.primary_key_field
-          q.join(" ")
+          if queryable.through_key_for_association(join)
+            join_through(queryable, join)
+          else
+            join_single(queryable, join)
+          end
         end
         joins.join(" ")
+      end
+
+      private def self.join_single(queryable, join)
+        association_klass = queryable.klass_for_association(join)
+
+        q = ["INNER JOIN"]
+        q.push association_klass.table_name
+        q.push "ON"
+        q.push association_klass.table_name + "." + queryable.foreign_key_for_association(join).to_s
+        q.push "="
+        q.push queryable.table_name + '.' + queryable.primary_key_field
+        q.join(" ")
+      end
+
+      private def self.join_through(queryable, join)
+        association_klass = queryable.klass_for_association(join)
+        join_klass = queryable.klass_for_association(queryable.through_key_for_association(join).as(Symbol))
+
+        q = ["INNER JOIN"]
+        q.push join_klass.table_name
+        q.push "ON"
+        q.push join_klass.table_name + "." + queryable.foreign_key_for_association(join).to_s
+        q.push "="
+        q.push queryable.table_name + "." + queryable.primary_key_field
+        q.push "INNER JOIN"
+        q.push association_klass.table_name
+        q.push "ON"
+        q.push association_klass.table_name + "." + association_klass.primary_key_field
+        q.push "="
+        q.push join_klass.table_name + "." + join_klass.foreign_key_for_association(association_klass).to_s
+        q.join(" ")
       end
 
       private def self.order_bys(query)

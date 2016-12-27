@@ -144,7 +144,7 @@ describe Crecto do
       end
 
       it "should not return a user if not in db" do
-        user = Crecto::Repo.get(User, 1)
+        user = Crecto::Repo.get(User, 99999)
         user.nil?.should be_true
       end
     end
@@ -162,7 +162,7 @@ describe Crecto do
       end
 
       it "should not return a row" do
-        user = Crecto::Repo.get_by(User, id: 1)
+        user = Crecto::Repo.get_by(User, id: 99999)
         user.nil?.should be_true
       end
     end
