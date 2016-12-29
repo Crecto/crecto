@@ -4,6 +4,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+
+# [0.3.1] 2016-12-28
 * Mysql Adapter
 * moved association `preload` to `Query` instead of `Repo.all` option
 * joins queries and `has_many through` associations
@@ -32,5 +34,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Query
 * Postgres Adapter
 
+[0.3.1]: https://github.com/fridgerator/crecto/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/fridgerator/crecto/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/fridgerator/crecto/compare/0.1.0...v0.2.0

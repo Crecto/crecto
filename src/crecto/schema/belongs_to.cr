@@ -1,6 +1,7 @@
 module Crecto
   module Schema
     module BelongsTo
+      # :nodoc:
       VALID_BELONGS_TO_OPTIONS = [:foreign_key]
 
       macro belongs_to(association_name, klass, **opts)

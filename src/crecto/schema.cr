@@ -1,13 +1,9 @@
 module Crecto
   # Schema is used to define the table name, and inside the schema block define the database field (column) names.
   #
-  # Include this module and then define `schema` and `field` in your class
-  #
   # example:
   # ```
-  # class Uer
-  #   include Crecto::Schema
-  #
+  # class User < Crecot::Model
   #   schema "users" do
   #     field :name, String
   #   end
@@ -34,11 +30,15 @@ module Crecto
   # * `updated_at_field nil` - dont use the updated_at timestamp
   #
   module Schema
-    # Class constants
+    # :nodoc:
     CREATED_AT_FIELD         = "created_at"
+    # :nodoc:
     UPDATED_AT_FIELD         = "updated_at"
+    # :nodoc:
     PRIMARY_KEY_FIELD        = "id"
+    # :nodoc:
     PRIMARY_KEY_FIELD_SYMBOL = :id
+    # :nodoc:
     ASSOCIATIONS             = Array(NamedTuple(association_type: Symbol,
     key: Symbol,
     this_klass: Model.class,
@@ -113,7 +113,6 @@ module Crecto
     end
 
     # :nodoc:
-    # Check the field type is valid
     macro check_type!(field_name, field_type)
       {% unless VALID_FIELD_TYPES.includes?(field_type) %}
         raise Crecto::InvalidType.new("{{field_name}} type must be one of #{VALID_FIELD_TYPES.join(", ")}")
@@ -121,6 +120,8 @@ module Crecto
     end
 
     # Setup extended methods
+
+    # :nodoc:
     macro setup
       def initialize
       end

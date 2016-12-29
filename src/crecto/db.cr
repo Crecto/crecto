@@ -1,6 +1,8 @@
 #
 # 	Override crystal-pg `self.drivers` be public so we can see which driver is being used
 #
+
+# :nodoc:
 module DB
   def self.drivers
     @@drivers ||= {} of String => Driver.class

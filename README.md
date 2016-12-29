@@ -6,6 +6,8 @@ Database wrapper for Crystal.  Inspired by [Ecto](https://github.com/elixir-ecto
 
 [![Build Status](https://travis-ci.org/fridgerator/crecto.svg?branch=master)](https://travis-ci.org/fridgerator/crecto) [![Join the chat at https://gitter.im/crecto/Lobby](https://badges.gitter.im/crecto/Lobby.svg)](https://gitter.im/crecto/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+#### [Docs](http://docs.crecto.com)
+
 ## Installation
 
 Add this to your application's `shard.yml`:
@@ -34,12 +36,12 @@ Make sure you have `ENV["MYSQL_URL"]` set
 
 #### Roadmap (in no particular order)
 
-- [ ] specify `select` in query
 - [x] MySQL adapter
 - [ ] SQLite adapter
 - [x] Associations
 - [x] Preload
 - [x] Joins
+- [ ] Association / dependent options (`dependent: :delete_all`, `dependent: :nilify_all`, etc)
 
 ## Usage
 

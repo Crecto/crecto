@@ -1,5 +1,6 @@
 module Crecto
   module Schema
+  	# This hasn't been done yet
     module HasOne
       VALID_HAS_ONE_OPTIONS = [:foreign_key]
 

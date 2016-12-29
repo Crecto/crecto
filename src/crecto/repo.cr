@@ -2,14 +2,17 @@ module Crecto
   # A repository maps to an underlying data store, controlled by the adapter.
   module Repo
     # Set Adapter
+
+    # :nodoc:
     ADAPTER = if DB.drivers.keys.includes?("mysql")
                 Crecto::Adapters::Mysql
-              else
-                DB.drivers.keys.includes?("postgres") || DB.drivers.keys.includes?("postgresql")
+              elsif DB.drivers.keys.includes?("postgres") || DB.drivers.keys.includes?("postgresql")
                 Crecto::Adapters::Postgres
+              else
+                raise Crecto::InvalidAdapter.new("Invalid or no adapter specified")
               end
 
-    # Return a list of `queryable` instances using the *query* param
+    # Return a list of *queryable* instances using *query*
     #
     # ```
     # query = Query.where(name: "fred")
@@ -28,28 +31,28 @@ module Crecto
       results
     end
 
+    # Return a list of *queryable* instances
+    #
+    # ```
+    # user = Crecto::Repo.get(User, 1)
+    # posts = Repo.all(user, :post)
+    # ```
     def self.all(queryable_instance, association_name : Symbol)
       query = Crecto::Repo::Query.where(queryable_instance.class.foreign_key_for_association(association_name), queryable_instance.pkey_value)
       all(queryable_instance.class.klass_for_association(association_name), query)
     end
 
-    private def self.add_preloads(results, queryable, preloads)
-      preloads.each do |preload|
-        case queryable.association_type_for_association(preload)
-        when :has_many
-          has_many_preload(results, queryable, preload)
-        when :belongs_to
-          belongs_to_preload(results, queryable, preload)
-        end
-      end
-    end
-
+    # Returns a list of *queryable* instances.  Accepts an optional `query`
+    #
+    # ```
+    # users = Crecto::Repo.all(User)
+    # ```
     def self.all(queryable, query = Query.new)
       query = ADAPTER.run(:all, queryable, query).as(DB::ResultSet)
       queryable.from_rs(query)
     end
 
-    # Return a single insance of `queryable` by primary key with *id*.
+    # Return a single insance of *queryable* by primary key with *id*.
     #
     # ```
     # user = Repo.get(User, 1)
@@ -60,7 +63,7 @@ module Crecto
       results.first if results.any?
     end
 
-    # Return a single instance of `queryable` using the *query* param
+    # Return a single instance of *queryable* using the *query* param
     #
     # ```
     # user = Repo.get_by(User, name: "fred", age: 21)
@@ -215,6 +218,17 @@ module Crecto
     # ```
     def self.query(sql : String, params = [] of DbValue)
       ADAPTER.run(:sql, sql, params)
+    end
+
+    private def self.add_preloads(results, queryable, preloads)
+      preloads.each do |preload|
+        case queryable.association_type_for_association(preload)
+        when :has_many
+          has_many_preload(results, queryable, preload)
+        when :belongs_to
+          belongs_to_preload(results, queryable, preload)
+        end
+      end
     end
 
     private def self.has_many_preload(results, queryable, preload)
