@@ -42,6 +42,7 @@ Make sure you have `ENV["MYSQL_URL"]` set
 - [x] Preload
 - [x] Joins
 - [ ] Association / dependent options (`dependent: :delete_all`, `dependent: :nilify_all`, etc)
+- [ ] Unique constraint
 
 ## Usage
 

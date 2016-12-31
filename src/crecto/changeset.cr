@@ -121,7 +121,7 @@ module Crecto
     def validate_acceptance
     end
 
-    # TODO: not done
+    # TODO: not done - https://hexdocs.pm/ecto/Ecto.Changeset.html#unique_constraint/3
     def unique_constraint
     end
 

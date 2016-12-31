@@ -1,3 +1,5 @@
+require "db"
+
 module Crecto
   # Schema is used to define the table name, and inside the schema block define the database field (column) names.
   #
