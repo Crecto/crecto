@@ -26,11 +26,25 @@ Include [crystal-pg](https://github.com/will/crystal-pg) in your project
 
 Make sure you have `ENV["PG_URL"]` set
 
+in your application:
+
+```
+require "pg"
+require "crecto"
+```
+
 #### Mysql
 
 Include [crystal-mysql](https://github.com/crystal-lang/crystal-mysql) in your project
 
 Make sure you have `ENV["MYSQL_URL"]` set
+
+in your application:
+
+```
+require "mysql"
+require "crecto"
+```
 
 ## TODO
 
