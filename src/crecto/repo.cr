@@ -23,6 +23,7 @@ module Crecto
       return nil if q.nil?
 
       results = queryable.from_rs(q.as(DB::ResultSet))
+      q.as(DB::ResultSet).close
 
       if query.preloads.any?
         add_preloads(results, queryable, query.preloads)
@@ -48,8 +49,10 @@ module Crecto
     # users = Crecto::Repo.all(User)
     # ```
     def self.all(queryable, query = Query.new)
-      query = ADAPTER.run(:all, queryable, query).as(DB::ResultSet)
-      queryable.from_rs(query)
+      q = ADAPTER.run(:all, queryable, query).as(DB::ResultSet)
+      results = queryable.from_rs(q)
+      q.close
+      results
     end
 
     # Return a single insance of *queryable* by primary key with *id*.
@@ -58,8 +61,9 @@ module Crecto
     # user = Repo.get(User, 1)
     # ```
     def self.get(queryable, id)
-      query = ADAPTER.run(:get, queryable, id).as(DB::ResultSet)
-      results = queryable.from_rs(query)
+      q = ADAPTER.run(:get, queryable, id).as(DB::ResultSet)
+      results = queryable.from_rs(q)
+      q.close
       results.first if results.any?
     end
 
@@ -69,8 +73,9 @@ module Crecto
     # user = Repo.get_by(User, name: "fred", age: 21)
     # ```
     def self.get_by(queryable, **opts)
-      query = ADAPTER.run(:all, queryable, Query.where(**opts).limit(1)).as(DB::ResultSet)
-      results = queryable.from_rs(query)
+      q = ADAPTER.run(:all, queryable, Query.where(**opts).limit(1)).as(DB::ResultSet)
+      results = queryable.from_rs(q)
+      q.close
       results.first if results.any?
     end
 
@@ -93,6 +98,7 @@ module Crecto
         changeset.add_error("insert_error", "Insert Failed")
       else
         new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first
+        query.as(DB::ResultSet).close
         changeset = new_instance.class.changeset(new_instance) if new_instance
       end
 
@@ -128,6 +134,7 @@ module Crecto
         changeset.add_error("update_error", "Update Failed")
       else
         new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first
+        query.as(DB::ResultSet).close
         changeset = new_instance.class.changeset(new_instance) if new_instance
       end
 
@@ -169,6 +176,7 @@ module Crecto
         changeset.add_error("delete_error", "Delete Failed")
       else
         new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first
+        query.as(DB::ResultSet).close
         changeset = new_instance.class.changeset(new_instance) if new_instance
       end
 
@@ -204,8 +212,10 @@ module Crecto
     # Repo.query(User, "select * from users where id > ?", [30])
     # ```
     def self.query(queryable, sql : String, params = [] of DbValue)
-      query = ADAPTER.run(:sql, sql, params).as(DB::ResultSet)
-      queryable.from_rs(query)
+      q = ADAPTER.run(:sql, sql, params).as(DB::ResultSet)
+      results = queryable.from_rs(q)
+      q.close
+      results
     end
 
     # Run aribtrary sql. `query` will pass a PG::ResultSet as
