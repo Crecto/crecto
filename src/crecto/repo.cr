@@ -67,6 +67,25 @@ module Crecto
       results.first if results.any?
     end
 
+    # Return a single insance of *queryable* by primary key with *id*.
+    # Can pass a Query for the purpose of preloading associations
+    #
+    # ```
+    # query = Query.preload(:posts)
+    # user = Repo.get(User, 1, query)
+    # ```
+    def self.get(queryable, id, query : Query)
+      q = ADAPTER.run(:get, queryable, id).as(DB::ResultSet)
+      results = queryable.from_rs(q)
+      q.close
+
+      if query.preloads.any?
+        add_preloads(results, queryable, query.preloads)
+      end
+
+      results.first if results.any?
+    end
+
     # Return a single instance of *queryable* using the *query* param
     #
     # ```
