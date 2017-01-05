@@ -31,15 +31,15 @@ module Crecto
   #
   module Schema
     # :nodoc:
-    CREATED_AT_FIELD         = "created_at"
+    CREATED_AT_FIELD = "created_at"
     # :nodoc:
-    UPDATED_AT_FIELD         = "updated_at"
+    UPDATED_AT_FIELD = "updated_at"
     # :nodoc:
-    PRIMARY_KEY_FIELD        = "id"
+    PRIMARY_KEY_FIELD = "id"
     # :nodoc:
     PRIMARY_KEY_FIELD_SYMBOL = :id
     # :nodoc:
-    ASSOCIATIONS             = Array(NamedTuple(association_type: Symbol,
+    ASSOCIATIONS = Array(NamedTuple(association_type: Symbol,
     key: Symbol,
     this_klass: Model.class,
     klass: Model.class,
@@ -138,6 +138,7 @@ module Crecto
       {% end %}
 
       DB.mapping({ {{mapping.uniq.join(", ").id}} })
+      JSON.mapping({ {{mapping.uniq.join(", ").id}} })
 
       # Builds a hash from all `FIELDS` defined
       def to_query_hash
