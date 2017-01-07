@@ -336,6 +336,15 @@ describe Crecto do
         user.projects.as(Array).size.should eq 1
       end
 
+      it "shoud not preload if there are no 'through' associated records" do
+        user = User.new
+        user.name = "tester"
+        user = Crecto::Repo.insert(user).instance
+
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).preload(:projects)).as(Array)
+        users[0].projects.should eq(nil)
+      end
+
       it "should preload the belongs_to association" do
         user = User.new
         user.name = "tester"

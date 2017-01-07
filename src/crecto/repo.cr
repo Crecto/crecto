@@ -289,7 +289,7 @@ module Crecto
       join_query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(preload), ids)
       # UserProjects
       join_table_items = all(queryable.klass_for_association(queryable.through_key_for_association(preload).as(Symbol)), join_query)
-      unless join_table_items.nil?
+      unless join_table_items.nil? || join_table_items.empty?
         # array of Project id's
         join_ids = join_table_items.map { |i| queryable.klass_for_association(preload).foreign_key_value_for_association(queryable.through_key_for_association(preload).as(Symbol), i) }
         association_query = Crecto::Repo::Query.where(queryable.klass_for_association(preload).primary_key_field_symbol, join_ids)

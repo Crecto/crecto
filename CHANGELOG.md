@@ -4,6 +4,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+* fixed has_many through preloads when join association doesn’t exist
 
 # [0.3.1] 2016-12-28
 * Mysql Adapter
