@@ -176,8 +176,12 @@ module Crecto
     # query = Crecto::Repo::Query.where(name: "Ted", count: 0)
     # Repo.update_all(User, query, {count: 1, date: Time.now})
     # ```
-    def self.update_all(queryable, query, update_hash)
+    def self.update_all(queryable, query, update_hash : Hash)
       query = ADAPTER.run(:update_all, queryable, query, update_hash)
+    end
+
+    def self.update_all(queryable, query, update_hash : NamedTuple)
+      update_all(queryable, query, update_hash.to_h)
     end
 
     # Delete a shema instance from the data store.
