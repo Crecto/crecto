@@ -73,7 +73,7 @@ class User < Crecto::Model
     field :name, String
     field :is_admin, Bool
     field :temporary_info, Float64, virtual: true
-    has_many :posts
+    has_many :posts, Post
   end
 
   validate_required [:name, :age]
@@ -84,7 +84,7 @@ class Post < Crecto::Model
   
   schema "posts" do
     field :user_id, PkValue
-    belongs_to :user
+    belongs_to :user, User
   end
 end
 
