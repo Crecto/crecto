@@ -18,9 +18,8 @@ module Crecto
     # query = Query.where(name: "fred")
     # users = Repo.all(User, query)
     # ```
-    def self.all(queryable, query : Query? = Query.new, **opts)
-      q = ADAPTER.run(:all, queryable, query)
-      return nil if q.nil?
+    def self.all(queryable, query : Query? = Query.new, **opts) : Array
+      q = ADAPTER.run(:all, queryable, query).as(DB::ResultSet)
 
       results = queryable.from_rs(q.as(DB::ResultSet))
       q.as(DB::ResultSet).close
@@ -38,7 +37,7 @@ module Crecto
     # user = Crecto::Repo.get(User, 1)
     # posts = Repo.all(user, :post)
     # ```
-    def self.all(queryable_instance, association_name : Symbol)
+    def self.all(queryable_instance, association_name : Symbol) : Array
       query = Crecto::Repo::Query.where(queryable_instance.class.foreign_key_for_association(association_name), queryable_instance.pkey_value)
       all(queryable_instance.class.klass_for_association(association_name), query)
     end
@@ -48,7 +47,7 @@ module Crecto
     # ```
     # users = Crecto::Repo.all(User)
     # ```
-    def self.all(queryable, query = Query.new)
+    def self.all(queryable, query = Query.new) : Array
       q = ADAPTER.run(:all, queryable, query).as(DB::ResultSet)
       results = queryable.from_rs(q)
       q.close
@@ -234,7 +233,7 @@ module Crecto
     # ```
     # Repo.query(User, "select * from users where id > ?", [30])
     # ```
-    def self.query(queryable, sql : String, params = [] of DbValue)
+    def self.query(queryable, sql : String, params = [] of DbValue) : Array
       q = ADAPTER.run(:sql, sql, params).as(DB::ResultSet)
       results = queryable.from_rs(q)
       q.close
@@ -249,8 +248,8 @@ module Crecto
     # ```
     # query = Crecto::Repo.query("select * from users where id = ?", [30])
     # ```
-    def self.query(sql : String, params = [] of DbValue)
-      ADAPTER.run(:sql, sql, params)
+    def self.query(sql : String, params = [] of DbValue) : DB::ResultSet
+      ADAPTER.run(:sql, sql, params).as(DB::ResultSet)
     end
 
     private def self.add_preloads(results, queryable, preloads)
