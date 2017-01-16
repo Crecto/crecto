@@ -259,6 +259,37 @@ describe Crecto do
       end
     end
 
+    describe "has_one" do
+      it "should load the association" do
+        user = User.new
+        user.name = "fridge"
+        user = Crecto::Repo.insert(user).instance
+
+        post = Post.new
+        post.user_id = user.id.as(Int32)
+        Crecto::Repo.insert(post)
+        post = Crecto::Repo.insert(post).instance
+
+        post = Crecto::Repo.get(user, :post)
+        post.class.should eq(Post)
+      end
+
+      it "should preload the association" do
+        user = User.new
+        user.name = "fridge"
+        user = Crecto::Repo.insert(user).instance
+
+        post = Post.new
+        post.user_id = user.id.as(Int32)
+        Crecto::Repo.insert(post)
+        post = Crecto::Repo.insert(post).instance
+
+        query = Crecto::Repo::Query.where(id: user.id).preload(:post)
+        users = Crecto::Repo.all(User, query)
+        users[0].post.should_not be_nil
+      end
+    end
+
     describe "has_many" do
       it "should load associations" do
         user = User.new
