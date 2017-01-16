@@ -57,8 +57,7 @@ describe Crecto do
           .order_by("users.things DESC")
           .limit(1)
         users = Crecto::Repo.all(User, query)
-        users = users.as(Array)
-        users.as(Array).size.should be > 0
+        users.size.should be > 0
       end
 
       it "should accept an array" do
@@ -66,14 +65,12 @@ describe Crecto do
           .where(name: ["fridge", "steve"])
 
         users = Crecto::Repo.all(User, query)
-        users = users.as(Array)
         users.size.should be > 0
 
         query = Crecto::Repo::Query
           .where(things: [123, 999])
 
         users = Crecto::Repo.all(User, query)
-        users = users.as(Array)
         users.size.should be > 0
       end
 
@@ -88,13 +85,13 @@ describe Crecto do
             .or_where(name: "or_where_user", things: 999)
 
           users = Crecto::Repo.all(User, query)
-          users.as(Array).size.should be > 0
+          users.size.should be > 0
 
           query = Crecto::Repo::Query
             .or_where(name: "dlkjf9f9ddf", things: 123)
 
           users = Crecto::Repo.all(User, query)
-          users.as(Array).size.should be > 0
+          users.size.should be > 0
         end
       end
     end
@@ -123,7 +120,7 @@ describe Crecto do
 
       it "should accept a query with parameters and cast result" do
         query = Crecto::Repo.query(User, "select * from users where name = ?", ["awesome-dude"])
-        query.as(Array).size.should eq(1)
+        query.size.should eq(1)
         query[0].is_a?(User).should be_true
       end
     end
@@ -233,17 +230,17 @@ describe Crecto do
         user = User.new
         user.name = "updated_all"
         user.things = 872384732
-        Crecto::Repo.insert(user).instance.as(User).id
+        Crecto::Repo.insert(user).instance.id
 
         user = User.new
         user.name = "updated_all"
         user.things = 98347598
-        Crecto::Repo.insert(user).instance.as(User).id
+        Crecto::Repo.insert(user).instance.id
 
         user = User.new
         user.name = "not_updated_all"
         user.things = 2334234
-        id3 = Crecto::Repo.insert(user).instance.as(User).id
+        id3 = Crecto::Repo.insert(user).instance.id
 
         query = Crecto::Repo::Query
           .where(name: "updated_all")
@@ -251,7 +248,7 @@ describe Crecto do
         Crecto::Repo.update_all(User, query, {:things => 42})
 
         # should update first two
-        users = Crecto::Repo.all(User, query).as(Array)
+        users = Crecto::Repo.all(User, query)
         users.each do |user|
           user.things.should eq(42)
         end
@@ -259,6 +256,37 @@ describe Crecto do
         # should not update the last
         user = Crecto::Repo.get(User, id3).as(User)
         user.things.should eq(2334234)
+      end
+    end
+
+    describe "has_one" do
+      it "should load the association" do
+        user = User.new
+        user.name = "fridge"
+        user = Crecto::Repo.insert(user).instance
+
+        post = Post.new
+        post.user_id = user.id.as(Int32)
+        Crecto::Repo.insert(post)
+        post = Crecto::Repo.insert(post).instance
+
+        post = Crecto::Repo.get(user, :post)
+        post.class.should eq(Post)
+      end
+
+      it "should preload the association" do
+        user = User.new
+        user.name = "fridge"
+        user = Crecto::Repo.insert(user).instance
+
+        post = Post.new
+        post.user_id = user.id.as(Int32)
+        Crecto::Repo.insert(post)
+        post = Crecto::Repo.insert(post).instance
+
+        query = Crecto::Repo::Query.where(id: user.id).preload(:post)
+        users = Crecto::Repo.all(User, query)
+        users[0].post.should_not be_nil
       end
     end
 
@@ -277,13 +305,13 @@ describe Crecto do
         address.user_id = user.id.as(Int32)
         Crecto::Repo.insert(address)
 
-        posts = Crecto::Repo.all(user, :posts).as(Array)
+        posts = Crecto::Repo.all(user, :posts).as(Array(Post))
         posts.size.should eq(2)
-        posts[0].as(Post).user_id.should eq(user.id)
+        posts[0].user_id.should eq(user.id)
 
-        addresses = Crecto::Repo.all(user, :addresses).as(Array)
+        addresses = Crecto::Repo.all(user, :addresses).as(Array(Address))
         addresses.size.should eq(1)
-        addresses[0].as(Address).user_id.should eq(user.id)
+        addresses[0].user_id.should eq(user.id)
       end
     end
 
@@ -313,8 +341,8 @@ describe Crecto do
         Crecto::Repo.insert(post)
         Crecto::Repo.insert(post)
 
-        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).preload(:posts)).as(Array)
-        users[0].posts.as(Array).size.should eq(2)
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).preload(:posts))
+        users[0].posts.not_nil!.size.should eq(2)
       end
 
       it "should preload the has_many through association" do
@@ -330,10 +358,10 @@ describe Crecto do
         user_project.user = user
         user_project = Crecto::Repo.insert(user_project).instance
 
-        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).preload(:projects)).as(Array)
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).preload(:projects))
         user = users[0]
-        user.user_projects.as(Array).size.should eq 1
-        user.projects.as(Array).size.should eq 1
+        user.user_projects.not_nil!.size.should eq 1
+        user.projects.not_nil!.size.should eq 1
       end
 
       it "shoud not preload if there are no 'through' associated records" do
@@ -341,7 +369,7 @@ describe Crecto do
         user.name = "tester"
         user = Crecto::Repo.insert(user).instance
 
-        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).preload(:projects)).as(Array)
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).preload(:projects))
         users[0].projects.should eq(nil)
       end
 
@@ -354,7 +382,7 @@ describe Crecto do
         post.user_id = user.id.as(Int32)
         post = Crecto::Repo.insert(post).instance
 
-        posts = Crecto::Repo.all(Post, Crecto::Repo::Query.where(id: post.id).preload(:user)).as(Array)
+        posts = Crecto::Repo.all(Post, Crecto::Repo::Query.where(id: post.id).preload(:user))
         posts[0].user.as(User).id.should eq(user.id)
       end
 
@@ -375,14 +403,14 @@ describe Crecto do
         user.name = "tester"
         user = Crecto::Repo.insert(user).instance
 
-        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:posts)).as(Array)
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:posts))
         users.empty?.should eq true
 
         post = Post.new
         post.user = user
         post = Crecto::Repo.insert(post).instance
 
-        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:posts)).as(Array)
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:posts))
         users.size.should eq 1
       end
     end
@@ -393,7 +421,7 @@ describe Crecto do
         user.name = "tester"
         user = Crecto::Repo.insert(user).instance
 
-        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:projects)).as(Array)
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:projects))
         users.size.should eq 0
 
         project = Project.new
@@ -404,7 +432,7 @@ describe Crecto do
         user_project.user = user
         user_project = Crecto::Repo.insert(user_project).instance
 
-        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:projects)).as(Array)
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:projects))
         users.size.should eq 1
       end
     end
@@ -420,25 +448,25 @@ describe Crecto do
         Crecto::Repo.delete_all(UserDifferentDefaults)
         Crecto::Repo.delete_all(UserLargeDefaults)
 
-        user_projects = Crecto::Repo.all(UserProject).as(Array)
+        user_projects = Crecto::Repo.all(UserProject)
         user_projects.size.should eq 0
 
-        projects = Crecto::Repo.all(Project).as(Array)
+        projects = Crecto::Repo.all(Project)
         projects.size.should eq 0
 
-        posts = Crecto::Repo.all(Post).as(Array)
+        posts = Crecto::Repo.all(Post)
         posts.size.should eq 0
 
-        addresses = Crecto::Repo.all(Address).as(Array)
+        addresses = Crecto::Repo.all(Address)
         addresses.size.should eq 0
 
-        users = Crecto::Repo.all(User).as(Array)
+        users = Crecto::Repo.all(User)
         users.size.should eq 0
 
-        users = Crecto::Repo.all(UserDifferentDefaults).as(Array)
+        users = Crecto::Repo.all(UserDifferentDefaults)
         users.size.should eq 0
 
-        users = Crecto::Repo.all(UserLargeDefaults).as(Array)
+        users = Crecto::Repo.all(UserLargeDefaults)
         users.size.should eq 0
       end
     end

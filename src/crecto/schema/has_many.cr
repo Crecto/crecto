@@ -30,8 +30,8 @@ module Crecto
               item.as({{klass}}).{{foreign_key.id}}.as(PkeyValue)
             {% end %}
           },
-          set_association: ->(self_item : Crecto::Model, items : Array(Crecto::Model)){
-            self_item.as({{@type}}).{{association_name.id}} = items.map{|i| i.as({{klass}}) }
+          set_association: ->(self_item : Crecto::Model, items : Array(Crecto::Model) | Crecto::Model){
+            self_item.as({{@type}}).{{association_name.id}} = items.as(Array(Crecto::Model)).map{|i| i.as({{klass}}) }
             nil
           },
           through: {{through}}

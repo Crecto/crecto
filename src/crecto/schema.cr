@@ -45,7 +45,7 @@ module Crecto
     klass: Model.class,
     foreign_key: Symbol,
     foreign_key_value: Proc(Model, PkeyValue),
-    set_association: Proc(Model, Array(Model), Nil),
+    set_association: Proc(Model, (Array(Crecto::Model) | Model), Nil),
     through: Symbol?)).new
 
     # schema block macro

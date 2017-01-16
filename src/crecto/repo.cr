@@ -18,9 +18,8 @@ module Crecto
     # query = Query.where(name: "fred")
     # users = Repo.all(User, query)
     # ```
-    def self.all(queryable, query : Query? = Query.new, **opts)
-      q = ADAPTER.run(:all, queryable, query)
-      return nil if q.nil?
+    def self.all(queryable, query : Query? = Query.new, **opts) : Array
+      q = ADAPTER.run(:all, queryable, query).as(DB::ResultSet)
 
       results = queryable.from_rs(q.as(DB::ResultSet))
       q.as(DB::ResultSet).close
@@ -36,9 +35,9 @@ module Crecto
     #
     # ```
     # user = Crecto::Repo.get(User, 1)
-    # posts = Repo.all(user, :post)
+    # posts = Repo.all(user, :posts)
     # ```
-    def self.all(queryable_instance, association_name : Symbol)
+    def self.all(queryable_instance, association_name : Symbol) : Array
       query = Crecto::Repo::Query.where(queryable_instance.class.foreign_key_for_association(association_name), queryable_instance.pkey_value)
       all(queryable_instance.class.klass_for_association(association_name), query)
     end
@@ -48,7 +47,7 @@ module Crecto
     # ```
     # users = Crecto::Repo.all(User)
     # ```
-    def self.all(queryable, query = Query.new)
+    def self.all(queryable, query = Query.new) : Array
       q = ADAPTER.run(:all, queryable, query).as(DB::ResultSet)
       results = queryable.from_rs(q)
       q.close
@@ -84,6 +83,17 @@ module Crecto
       end
 
       results.first if results.any?
+    end
+
+    # Return a *queryable* instance
+    #
+    # ```
+    # user = Crecto::Repo.get(User, 1)
+    # post = Repo.all(user, :post)
+    # ```
+    def self.get(queryable_instance, association_name : Symbol)
+      results = all(queryable_instance, association_name)
+      results[0] if results.any?
     end
 
     # Return a single instance of *queryable* using the *query* param
@@ -234,7 +244,7 @@ module Crecto
     # ```
     # Repo.query(User, "select * from users where id > ?", [30])
     # ```
-    def self.query(queryable, sql : String, params = [] of DbValue)
+    def self.query(queryable, sql : String, params = [] of DbValue) : Array
       q = ADAPTER.run(:sql, sql, params).as(DB::ResultSet)
       results = queryable.from_rs(q)
       q.close
@@ -249,8 +259,8 @@ module Crecto
     # ```
     # query = Crecto::Repo.query("select * from users where id = ?", [30])
     # ```
-    def self.query(sql : String, params = [] of DbValue)
-      ADAPTER.run(:sql, sql, params)
+    def self.query(sql : String, params = [] of DbValue) : DB::ResultSet
+      ADAPTER.run(:sql, sql, params).as(DB::ResultSet)
     end
 
     private def self.add_preloads(results, queryable, preloads)
@@ -258,9 +268,19 @@ module Crecto
         case queryable.association_type_for_association(preload)
         when :has_many
           has_many_preload(results, queryable, preload)
+        when :has_one
+          has_one_preload(results, queryable, preload)
         when :belongs_to
           belongs_to_preload(results, queryable, preload)
         end
+      end
+    end
+
+    private def self.has_one_preload(results, queryable, preload)
+      query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(preload), results[0].pkey_value)
+      relation_item = all(queryable.klass_for_association(preload), query)
+      unless relation_item.nil? || relation_item.empty?
+        queryable.set_value_for_association(preload, results[0], relation_item[0])
       end
     end
 

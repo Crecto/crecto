@@ -27,8 +27,12 @@ module Crecto
           this_klass: {{@type}},
           klass: {{klass}},
           foreign_key: {{foreign_key.id.symbolize}},
-          foreign_key_value: ->(item : Crecto::Model){ item.as({{@type}}).{{foreign_key.id}}.as(PkeyValue) },
-          set_association: ->(self_item : Crecto::Model, items : Array(Crecto::Model)){ self_item.as({{@type}}).{{association_name.id}} = items[0].as({{klass}});nil },
+          foreign_key_value: ->(item : Crecto::Model){
+            item.as({{@type}}).{{foreign_key.id}}.as(PkeyValue)
+          },
+          set_association: ->(self_item : Crecto::Model, items : Array(Crecto::Model) | Crecto::Model){
+            self_item.as({{@type}}).{{association_name.id}} = items.as(Array(Crecto::Model))[0].as({{klass}});nil
+          },
           through: nil
         })
       end
