@@ -51,6 +51,7 @@ require "crecto"
 #### Roadmap (in no particular order)
 
 - [x] has_one
+- [ ] insert_all
 - [x] MySQL adapter
 - [ ] SQLite adapter
 - [x] Associations
