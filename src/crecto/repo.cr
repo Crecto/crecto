@@ -35,7 +35,7 @@ module Crecto
     #
     # ```
     # user = Crecto::Repo.get(User, 1)
-    # posts = Repo.all(user, :post)
+    # posts = Repo.all(user, :posts)
     # ```
     def self.all(queryable_instance, association_name : Symbol) : Array
       query = Crecto::Repo::Query.where(queryable_instance.class.foreign_key_for_association(association_name), queryable_instance.pkey_value)
@@ -83,6 +83,17 @@ module Crecto
       end
 
       results.first if results.any?
+    end
+
+    # Return a *queryable* instance
+    #
+    # ```
+    # user = Crecto::Repo.get(User, 1)
+    # post = Repo.all(user, :post)
+    # ```
+    def self.get(queryable_instance, association_name : Symbol)
+      results = all(queryable_instance, association_name)
+      results[0] if results.any?
     end
 
     # Return a single instance of *queryable* using the *query* param
@@ -257,9 +268,19 @@ module Crecto
         case queryable.association_type_for_association(preload)
         when :has_many
           has_many_preload(results, queryable, preload)
+        when :has_one
+          has_one_preload(results, queryable, preload)
         when :belongs_to
           belongs_to_preload(results, queryable, preload)
         end
+      end
+    end
+
+    private def self.has_one_preload(results, queryable, preload)
+      query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(preload), results[0].pkey_value)
+      relation_item = all(queryable.klass_for_association(preload), query)
+      unless relation_item.nil? || relation_item.empty?
+        queryable.set_value_for_association(preload, results[0], relation_item[0])
       end
     end
 

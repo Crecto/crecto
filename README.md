@@ -50,11 +50,14 @@ require "crecto"
 
 #### Roadmap (in no particular order)
 
+- [x] has_one
 - [x] MySQL adapter
 - [ ] SQLite adapter
 - [x] Associations
 - [x] Preload
 - [x] Joins
+- [ ] [Embeds](https://robots.thoughtbot.com/embedding-elixir-structs-in-ecto-models)
+- [ ] Transactions / Multi
 - [ ] Association / dependent options (`dependent: :delete_all`, `dependent: :nilify_all`, etc)
 - [ ] Unique constraint
 
