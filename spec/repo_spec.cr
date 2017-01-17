@@ -470,5 +470,20 @@ describe Crecto do
         users.size.should eq 0
       end
     end
+
+    describe "#transaction" do
+      it "should have errors" do
+        user = User.new
+        user.name = "tester"
+        user = Crecto::Repo.insert(user).instance
+        user.name = nil
+
+        multi = Crecto::Multi.new
+        multi.update(user)
+
+        Crecto::Repo.transaction(multi)
+        multi.errors.should_not be_nil
+      end
+    end
   end
 end

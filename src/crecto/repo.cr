@@ -263,6 +263,17 @@ module Crecto
       ADAPTER.run(:sql, sql, params).as(DB::ResultSet)
     end
 
+    def self.transaction(multi : Crecto::Multi)
+      if multi.changesets_valid?
+        total_size = multi.inserts.size + multi.deletes.size + multi.delete_alls.size + multi.updates.size + multi.update_alls.size
+        puts "total_size : #{total_size}"
+        (1..total_size).each do |x|
+          puts "perform #{x}"
+        end
+      end
+      multi
+    end
+
     private def self.add_preloads(results, queryable, preloads)
       preloads.each do |preload|
         case queryable.association_type_for_association(preload)
