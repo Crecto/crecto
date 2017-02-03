@@ -475,14 +475,13 @@ describe Crecto do
       it "should have errors" do
         user = User.new
         user.name = "tester"
-        user = Crecto::Repo.insert(user).instance
-        user.name = nil
 
         multi = Crecto::Multi.new
-        multi.update(user)
+        multi.insert(user)
 
-        Crecto::Repo.transaction(multi)
-        multi.errors.should_not be_nil
+        x = Crecto::Repo.transaction(multi)
+        puts x
+        
       end
     end
   end

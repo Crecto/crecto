@@ -39,7 +39,7 @@ module Crecto
     end
 
     def changeset(instance)
-      Changeset(T).new(instance)
+      Changeset(T).new(instance.as(T))
     end
 
     # Validate that a *field* is present.

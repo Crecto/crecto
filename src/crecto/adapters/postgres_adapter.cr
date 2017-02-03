@@ -49,10 +49,10 @@ module Crecto
       end
 
       # Query data store in relation to a *queryable_instance* of Schema
-      def self.run_on_instance(operation, changeset)
+      def self.run_on_instance(operation, changeset, tx)
         case operation
         when :insert
-          insert(changeset)
+          insert(changeset, tx)
         when :update
           update(changeset)
         when :delete
@@ -60,14 +60,26 @@ module Crecto
         end
       end
 
-      def self.execute(query_string, params)
+      def self.run_on_instance(operation, changeset)
+        run_on_instance(operation, changeset, nil)
+      end
+
+      def self.get_db : DB::Database
         @@CRECTO_DB = DB.open(ENV["PG_URL"]) if @@CRECTO_DB.nil?
-        @@CRECTO_DB.as(DB::Database).query(query_string, params)
+        @@CRECTO_DB.as(DB::Database)
+      end
+
+      def self.execute(query_string, params)
+        get_db().query(query_string, params)
+      end
+
+      def self.execute(query_string, params, tx)
+        return execute(query_string, params) if tx.nil?
+        tx.connection.query(query_string, params)
       end
 
       def self.execute(query_string)
-        @@CRECTO_DB = DB.open(ENV["PG_URL"]) if @@CRECTO_DB.nil?
-        @@CRECTO_DB.as(DB::Database).query(query_string)
+        get_db().query(query_string)
       end
 
       private def self.get(queryable, id)
@@ -95,7 +107,7 @@ module Crecto
         execute(position_args(q.join(" ")), params)
       end
 
-      private def self.insert(changeset)
+      private def self.insert(changeset, tx)
         fields_values = instance_fields_and_values(changeset.instance)
 
         q = ["INSERT INTO"]
@@ -105,7 +117,7 @@ module Crecto
         q.push "(#{(1..fields_values[:values].size).map { "?" }.join(", ")})"
         q.push "RETURNING *"
 
-        execute(position_args(q.join(" ")), fields_values[:values])
+        execute(position_args(q.join(" ")), fields_values[:values], tx)
       end
 
       private def self.update_begin(table_name, fields_values)

@@ -114,14 +114,14 @@ module Crecto
     # user = User.new
     # Repo.insert(user)
     # ```
-    def self.insert(queryable_instance)
+    def self.insert(queryable_instance, tx : DB::Transaction?)
       changeset = queryable_instance.class.changeset(queryable_instance)
       return changeset unless changeset.valid?
 
       changeset.instance.updated_at_to_now
       changeset.instance.created_at_to_now
 
-      query = ADAPTER.run_on_instance(:insert, changeset)
+      query = ADAPTER.run_on_instance(:insert, changeset, tx)
 
       if query.nil?
         changeset.add_error("insert_error", "Insert Failed")
@@ -133,6 +133,10 @@ module Crecto
 
       changeset.action = :insert
       changeset
+    end
+
+    def self.insert(queryable_instance)
+      insert(queryable_instance, nil)
     end
 
     # Insert a changeset instance into the data store.
@@ -267,8 +271,20 @@ module Crecto
       if multi.changesets_valid?
         total_size = multi.inserts.size + multi.deletes.size + multi.delete_alls.size + multi.updates.size + multi.update_alls.size
         puts "total_size : #{total_size}"
-        (1..total_size).each do |x|
-          puts "perform #{x}"
+        ADAPTER.get_db().transaction do |tx|
+          (1..total_size).each do |x|
+            if inserts = multi.inserts.select{|i| i[:sortorder] == x}
+              insert(inserts[0][:instance], tx)
+            elsif deletes = multi.deletes.select{|i| i[:sortorder] == x}
+              puts "do delete for #{x}"
+            elsif delete_alls = multi.delete_alls.select{|i| i[:sortorder] == x}
+              puts "do delete all for #{x}"
+            elsif updates = multi.updates.select{|i| i[:sortorder] == x}
+              puts "do update for #{x}"
+            elsif update_alls = multi.update_alls.select{|i| i[:sortorder] == x}
+              puts "do update_all for #{x}"
+            end
+          end
         end
       end
       multi
