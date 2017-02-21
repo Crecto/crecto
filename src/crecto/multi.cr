@@ -31,7 +31,7 @@ module Crecto
       delete(changeset.instance)
     end
 
-    def delete_all(queryable, query = Query.new)
+    def delete_all(queryable, query = Crecto::Repo::Query.new)
       @delete_alls.push({sortorder: @sortorder += 1, queryable: queryable, query: query})
     end
 

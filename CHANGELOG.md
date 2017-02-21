@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * `has_one` relation type
 * added `require "json"`
 * `update_all` method override to allow for named tuples
+* `Repo.get` now raises `NoResults` error if no record is found
+* MULTI + TRANSACTIONS!
 
 # [0.3.4] 2017-01-06
 * fixed has_many through preloads when join association doesn’t exist

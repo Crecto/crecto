@@ -63,7 +63,8 @@ module Crecto
       q = ADAPTER.run(:get, queryable, id).as(DB::ResultSet)
       results = queryable.from_rs(q)
       q.close
-      results.first if results.any?
+      raise NoResults.new("No Results") unless results.any?
+      results.first
     end
 
     # Return a single insance of *queryable* by primary key with *id*.
@@ -78,11 +79,13 @@ module Crecto
       results = queryable.from_rs(q)
       q.close
 
+      raise NoResults.new("No Results") unless results.any?
+
       if query.preloads.any?
         add_preloads(results, queryable, query.preloads)
       end
 
-      results.first if results.any?
+      results.first
     end
 
     # Return a *queryable* instance
@@ -155,7 +158,7 @@ module Crecto
     # ```
     # Repo.update(user)
     # ```
-    def self.update(queryable_instance)
+    def self.update(queryable_instance, tx : DB::Transaction?)
       changeset = queryable_instance.class.changeset(queryable_instance)
       return changeset unless changeset.valid?
 
@@ -173,6 +176,10 @@ module Crecto
 
       changeset.action = :update
       changeset
+    end
+
+    def self.update(queryable_instance)
+      update(queryable_instance, nil)
     end
 
     # Update a changeset instance in the data store.
@@ -203,11 +210,11 @@ module Crecto
     # ```
     # Repo.delete(user)
     # ```
-    def self.delete(queryable_instance)
+    def self.delete(queryable_instance, tx : DB::Transaction?)
       changeset = queryable_instance.class.changeset(queryable_instance)
       return changeset unless changeset.valid?
 
-      query = ADAPTER.run_on_instance(:delete, changeset)
+      query = ADAPTER.run_on_instance(:delete, changeset, tx)
 
       if query.nil?
         changeset.add_error("delete_error", "Delete Failed")
@@ -219,6 +226,10 @@ module Crecto
 
       changeset.action = :delete
       changeset
+    end
+
+    def self.delete(queryable_instance)
+      delete(queryable_instance, nil)
     end
 
     # Delete a changeset instance from the data store.
@@ -237,7 +248,12 @@ module Crecto
     # Repo.delete_all(User, query)
     # ```
     def self.delete_all(queryable, query = Query.new)
-      query = ADAPTER.run(:delete_all, queryable, query)
+      ADAPTER.run(:delete_all, queryable, query)
+    end
+
+    def self.delete_all(queryable, query : Query?, tx : DB::Transaction?)
+      query = Query.new if query.nil?
+      ADAPTER.run(:delete_all, queryable, query, tx)
     end
 
     # Run aribtrary sql queries. `query` will cast the output as that
@@ -270,20 +286,22 @@ module Crecto
     def self.transaction(multi : Crecto::Multi)
       if multi.changesets_valid?
         total_size = multi.inserts.size + multi.deletes.size + multi.delete_alls.size + multi.updates.size + multi.update_alls.size
-        puts "total_size : #{total_size}"
         ADAPTER.get_db().transaction do |tx|
           (1..total_size).each do |x|
-            if inserts = multi.inserts.select{|i| i[:sortorder] == x}
-              insert(inserts[0][:instance], tx)
-            elsif deletes = multi.deletes.select{|i| i[:sortorder] == x}
-              puts "do delete for #{x}"
-            elsif delete_alls = multi.delete_alls.select{|i| i[:sortorder] == x}
-              puts "do delete all for #{x}"
-            elsif updates = multi.updates.select{|i| i[:sortorder] == x}
-              puts "do update for #{x}"
-            elsif update_alls = multi.update_alls.select{|i| i[:sortorder] == x}
-              puts "do update_all for #{x}"
-            end
+            inserts = multi.inserts.select{|i| i[:sortorder] == x}
+            insert(inserts[0][:instance], tx) && next if inserts.any?
+
+            deletes = multi.deletes.select{|i| i[:sortorder] == x}
+            delete(deletes[0][:instance], tx) && next if deletes.any?
+
+            delete_alls = multi.delete_alls.select{|i| i[:sortorder] == x}
+            delete_all(delete_alls[0][:queryable], delete_alls[0][:query], tx) && next if delete_alls.any?
+
+            updates = multi.updates.select{|i| i[:sortorder] == x}
+            update(updates[0][:instance], tx) && next if updates.any?
+
+            update_alls = multi.update_alls.select{|i| i[:sortorder] == x}
+            puts "do update_all for #{x}" && next if updates.any?
           end
         end
       end

@@ -134,15 +134,16 @@ describe Crecto do
         user.some_date = now
         changeset = Crecto::Repo.insert(user)
         id = changeset.instance.id
-        user = Crecto::Repo.get(User, id).as(User)
+        user = Crecto::Repo.get(User, id)
         user.is_a?(User).should eq(true)
         user.id.should eq(id)
         user.some_date.as(Time).to_local.epoch_ms.should be_close(now.epoch_ms, 2000)
       end
 
-      it "should not return a user if not in db" do
-        user = Crecto::Repo.get(User, 99999)
-        user.nil?.should be_true
+      it "should raise NoResults error if not in db" do
+        expect_raises(Crecto::NoResults) do
+          user = Crecto::Repo.get(User, 99999)
+        end
       end
     end
 
@@ -254,7 +255,7 @@ describe Crecto do
         end
 
         # should not update the last
-        user = Crecto::Repo.get(User, id3).as(User)
+        user = Crecto::Repo.get(User, id3)
         user.things.should eq(2334234)
       end
     end
@@ -468,20 +469,6 @@ describe Crecto do
 
         users = Crecto::Repo.all(UserLargeDefaults)
         users.size.should eq 0
-      end
-    end
-
-    describe "#transaction" do
-      it "should have errors" do
-        user = User.new
-        user.name = "tester"
-
-        multi = Crecto::Multi.new
-        multi.insert(user)
-
-        x = Crecto::Repo.transaction(multi)
-        puts x
-        
       end
     end
   end
