@@ -265,13 +265,13 @@ module Crecto
 
     # Calculate the given aggregate `ag` over the given `field`
     # Aggregate `ag` must be one of (:avg, :count, :max, :min:, :sum)
-    def self.aggregate(queryable, ag : Symbol, field : Symbol | String)
+    def self.aggregate(queryable, ag : Symbol, field : Symbol)
       raise InvalidOption.new("Aggregate must be one of :avg, :count, :max, :min:, :sum") unless [:avg, :count, :max, :min, :sum].includes?(ag)
 
       ADAPTER.aggregate(queryable, ag, field)
     end
 
-    def self.aggregate(queryable, ag : Symbol, field : Symbol | String, query : Crecto::Repo::Query)
+    def self.aggregate(queryable, ag : Symbol, field : Symbol, query : Crecto::Repo::Query)
       raise InvalidOption.new("Aggregate must be one of :avg, :count, :max, :min:, :sum") unless [:avg, :count, :max, :min, :sum].includes?(ag)
 
       ADAPTER.aggregate(queryable, ag, field, query)

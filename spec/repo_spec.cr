@@ -126,17 +126,48 @@ describe Crecto do
     end
 
     describe "#aggregate" do
-      it "should do things" do
-        x = Crecto::Repo.aggregate(User, :sum, :id)
-        puts x
-        puts x.class
+      describe "without a query" do
+        pending "should return the correct :avg" do
+          
+        end
+
+        pending "should return the correct :count" do
+          
+        end
+
+        pending "should return the correct :max" do
+          
+        end
+
+        pending "should return the correct :min" do
+          
+        end
+
+        pending "should return the correct :sum" do
+          
+        end
       end
 
-      it "should do more things" do
-        query = Crecto::Repo::Query.where(name: "test")
-        x = Crecto::Repo.aggregate(User, :count, :id, query)
-        puts x
-        puts x.class
+      describe "with a query" do
+        pending "should return the correct :avg" do
+          
+        end
+
+        pending "should return the correct :count" do
+          
+        end
+
+        pending "should return the correct :max" do
+          
+        end
+
+        pending "should return the correct :min" do
+          
+        end
+
+        pending "should return the correct :sum" do
+          
+        end
       end
     end
 
