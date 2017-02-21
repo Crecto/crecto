@@ -18,4 +18,4 @@ development_dependencies:
 
   pg:
     github: will/crystal-pg
-    version: 0.13.1
+    branch: master
