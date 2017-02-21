@@ -125,6 +125,21 @@ describe Crecto do
       end
     end
 
+    describe "#aggregate" do
+      it "should do things" do
+        x = Crecto::Repo.aggregate(User, :sum, :id)
+        puts x
+        puts x.class
+      end
+
+      it "should do more things" do
+        query = Crecto::Repo::Query.where(name: "test")
+        x = Crecto::Repo.aggregate(User, :count, :id, query)
+        puts x
+        puts x.class
+      end
+    end
+
     describe "#get" do
       it "should return a user" do
         now = Time.now
