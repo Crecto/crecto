@@ -4,9 +4,11 @@ def quick_create_user(name)
   Crecto::Repo.insert(user).instance
 end
 
-def quick_create_user_with_things(name, things)
+{% for x in ["things", "nope", "yep", "some_date", "pageviews"] %}
+def quick_create_user_with_{{x.id}}(name, {{x.id}})
   user = User.new
   user.name = name
-  user.things = things
+  user.{{x.id}} = {{x.id}}
   Crecto::Repo.insert(user).instance
 end
+{% end %}
