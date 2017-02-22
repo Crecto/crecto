@@ -127,6 +127,12 @@ describe Crecto do
     end
 
     describe "#aggregate" do
+      it "should raise InvalidOption with an invalid option" do
+        expect_raises Crecto::InvalidOption do
+          Crecto::Repo.aggregate(User, :blurb, :id)
+        end
+      end
+
       describe "without a query" do
         it "should return the correct :avg" do
           Crecto::Repo.delete_all(Post)
