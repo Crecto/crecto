@@ -286,26 +286,40 @@ module Crecto
     def self.transaction(multi : Crecto::Multi)
       if multi.changesets_valid?
         total_size = multi.inserts.size + multi.deletes.size + multi.delete_alls.size + multi.updates.size + multi.update_alls.size
-        ADAPTER.get_db().transaction do |tx|
+        ADAPTER.get_db.transaction do |tx|
           (1..total_size).each do |x|
-            inserts = multi.inserts.select{|i| i[:sortorder] == x}
+            inserts = multi.inserts.select { |i| i[:sortorder] == x }
             insert(inserts[0][:instance], tx) && next if inserts.any?
 
-            deletes = multi.deletes.select{|i| i[:sortorder] == x}
+            deletes = multi.deletes.select { |i| i[:sortorder] == x }
             delete(deletes[0][:instance], tx) && next if deletes.any?
 
-            delete_alls = multi.delete_alls.select{|i| i[:sortorder] == x}
+            delete_alls = multi.delete_alls.select { |i| i[:sortorder] == x }
             delete_all(delete_alls[0][:queryable], delete_alls[0][:query], tx) && next if delete_alls.any?
 
-            updates = multi.updates.select{|i| i[:sortorder] == x}
+            updates = multi.updates.select { |i| i[:sortorder] == x }
             update(updates[0][:instance], tx) && next if updates.any?
 
-            update_alls = multi.update_alls.select{|i| i[:sortorder] == x}
+            update_alls = multi.update_alls.select { |i| i[:sortorder] == x }
             puts "do update_all for #{x}" && next if updates.any?
           end
         end
       end
       multi
+    end
+
+    # Calculate the given aggregate `ag` over the given `field`
+    # Aggregate `ag` must be one of (:avg, :count, :max, :min:, :sum)
+    def self.aggregate(queryable, ag : Symbol, field : Symbol)
+      raise InvalidOption.new("Aggregate must be one of :avg, :count, :max, :min:, :sum") unless [:avg, :count, :max, :min, :sum].includes?(ag)
+
+      ADAPTER.aggregate(queryable, ag, field)
+    end
+
+    def self.aggregate(queryable, ag : Symbol, field : Symbol, query : Crecto::Repo::Query)
+      raise InvalidOption.new("Aggregate must be one of :avg, :count, :max, :min:, :sum") unless [:avg, :count, :max, :min, :sum].includes?(ag)
+
+      ADAPTER.aggregate(queryable, ag, field, query)
     end
 
     private def self.add_preloads(results, queryable, preloads)

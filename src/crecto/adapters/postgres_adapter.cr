@@ -71,6 +71,25 @@ module Crecto
         run_on_instance(operation, changeset, nil)
       end
 
+      def self.aggregate(queryable, ag, field)
+        @@CRECTO_DB = DB.open(ENV["PG_URL"]) if @@CRECTO_DB.nil?
+        @@CRECTO_DB.as(DB::Database).scalar(build_aggregate_query(queryable, ag, field))
+      end
+
+      def self.aggregate(queryable, ag, field, query : Crecto::Repo::Query)
+        @@CRECTO_DB = DB.open(ENV["PG_URL"]) if @@CRECTO_DB.nil?
+        params = [] of DbValue | Array(DbValue)
+        q = [build_aggregate_query(queryable, ag, field)]
+        q.push joins(queryable, query, params) if query.joins.any?
+        q.push wheres(queryable, query, params) if query.wheres.any?
+        q.push or_wheres(queryable, query, params) if query.or_wheres.any?
+        q.push order_bys(query) if query.order_bys.any?
+        q.push limit(query) unless query.limit.nil?
+        q.push offset(query) unless query.offset.nil?
+
+        @@CRECTO_DB.as(DB::Database).scalar(position_args(q.join(" ")), params)
+      end
+
       def self.get_db : DB::Database
         @@CRECTO_DB = DB.open(ENV["PG_URL"]) if @@CRECTO_DB.nil?
         @@CRECTO_DB.as(DB::Database)
@@ -101,6 +120,10 @@ module Crecto
         q.push "LIMIT 1"
 
         execute(q.join(" "), [id])
+      end
+
+      private def self.build_aggregate_query(queryable, ag, field)
+        "SELECT #{ag}(#{field}) from #{queryable.table_name}"
       end
 
       private def self.all(queryable, query)

@@ -10,7 +10,6 @@ describe Crecto do
         multi.insert(user)
 
         multi = Crecto::Repo.transaction(multi)
-        
         multi.errors.not_nil![0][:field].should eq("name")
         multi.errors.not_nil![0][:message].should eq("is required")
       end
@@ -75,7 +74,6 @@ describe Crecto do
       end
 
       it "with a valid update_all, should update all records" do
-
       end
     end
   end
