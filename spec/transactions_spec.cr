@@ -23,8 +23,8 @@ describe Crecto do
 
         multi = Crecto::Repo.transaction(multi)
 
-        users = Crecto::Repo.all(User, Crecto::Repo::Query.order_by("id desc"))
-        users[0].name.should eq("this should insert in the transaction")
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(name: "this should insert in the transaction"))
+        users.size.should be > 0
       end
 
       it "with a valid delete, should delete the record" do
