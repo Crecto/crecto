@@ -4,6 +4,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+
+# [0.3.5] 2017-02-21
+* `Repo#aggregate` methods
 * `has_one` relation type
 * added `require "json"`
 * `update_all` method override to allow for named tuples
@@ -44,6 +47,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Query
 * Postgres Adapter
 
+[0.3.5]: https://github.com/fridgerator/crecto/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/fridgerator/crecto/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/fridgerator/crecto/compare/v0.3.1...v0.3.3
 [0.3.1]: https://github.com/fridgerator/crecto/compare/v0.3.0...v0.3.1
