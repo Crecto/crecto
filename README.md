@@ -61,6 +61,7 @@ require "crecto"
 - [ ] Transactions / Multi
 - [ ] Association / dependent options (`dependent: :delete_all`, `dependent: :nilify_all`, etc)
 - [ ] Unique constraint
+- [ ] Combine database adapters (base class). Currently there is unecessary duplication
 
 ## Usage
 
@@ -169,6 +170,13 @@ users[0].posts # has_many relation is preloaded
 
 posts = Crecto::Repo.all(Post, Crecto::Query.new, preload: [:user])
 posts[0].user # belongs_to relation preloaded
+
+#
+# Aggregate functions
+#
+# can use the following aggregate functions: :avg, :count, :max, :min:, :sum
+Crecto::Repo.aggregate(User, :count, :id)
+Crecto::Repo.aggregate(User, :avg, :age, Crecto::Repo::Query.where(name: 'Bill'))
 ```
 
 ## Contributing

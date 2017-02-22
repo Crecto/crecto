@@ -1,4 +1,5 @@
 require "./spec_helper"
+require "./helper_methods"
 
 describe Crecto do
   describe "Repo" do
@@ -122,6 +123,128 @@ describe Crecto do
         query = Crecto::Repo.query(User, "select * from users where name = ?", ["awesome-dude"])
         query.size.should eq(1)
         query[0].is_a?(User).should be_true
+      end
+    end
+
+    describe "#aggregate" do
+      it "should raise InvalidOption with an invalid option" do
+        expect_raises Crecto::InvalidOption do
+          Crecto::Repo.aggregate(User, :blurb, :id)
+        end
+      end
+
+      describe "without a query" do
+        it "should return the correct :avg" do
+          Crecto::Repo.delete_all(Post)
+          Crecto::Repo.delete_all(User)
+          quick_create_user_with_things("test", 9)
+          quick_create_user_with_things("test", 10)
+          quick_create_user_with_things("test", 11)
+
+          Crecto::Repo.aggregate(User, :avg, :things).as(PG::Numeric).to_f.should eq 10.0
+        end
+
+        it "should return the correct :count" do
+          Crecto::Repo.delete_all(Post)
+          Crecto::Repo.delete_all(User)
+          quick_create_user_with_things("test", 9)
+          quick_create_user_with_things("test", 10)
+          quick_create_user_with_things("test", 11)
+
+          Crecto::Repo.aggregate(User, :count, :id).should eq 3
+        end
+
+        it "should return the correct :max" do
+          Crecto::Repo.delete_all(Post)
+          Crecto::Repo.delete_all(User)
+          quick_create_user_with_things("test", 9)
+          quick_create_user_with_things("test", 10)
+          quick_create_user_with_things("test", 11)
+
+          Crecto::Repo.aggregate(User, :max, :things).should eq 11
+        end
+
+        it "should return the correct :min" do
+          Crecto::Repo.delete_all(Post)
+          Crecto::Repo.delete_all(User)
+          quick_create_user_with_things("test", 9)
+          quick_create_user_with_things("test", 10)
+          quick_create_user_with_things("test", 11)
+
+          Crecto::Repo.aggregate(User, :min, :things).should eq 9
+        end
+
+        it "should return the correct :sum" do
+          Crecto::Repo.delete_all(Post)
+          Crecto::Repo.delete_all(User)
+          quick_create_user_with_things("test", 9)
+          quick_create_user_with_things("test", 10)
+          quick_create_user_with_things("test", 11)
+
+          Crecto::Repo.aggregate(User, :sum, :things).should eq 30
+        end
+      end
+
+      describe "with a query" do
+        it "should return the correct :avg" do
+          Crecto::Repo.delete_all(Post)
+          Crecto::Repo.delete_all(User)
+          quick_create_user_with_things("test", 9)
+          quick_create_user_with_things("test", 10)
+          quick_create_user_with_things("test", 11)
+          quick_create_user_with_things("nope", 12)
+          query = Crecto::Repo::Query.where(name: "test")
+
+          Crecto::Repo.aggregate(User, :avg, :things, query).as(PG::Numeric).to_f.should eq 10.0
+        end
+
+        it "should return the correct :count" do
+          Crecto::Repo.delete_all(Post)
+          Crecto::Repo.delete_all(User)
+          quick_create_user_with_things("test", 9)
+          quick_create_user_with_things("test", 10)
+          quick_create_user_with_things("test", 11)
+          quick_create_user_with_things("nope", 12)
+          query = Crecto::Repo::Query.where(name: "test")
+
+          Crecto::Repo.aggregate(User, :count, :id, query).should eq 3
+        end
+
+        it "should return the correct :max" do
+          Crecto::Repo.delete_all(Post)
+          Crecto::Repo.delete_all(User)
+          quick_create_user_with_things("test", 9)
+          quick_create_user_with_things("test", 10)
+          quick_create_user_with_things("test", 11)
+          quick_create_user_with_things("nope", 12)
+          query = Crecto::Repo::Query.where(name: "test")
+
+          Crecto::Repo.aggregate(User, :max, :things, query).should eq 11
+        end
+
+        it "should return the correct :min" do
+          Crecto::Repo.delete_all(Post)
+          Crecto::Repo.delete_all(User)
+          quick_create_user_with_things("test", 9)
+          quick_create_user_with_things("test", 10)
+          quick_create_user_with_things("test", 11)
+          quick_create_user_with_things("nope", 12)
+          query = Crecto::Repo::Query.where(name: "test")
+
+          Crecto::Repo.aggregate(User, :min, :things, query).should eq 9
+        end
+
+        it "should return the correct :sum" do
+          Crecto::Repo.delete_all(Post)
+          Crecto::Repo.delete_all(User)
+          quick_create_user_with_things("test", 9)
+          quick_create_user_with_things("test", 10)
+          quick_create_user_with_things("test", 11)
+          quick_create_user_with_things("nope", 12)
+          query = Crecto::Repo::Query.where(name: "test")
+
+          Crecto::Repo.aggregate(User, :sum, :things, query).should eq 30
+        end
       end
     end
 

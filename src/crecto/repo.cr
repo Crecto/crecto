@@ -233,7 +233,7 @@ module Crecto
     # Repo.delete_all(User, query)
     # ```
     def self.delete_all(queryable, query = Query.new)
-      query = ADAPTER.run(:delete_all, queryable, query)
+      ADAPTER.run(:delete_all, queryable, query)
     end
 
     # Run aribtrary sql queries. `query` will cast the output as that
@@ -261,6 +261,20 @@ module Crecto
     # ```
     def self.query(sql : String, params = [] of DbValue) : DB::ResultSet
       ADAPTER.run(:sql, sql, params).as(DB::ResultSet)
+    end
+
+    # Calculate the given aggregate `ag` over the given `field`
+    # Aggregate `ag` must be one of (:avg, :count, :max, :min:, :sum)
+    def self.aggregate(queryable, ag : Symbol, field : Symbol)
+      raise InvalidOption.new("Aggregate must be one of :avg, :count, :max, :min:, :sum") unless [:avg, :count, :max, :min, :sum].includes?(ag)
+
+      ADAPTER.aggregate(queryable, ag, field)
+    end
+
+    def self.aggregate(queryable, ag : Symbol, field : Symbol, query : Crecto::Repo::Query)
+      raise InvalidOption.new("Aggregate must be one of :avg, :count, :max, :min:, :sum") unless [:avg, :count, :max, :min, :sum].includes?(ag)
+
+      ADAPTER.aggregate(queryable, ag, field, query)
     end
 
     private def self.add_preloads(results, queryable, preloads)

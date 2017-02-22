@@ -1,3 +1,4 @@
+require "json"
 require "./crecto/errors/*"
 require "./crecto/schema/*"
 require "./crecto/adapters/*"
