@@ -68,7 +68,6 @@ module Crecto
       def self.aggregate(queryable, ag, field, query : Crecto::Repo::Query)
         @@CRECTO_DB = DB.open(ENV["PG_URL"]) if @@CRECTO_DB.nil?
         params = [] of DbValue | Array(DbValue)
-        
         q = [build_aggregate_query(queryable, ag, field)]
         q.push joins(queryable, query, params) if query.joins.any?
         q.push wheres(queryable, query, params) if query.wheres.any?

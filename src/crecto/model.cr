@@ -1,6 +1,5 @@
 module Crecto
-
-  #Your data models should extend `Crecto::Model`:
+  # Your data models should extend `Crecto::Model`:
   #
   # `class User < Crecto::Model`
   #  -or-
