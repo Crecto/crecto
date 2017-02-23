@@ -13,7 +13,7 @@ module Crecto
     property deletes = Array(NamedTuple(sortorder: Int32, instance: Crecto::Model)).new
     property delete_alls = Array(NamedTuple(sortorder: Int32, queryable: Crecto::Model.class, query: Crecto::Repo::Query)).new
     property updates = Array(NamedTuple(sortorder: Int32, instance: Crecto::Model)).new
-    property update_alls = Array(NamedTuple(sortorder: Int32, queryable: Crecto::Model.class, query: Crecto::Repo::Query, update_hash: WhereType)).new
+    property update_alls = Array(NamedTuple(sortorder: Int32, queryable: Crecto::Model.class, query: Crecto::Repo::Query, update_hash: Hash(Symbol, String))).new
 
     def insert(queryable_instance : Crecto::Model)
       @inserts.push({sortorder: @sortorder += 1, instance: queryable_instance})

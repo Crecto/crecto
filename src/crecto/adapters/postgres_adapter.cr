@@ -24,14 +24,21 @@ module Crecto
       def self.run(operation : Symbol, queryable, query : Crecto::Repo::Query, tx : DB::Transaction?)
         case operation
         when :delete_all
-          delete(queryable, query, tx)
+          exec_delete(queryable, query, tx)
         end
       end
 
       def self.run(operation : Symbol, queryable, query : Crecto::Repo::Query, query_hash : Hash)
         case operation
         when :update_all
-          update(queryable, query, query_hash)
+          update(queryable, query, query_hash, nil)
+        end
+      end
+
+      def self.run(operation : Symbol, queryable, query : Crecto::Repo::Query, query_hash : Hash, tx : DB::Transaction?)
+        case operation
+        when :update_all
+          update(queryable, query, query_hash, tx)
         end
       end
 
@@ -102,6 +109,11 @@ module Crecto
       def self.execute(query_string, params, tx : DB::Transaction?)
         return execute(query_string, params) if tx.nil?
         tx.connection.query(query_string, params)
+      end
+
+      def self.exec_execute(query_string, params, tx : DB::Transaction?)
+        return execute(query_string, params) if tx.nil?
+        tx.connection.exec(query_string, params)
       end
 
       def self.execute(query_string, tx : DB::Transaction?)
@@ -175,7 +187,7 @@ module Crecto
         execute(position_args(q.join(" ")), fields_values[:values], tx)
       end
 
-      private def self.update(queryable, query, query_hash)
+      private def self.update(queryable, query, query_hash, tx : DB::Transaction?)
         fields_values = instance_fields_and_values(query_hash)
         params = [] of DbValue | Array(DbValue)
 
@@ -183,7 +195,7 @@ module Crecto
         q.push wheres(queryable, query, params) if query.wheres.any?
         q.push or_wheres(queryable, query, params) if query.or_wheres.any?
 
-        execute(position_args(q.join(" ")), fields_values[:values] + params)
+        exec_execute(position_args(q.join(" ")), fields_values[:values] + params, tx)
       end
 
       private def self.delete_begin(table_name)
@@ -208,6 +220,16 @@ module Crecto
         q.push or_wheres(queryable, query, params) if query.or_wheres.any?
 
         execute(position_args(q.join(" ")), params, tx)
+      end
+
+      private def self.exec_delete(queryable, query : Crecto::Repo::Query, tx : DB::Transaction)
+        params = [] of DbValue | Array(DbValue)
+
+        q = delete_begin(queryable.table_name)
+        q.push wheres(queryable, query, params) if query.wheres.any?
+        q.push or_wheres(queryable, query, params) if query.or_wheres.any?
+
+        exec_execute(position_args(q.join(" ")), params, tx)
       end
 
       private def self.wheres(queryable, query, params)

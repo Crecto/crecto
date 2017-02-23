@@ -1,4 +1,5 @@
 require "./spec_helper"
+require "./helper_methods"
 
 describe Crecto do
   describe "Repo" do
@@ -28,9 +29,7 @@ describe Crecto do
       end
 
       it "with a valid delete, should delete the record" do
-        user = User.new
-        user.name = "this should delete"
-        user = Crecto::Repo.insert(user).instance
+        user = quick_create_user("this should delete")
 
         multi = Crecto::Multi.new
         multi.delete(user)
@@ -42,9 +41,7 @@ describe Crecto do
 
       it "with a valid delete_all, should delete all records" do
         2.times do
-          user = User.new
-          user.name = "test"
-          Crecto::Repo.insert(user)
+          quick_create_user("test")
         end
 
         Crecto::Repo.delete_all(Post)
@@ -59,9 +56,7 @@ describe Crecto do
       end
 
       it "with a valid update, should update the record" do
-        user = User.new
-        user.name = "this will change 89ffsf"
-        user = Crecto::Repo.insert(user).instance
+        user = quick_create_user("this will change 89ffsf")
 
         user.name = "this should have changed 89ffsf"
 
@@ -74,6 +69,17 @@ describe Crecto do
       end
 
       it "with a valid update_all, should update all records" do
+        quick_create_user("testing_update_all")
+        quick_create_user("testing_update_all")
+        quick_create_user("testing_update_all")
+
+        multi = Crecto::Multi.new
+        testing_update_all_query = Crecto::Repo::Query.where(name: "testing_update_all")
+        multi.update_all(User, testing_update_all_query, {:name => "testing_update_all_994934"})
+        Crecto::Repo.transaction(multi)
+
+        Crecto::Repo.all(User, testing_update_all_query).size.should eq 0
+        Crecto::Repo.all(User, Crecto::Repo::Query.where(name: "testing_update_all_994934")).size.should eq 3
       end
     end
   end

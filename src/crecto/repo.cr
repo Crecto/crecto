@@ -164,7 +164,7 @@ module Crecto
 
       changeset.instance.updated_at_to_now
 
-      query = ADAPTER.run_on_instance(:update, changeset)
+      query = ADAPTER.run_on_instance(:update, changeset, tx)
 
       if query.nil?
         changeset.add_error("update_error", "Update Failed")
@@ -197,12 +197,16 @@ module Crecto
     # query = Crecto::Repo::Query.where(name: "Ted", count: 0)
     # Repo.update_all(User, query, {count: 1, date: Time.now})
     # ```
+    def self.update_all(queryable, query, update_hash : Hash, tx : DB::Transaction?)
+      ADAPTER.run(:update_all, queryable, query, update_hash, tx)
+    end
+
     def self.update_all(queryable, query, update_hash : Hash)
-      query = ADAPTER.run(:update_all, queryable, query, update_hash)
+      ADAPTER.run(:update_all, queryable, query, update_hash, nil)
     end
 
     def self.update_all(queryable, query, update_hash : NamedTuple)
-      update_all(queryable, query, update_hash.to_h)
+      update_all(queryable, query, update_hash.to_h, nil)
     end
 
     # Delete a shema instance from the data store.
@@ -301,7 +305,7 @@ module Crecto
             update(updates[0][:instance], tx) && next if updates.any?
 
             update_alls = multi.update_alls.select { |i| i[:sortorder] == x }
-            puts "do update_all for #{x}" && next if updates.any?
+            update_all(update_alls[0][:queryable], update_alls[0][:query], update_alls[0][:update_hash], tx) if update_alls.any?
           end
         end
       end

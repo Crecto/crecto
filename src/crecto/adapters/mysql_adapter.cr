@@ -31,7 +31,14 @@ module Crecto
       def self.run(operation : Symbol, queryable, query : Crecto::Repo::Query, query_hash : Hash)
         case operation
         when :update_all
-          update(queryable, query, query_hash)
+          update(queryable, query, query_hash, nil)
+        end
+      end
+
+      def self.run(operation : Symbol, queryable, query : Crecto::Repo::Query, query_hash : Hash, tx : DB::Transaction?)
+        case operation
+        when :update_all
+          update(queryable, query, query_hash, tx)
         end
       end
 
@@ -183,7 +190,7 @@ module Crecto
         execute_query("SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field} = #{changeset.instance.pkey_value}")
       end
 
-      private def self.update(queryable, query, query_hash)
+      private def self.update(queryable, query, query_hash, tx : DB::Transaction?)
         fields_values = instance_fields_and_values(query_hash)
         params = [] of DbValue | Array(DbValue)
 
@@ -191,7 +198,7 @@ module Crecto
         q.push wheres(queryable, query, params) if query.wheres.any?
         q.push or_wheres(queryable, query, params) if query.or_wheres.any?
 
-        execute_exec(q.join(" "), fields_values[:values] + params)
+        execute_exec(q.join(" "), fields_values[:values] + params, tx)
       end
 
       private def self.delete_begin(table_name)
