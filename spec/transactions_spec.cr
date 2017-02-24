@@ -69,17 +69,16 @@ describe Crecto do
       end
 
       it "with a valid update_all, should update all records" do
-        quick_create_user("testing_update_all")
-        quick_create_user("testing_update_all")
-        quick_create_user("testing_update_all")
+        quick_create_user_with_things("testing_update_all", 123)
+        quick_create_user_with_things("testing_update_all", 123)
+        quick_create_user_with_things("testing_update_all", 123)
 
         multi = Crecto::Multi.new
-        testing_update_all_query = Crecto::Repo::Query.where(name: "testing_update_all")
-        multi.update_all(User, testing_update_all_query, {:name => "testing_update_all_994934"})
+        multi.update_all(User, Crecto::Repo::Query.where(name: "testing_update_all"), {things: 9494})
         Crecto::Repo.transaction(multi)
 
-        Crecto::Repo.all(User, testing_update_all_query).size.should eq 0
-        Crecto::Repo.all(User, Crecto::Repo::Query.where(name: "testing_update_all_994934")).size.should eq 3
+        Crecto::Repo.all(User, Crecto::Repo::Query.where(things: 123)).size.should eq 0
+        Crecto::Repo.all(User, Crecto::Repo::Query.where(things: 9494)).size.should eq 3
       end
     end
   end

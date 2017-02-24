@@ -128,7 +128,7 @@ module Crecto
 
       if query.nil?
         changeset.add_error("insert_error", "Insert Failed")
-      else
+      elsif ADAPTER == Crecto::Adapters::Postgres || (ADAPTER == Crecto::Adapters::Mysql && tx.nil?)
         new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first
         query.as(DB::ResultSet).close
         changeset = new_instance.class.changeset(new_instance) if new_instance
