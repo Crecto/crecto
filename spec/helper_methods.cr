@@ -12,3 +12,10 @@ def quick_create_user_with_{{x.id}}(name, {{x.id}})
   Crecto::Repo.insert(user).instance
 end
 {% end %}
+
+
+def quick_create_post(user)
+  post = Post.new
+  post.user = user
+  Crecto::Repo.insert(post).instance
+end
