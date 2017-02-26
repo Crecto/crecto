@@ -142,6 +142,10 @@ describe Crecto do
         multi.insert(invalid_user)
         Crecto::Repo.transaction(multi)
 
+        multi.errors.not_nil![0][:field].should eq "name"
+        multi.errors.not_nil![0][:message].should eq "is required"
+        multi.errors.not_nil![0][:queryable].should eq "User"
+
         # check insert didn't happen 
         Crecto::Repo.all(User, Crecto::Repo::Query.where(name: "all_transactions_insert_user")).size.should eq 0
 

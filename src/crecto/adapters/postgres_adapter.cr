@@ -116,6 +116,11 @@ module Crecto
         tx.connection.exec(query_string, params)
       end
 
+      def self.exec_execute(query_string, tx : DB::Transaction?)
+        return execute(query_string) if tx.nil?
+        tx.connection.exec(query_string)
+      end
+
       def self.execute(query_string, tx : DB::Transaction?)
         return execute(query_string) if tx.nil?
         get_db().query(query_string)
@@ -207,9 +212,9 @@ module Crecto
         q = delete_begin(changeset.instance.class.table_name)
         q.push "WHERE"
         q.push "#{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}"
-        q.push "RETURNING *"
+        q.push "RETURNING *" if tx.nil?
 
-        execute(q.join(" "), tx)
+        exec_execute(q.join(" "), tx)
       end
 
       private def self.delete(queryable, query : Crecto::Repo::Query, tx : DB::Transaction?)

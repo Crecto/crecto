@@ -56,6 +56,8 @@ module Crecto
         changeset = i[:instance].get_changeset
         unless changeset.valid?
           @errors = changeset.errors
+          @errors.not_nil![0][:queryable] = i[:instance].class.to_s
+          @errors.not_nil![0][:failed_operation] = "insert"
           return false
         end
       end
@@ -64,6 +66,8 @@ module Crecto
         changeset = d[:instance].get_changeset
         unless changeset.valid?
           @errors = changeset.errors
+          @errors.not_nil![0][:queryable] = d[:instance].class.to_s
+          @errors.not_nil![0][:failed_operation] = "insert"
           return false
         end
       end
@@ -72,6 +76,8 @@ module Crecto
         changeset = u[:instance].get_changeset
         unless changeset.valid?
           @errors = changeset.errors
+          @errors.not_nil![0][:queryable] = u[:instance].class.to_s
+          @errors.not_nil![0][:failed_operation] = "insert"
           return false
         end
       end

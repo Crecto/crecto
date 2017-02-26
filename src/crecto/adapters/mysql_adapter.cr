@@ -211,8 +211,8 @@ module Crecto
         q.push "WHERE"
         q.push "#{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}"
 
-        sel = execute_query("SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}")
-        execute_exec(q.join(" "), tx)
+        sel = execute_query("SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}") if !tx.nil?
+        return execute_exec(q.join(" "), tx) if !tx.nil?
         sel
       end
 

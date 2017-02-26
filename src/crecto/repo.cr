@@ -223,9 +223,11 @@ module Crecto
       if query.nil?
         changeset.add_error("delete_error", "Delete Failed")
       else
-        new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first
-        query.as(DB::ResultSet).close
-        changeset = new_instance.class.changeset(new_instance) if new_instance
+        if tx.nil?
+          new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first
+          query.as(DB::ResultSet).close
+          changeset = new_instance.class.changeset(new_instance) if new_instance
+        end
       end
 
       changeset.action = :delete
@@ -293,19 +295,44 @@ module Crecto
         ADAPTER.get_db.transaction do |tx|
           (1..total_size).each do |x|
             inserts = multi.inserts.select { |i| i[:sortorder] == x }
-            insert(inserts[0][:instance], tx) && next if inserts.any?
+            begin
+              insert(inserts[0][:instance], tx) && next if inserts.any?
+            rescue ex : Exception
+              multi.errors = [{:message => "#{ex.message}", :queryable => "#{inserts[0][:instance].class}", :failed_operation => "insert"}]
+              tx.rollback && break
+            end
 
             deletes = multi.deletes.select { |i| i[:sortorder] == x }
-            delete(deletes[0][:instance], tx) && next if deletes.any?
+            begin
+              delete(deletes[0][:instance], tx) && next if deletes.any?
+            rescue ex : Exception
+              multi.errors = [{:message => "#{ex.message}", :queryable => "#{deletes[0][:instance].class}", :failed_operation => "delete"}]
+              tx.rollback && break
+            end
 
             delete_alls = multi.delete_alls.select { |i| i[:sortorder] == x }
-            delete_all(delete_alls[0][:queryable], delete_alls[0][:query], tx) && next if delete_alls.any?
+            begin
+              delete_all(delete_alls[0][:queryable], delete_alls[0][:query], tx) && next if delete_alls.any?
+            rescue ex : Exception
+              multi.errors = [{:message => "#{ex.message}", :queryable => "#{delete_alls[0][:queryable]}", :failed_operation => "delete_all"}]
+              tx.rollback && break
+            end
 
             updates = multi.updates.select { |i| i[:sortorder] == x }
-            update(updates[0][:instance], tx) && next if updates.any?
+            begin
+              update(updates[0][:instance], tx) && next if updates.any?
+            rescue ex : Exception
+              multi.errors = [{:message => "#{ex.message}", :queryable => "#{updates[0][:instance].class}", :failed_operation => "update"}]
+              tx.rollback && break
+            end
 
             update_alls = multi.update_alls.select { |i| i[:sortorder] == x }
-            update_all(update_alls[0][:queryable], update_alls[0][:query], update_alls[0][:update_hash], tx) if update_alls.any?
+            begin
+              update_all(update_alls[0][:queryable], update_alls[0][:query], update_alls[0][:update_hash], tx) if update_alls.any?
+            rescue ex : Exception
+              multi.errors = [{:message => "#{ex.message}", :queryable => "#{update_alls[0][:queryable]}", :failed_operation => "update_all"}]
+              tx.rollback && break
+            end
           end
         end
       end
