@@ -103,20 +103,20 @@ describe Crecto do
 
         multi.errors.any?.should eq false
 
-        # check insert happened 
+        # check insert happened
         Crecto::Repo.all(User, Crecto::Repo::Query.where(name: "all_transactions_insert_user")).size.should eq 1
 
-        # check delete happened 
+        # check delete happened
         Crecto::Repo.all(User, Crecto::Repo::Query.where(name: "all_transactions_delete_user")).size.should eq 0
 
-        # check delete all happened 
+        # check delete all happened
         Crecto::Repo.all(Post).size.should eq 0
 
-        # check update happened 
+        # check update happened
         Crecto::Repo.all(User, Crecto::Repo::Query.where(name: "all_transactions_update_user")).size.should eq 0
         Crecto::Repo.all(User, Crecto::Repo::Query.where(name: "all_transactions_update_user_ojjl2032")).size.should eq 1
 
-        # check update all happened 
+        # check update all happened
         Crecto::Repo.all(User, Crecto::Repo::Query.where(name: "perform_all")).size.should eq 0
         Crecto::Repo.all(User, Crecto::Repo::Query.where(name: "perform_all_io2oj999")).size.should eq 2
       end
@@ -149,20 +149,20 @@ describe Crecto do
         multi.errors[0][:message].should eq "is required"
         multi.errors[0][:queryable].should eq "User"
 
-        # check insert didn't happen 
+        # check insert didn't happen
         Crecto::Repo.all(User, Crecto::Repo::Query.where(name: "all_transactions_insert_user")).size.should eq 0
 
-        # check delete didn't happen 
+        # check delete didn't happen
         Crecto::Repo.all(User, Crecto::Repo::Query.where(name: "all_transactions_delete_user")).size.should eq 1
 
-        # check delete all didn't happen 
+        # check delete all didn't happen
         Crecto::Repo.all(Post).size.should eq 2
 
-        # check update didn't happen 
+        # check update didn't happen
         Crecto::Repo.all(User, Crecto::Repo::Query.where(name: "all_transactions_update_user")).size.should eq 1
         Crecto::Repo.all(User, Crecto::Repo::Query.where(name: "all_transactions_update_user_ojjl2032")).size.should eq 0
 
-        # check update all didn't happen 
+        # check update all didn't happen
         Crecto::Repo.all(User, Crecto::Repo::Query.where(name: "perform_all")).size.should eq 2
         Crecto::Repo.all(User, Crecto::Repo::Query.where(name: "perform_all_io2oj999")).size.should eq 0
       end

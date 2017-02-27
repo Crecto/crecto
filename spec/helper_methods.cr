@@ -13,7 +13,6 @@ def quick_create_user_with_{{x.id}}(name, {{x.id}})
 end
 {% end %}
 
-
 def quick_create_post(user)
   post = Post.new
   post.user = user
