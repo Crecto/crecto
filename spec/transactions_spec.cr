@@ -11,8 +11,8 @@ describe Crecto do
         multi.insert(user)
 
         multi = Crecto::Repo.transaction(multi)
-        multi.errors.not_nil![0][:field].should eq("name")
-        multi.errors.not_nil![0][:message].should eq("is required")
+        multi.errors[0][:field].should eq("name")
+        multi.errors[0][:message].should eq("is required")
       end
 
       it "with a valid insert, should insert the record" do
@@ -101,6 +101,8 @@ describe Crecto do
         multi.update_all(User, Crecto::Repo::Query.where(name: "perform_all"), {name: "perform_all_io2oj999"})
         Crecto::Repo.transaction(multi)
 
+        multi.errors.any?.should eq false
+
         # check insert happened 
         Crecto::Repo.all(User, Crecto::Repo::Query.where(name: "all_transactions_insert_user")).size.should eq 1
 
@@ -142,9 +144,10 @@ describe Crecto do
         multi.insert(invalid_user)
         Crecto::Repo.transaction(multi)
 
-        multi.errors.not_nil![0][:field].should eq "name"
-        multi.errors.not_nil![0][:message].should eq "is required"
-        multi.errors.not_nil![0][:queryable].should eq "User"
+        multi.errors.any?.should eq true
+        multi.errors[0][:field].should eq "name"
+        multi.errors[0][:message].should eq "is required"
+        multi.errors[0][:queryable].should eq "User"
 
         # check insert didn't happen 
         Crecto::Repo.all(User, Crecto::Repo::Query.where(name: "all_transactions_insert_user")).size.should eq 0

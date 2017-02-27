@@ -8,7 +8,7 @@ module Crecto
   #
   class Multi
     property sortorder = 0
-    property errors : Array(Hash(Symbol, String))?
+    property errors = Array(Hash(Symbol, String)).new
     property inserts = Array(NamedTuple(sortorder: Int32, instance: Crecto::Model)).new
     property deletes = Array(NamedTuple(sortorder: Int32, instance: Crecto::Model)).new
     property delete_alls = Array(NamedTuple(sortorder: Int32, queryable: Crecto::Model.class, query: Crecto::Repo::Query)).new
