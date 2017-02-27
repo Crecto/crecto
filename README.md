@@ -51,6 +51,7 @@ require "crecto"
 #### Roadmap (in no particular order)
 
 - [x] has_one
+- [ ] insert_all
 - [x] MySQL adapter
 - [ ] SQLite adapter
 - [x] Associations
@@ -58,7 +59,7 @@ require "crecto"
 - [x] Joins
 - [x] Repo#aggregate ([ecto link](https://hexdocs.pm/ecto/Ecto.Repo.html#c:aggregate/4))
 - [ ] [Embeds](https://robots.thoughtbot.com/embedding-elixir-structs-in-ecto-models)
-- [ ] Transactions / Multi
+- [x] Transactions / Multi
 - [ ] Association / dependent options (`dependent: :delete_all`, `dependent: :nilify_all`, etc)
 - [ ] Unique constraint
 - [ ] Combine database adapters (base class). Currently there is unecessary duplication
@@ -177,6 +178,28 @@ posts[0].user # belongs_to relation preloaded
 # can use the following aggregate functions: :avg, :count, :max, :min:, :sum
 Crecto::Repo.aggregate(User, :count, :id)
 Crecto::Repo.aggregate(User, :avg, :age, Crecto::Repo::Query.where(name: 'Bill'))
+
+#
+# Multi / Transactions
+#
+
+# create the multi instance
+multi = Crecto::Multi.new
+
+# build the transactions
+multi.insert(insert_user)
+multi.delete(post)
+multi.delete_all(Comment)
+multi.update(update_user)
+multi.update_all(User, Crecto::Repo::Query.where(name: "stan"), {name: "stan the man"})
+multi.insert(new_user)
+
+# insert the multi using a transaction
+Crecto::Repo.transaction(multi)
+
+# check for errors
+# If there are any errors in any of the transactions, the database will rollback as if none of the transactions happened
+multi.errors.any?
 ```
 
 ## Contributing

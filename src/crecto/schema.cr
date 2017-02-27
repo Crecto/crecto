@@ -162,6 +162,10 @@ module Crecto
         query_hash
       end
 
+      def get_changeset
+        self.class.changeset(self)
+      end
+
       # Returns the value of the primary key field
       def pkey_value
         self.{{PRIMARY_KEY_FIELD.id}}.as(PkeyValue)

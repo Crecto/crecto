@@ -63,7 +63,8 @@ module Crecto
       q = ADAPTER.run(:get, queryable, id).as(DB::ResultSet)
       results = queryable.from_rs(q)
       q.close
-      results.first if results.any?
+      raise NoResults.new("No Results") unless results.any?
+      results.first
     end
 
     # Return a single insance of *queryable* by primary key with *id*.
@@ -78,11 +79,13 @@ module Crecto
       results = queryable.from_rs(q)
       q.close
 
+      raise NoResults.new("No Results") unless results.any?
+
       if query.preloads.any?
         add_preloads(results, queryable, query.preloads)
       end
 
-      results.first if results.any?
+      results.first
     end
 
     # Return a *queryable* instance
@@ -114,18 +117,18 @@ module Crecto
     # user = User.new
     # Repo.insert(user)
     # ```
-    def self.insert(queryable_instance)
+    def self.insert(queryable_instance, tx : DB::Transaction?)
       changeset = queryable_instance.class.changeset(queryable_instance)
       return changeset unless changeset.valid?
 
       changeset.instance.updated_at_to_now
       changeset.instance.created_at_to_now
 
-      query = ADAPTER.run_on_instance(:insert, changeset)
+      query = ADAPTER.run_on_instance(:insert, changeset, tx)
 
       if query.nil?
         changeset.add_error("insert_error", "Insert Failed")
-      else
+      elsif ADAPTER == Crecto::Adapters::Postgres || (ADAPTER == Crecto::Adapters::Mysql && tx.nil?)
         new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first
         query.as(DB::ResultSet).close
         changeset = new_instance.class.changeset(new_instance) if new_instance
@@ -133,6 +136,10 @@ module Crecto
 
       changeset.action = :insert
       changeset
+    end
+
+    def self.insert(queryable_instance)
+      insert(queryable_instance, nil)
     end
 
     # Insert a changeset instance into the data store.
@@ -151,13 +158,13 @@ module Crecto
     # ```
     # Repo.update(user)
     # ```
-    def self.update(queryable_instance)
+    def self.update(queryable_instance, tx : DB::Transaction?)
       changeset = queryable_instance.class.changeset(queryable_instance)
       return changeset unless changeset.valid?
 
       changeset.instance.updated_at_to_now
 
-      query = ADAPTER.run_on_instance(:update, changeset)
+      query = ADAPTER.run_on_instance(:update, changeset, tx)
 
       if query.nil?
         changeset.add_error("update_error", "Update Failed")
@@ -169,6 +176,10 @@ module Crecto
 
       changeset.action = :update
       changeset
+    end
+
+    def self.update(queryable_instance)
+      update(queryable_instance, nil)
     end
 
     # Update a changeset instance in the data store.
@@ -186,12 +197,16 @@ module Crecto
     # query = Crecto::Repo::Query.where(name: "Ted", count: 0)
     # Repo.update_all(User, query, {count: 1, date: Time.now})
     # ```
+    def self.update_all(queryable, query, update_hash : Hash, tx : DB::Transaction?)
+      ADAPTER.run(:update_all, queryable, query, update_hash, tx)
+    end
+
     def self.update_all(queryable, query, update_hash : Hash)
-      query = ADAPTER.run(:update_all, queryable, query, update_hash)
+      ADAPTER.run(:update_all, queryable, query, update_hash, nil)
     end
 
     def self.update_all(queryable, query, update_hash : NamedTuple)
-      update_all(queryable, query, update_hash.to_h)
+      update_all(queryable, query, update_hash.to_h, nil)
     end
 
     # Delete a shema instance from the data store.
@@ -199,22 +214,28 @@ module Crecto
     # ```
     # Repo.delete(user)
     # ```
-    def self.delete(queryable_instance)
+    def self.delete(queryable_instance, tx : DB::Transaction?)
       changeset = queryable_instance.class.changeset(queryable_instance)
       return changeset unless changeset.valid?
 
-      query = ADAPTER.run_on_instance(:delete, changeset)
+      query = ADAPTER.run_on_instance(:delete, changeset, tx)
 
       if query.nil?
         changeset.add_error("delete_error", "Delete Failed")
       else
-        new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first
-        query.as(DB::ResultSet).close
-        changeset = new_instance.class.changeset(new_instance) if new_instance
+        if tx.nil?
+          new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first
+          query.as(DB::ResultSet).close
+          changeset = new_instance.class.changeset(new_instance) if new_instance
+        end
       end
 
       changeset.action = :delete
       changeset
+    end
+
+    def self.delete(queryable_instance)
+      delete(queryable_instance, nil)
     end
 
     # Delete a changeset instance from the data store.
@@ -234,6 +255,11 @@ module Crecto
     # ```
     def self.delete_all(queryable, query = Query.new)
       ADAPTER.run(:delete_all, queryable, query)
+    end
+
+    def self.delete_all(queryable, query : Query?, tx : DB::Transaction?)
+      query = Query.new if query.nil?
+      ADAPTER.run(:delete_all, queryable, query, tx)
     end
 
     # Run aribtrary sql queries. `query` will cast the output as that
@@ -261,6 +287,56 @@ module Crecto
     # ```
     def self.query(sql : String, params = [] of DbValue) : DB::ResultSet
       ADAPTER.run(:sql, sql, params).as(DB::ResultSet)
+    end
+
+    def self.transaction(multi : Crecto::Multi)
+      if multi.changesets_valid?
+        total_size = multi.inserts.size + multi.deletes.size + multi.delete_alls.size + multi.updates.size + multi.update_alls.size
+        ADAPTER.get_db.transaction do |tx|
+          (1..total_size).each do |x|
+            inserts = multi.inserts.select { |i| i[:sortorder] == x }
+            begin
+              insert(inserts[0][:instance], tx) && next if inserts.any?
+            rescue ex : Exception
+              multi.errors = [{:message => "#{ex.message}", :queryable => "#{inserts[0][:instance].class}", :failed_operation => "insert"}]
+              tx.rollback && break
+            end
+
+            deletes = multi.deletes.select { |i| i[:sortorder] == x }
+            begin
+              delete(deletes[0][:instance], tx) && next if deletes.any?
+            rescue ex : Exception
+              multi.errors = [{:message => "#{ex.message}", :queryable => "#{deletes[0][:instance].class}", :failed_operation => "delete"}]
+              tx.rollback && break
+            end
+
+            delete_alls = multi.delete_alls.select { |i| i[:sortorder] == x }
+            begin
+              delete_all(delete_alls[0][:queryable], delete_alls[0][:query], tx) && next if delete_alls.any?
+            rescue ex : Exception
+              multi.errors = [{:message => "#{ex.message}", :queryable => "#{delete_alls[0][:queryable]}", :failed_operation => "delete_all"}]
+              tx.rollback && break
+            end
+
+            updates = multi.updates.select { |i| i[:sortorder] == x }
+            begin
+              update(updates[0][:instance], tx) && next if updates.any?
+            rescue ex : Exception
+              multi.errors = [{:message => "#{ex.message}", :queryable => "#{updates[0][:instance].class}", :failed_operation => "update"}]
+              tx.rollback && break
+            end
+
+            update_alls = multi.update_alls.select { |i| i[:sortorder] == x }
+            begin
+              update_all(update_alls[0][:queryable], update_alls[0][:query], update_alls[0][:update_hash], tx) if update_alls.any?
+            rescue ex : Exception
+              multi.errors = [{:message => "#{ex.message}", :queryable => "#{update_alls[0][:queryable]}", :failed_operation => "update_all"}]
+              tx.rollback && break
+            end
+          end
+        end
+      end
+      multi
     end
 
     # Calculate the given aggregate `ag` over the given `field`

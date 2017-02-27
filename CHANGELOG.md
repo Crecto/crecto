@@ -4,11 +4,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+* `Repo.get` now raises `NoResults` error if no record is found
+* MULTI + TRANSACTIONS!
 
 # [0.3.5] 2017-02-21
 * `Repo#aggregate` methods
 * `has_one` relation type
-* added `require "json"`
+* added explicit `require "json"`
 * `update_all` method override to allow for named tuples
 
 # [0.3.4] 2017-01-06

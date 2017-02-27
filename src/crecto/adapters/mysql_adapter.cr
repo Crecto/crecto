@@ -17,14 +17,28 @@ module Crecto
         when :all
           all(queryable, query)
         when :delete_all
-          delete(queryable, query)
+          delete(queryable, query, nil)
+        end
+      end
+
+      def self.run(operation : Symbol, queryable, query : Crecto::Repo::Query, tx : DB::Transaction?)
+        case operation
+        when :delete_all
+          delete(queryable, query, tx)
         end
       end
 
       def self.run(operation : Symbol, queryable, query : Crecto::Repo::Query, query_hash : Hash)
         case operation
         when :update_all
-          update(queryable, query, query_hash)
+          update(queryable, query, query_hash, nil)
+        end
+      end
+
+      def self.run(operation : Symbol, queryable, query : Crecto::Repo::Query, query_hash : Hash, tx : DB::Transaction?)
+        case operation
+        when :update_all
+          update(queryable, query, query_hash, tx)
         end
       end
 
@@ -49,15 +63,19 @@ module Crecto
       end
 
       # Query data store in relation to a *queryable_instance* of Schema
-      def self.run_on_instance(operation, changeset)
+      def self.run_on_instance(operation, changeset, tx : DB::Transaction?)
         case operation
         when :insert
-          insert(changeset)
+          insert(changeset, tx)
         when :update
-          update(changeset)
+          update(changeset, tx)
         when :delete
-          delete(changeset)
+          delete(changeset, tx)
         end
+      end
+
+      def self.run_on_instance(operation, changeset)
+        run_on_instance(operation, changeset, nil)
       end
 
       def self.aggregate(queryable, ag, field)
@@ -80,24 +98,35 @@ module Crecto
         @@CRECTO_DB.as(DB::Database).scalar(q.join(" "), params)
       end
 
-      def self.execute_query(query_string, params)
+      def self.get_db : DB::Database
         @@CRECTO_DB = DB.open(ENV["MYSQL_URL"]) if @@CRECTO_DB.nil?
-        @@CRECTO_DB.as(DB::Database).query(query_string, params)
+        @@CRECTO_DB.as(DB::Database)
+      end
+
+      def self.execute_query(query_string, params)
+        get_db().as(DB::Database).query(query_string, params)
       end
 
       def self.execute_query(query_string)
-        @@CRECTO_DB = DB.open(ENV["MYSQL_URL"]) if @@CRECTO_DB.nil?
-        @@CRECTO_DB.as(DB::Database).query(query_string)
+        get_db().as(DB::Database).query(query_string)
+      end
+
+      def self.execute_exec(query_string, params, tx : DB::Transaction?)
+        return execute_exec(query_string, params) if tx.nil?
+        tx.connection.query(query_string, params)
+      end
+
+      def self.execute_exec(query_string, params, tx : DB::Transaction?)
+        return execute_exec(query_string, params) if tx.nil?
+        tx.connection.exec(query_string, params)
       end
 
       def self.execute_exec(query_string, params)
-        @@CRECTO_DB = DB.open(ENV["MYSQL_URL"]) if @@CRECTO_DB.nil?
-        @@CRECTO_DB.as(DB::Database).exec(query_string, params)
+        get_db().as(DB::Database).exec(query_string, params)
       end
 
       def self.execute_exec(query_string)
-        @@CRECTO_DB = DB.open(ENV["MYSQL_URL"]) if @@CRECTO_DB.nil?
-        @@CRECTO_DB.as(DB::Database).exec(query_string)
+        get_db().as(DB::Database).exec(query_string)
       end
 
       private def self.get(queryable, id)
@@ -129,7 +158,7 @@ module Crecto
         execute_query(q.join(" "), params)
       end
 
-      private def self.insert(changeset)
+      private def self.insert(changeset, tx : DB::Transaction?)
         fields_values = instance_fields_and_values(changeset.instance)
 
         q = ["INSERT INTO"]
@@ -138,7 +167,7 @@ module Crecto
         q.push "VALUES"
         q.push "(#{(1..fields_values[:values].size).map { "?" }.join(", ")})"
 
-        execute_exec(q.join(" "), fields_values[:values])
+        execute_exec(q.join(" "), fields_values[:values], tx)
         execute_query("SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field} = LAST_INSERT_ID()")
       end
 
@@ -150,18 +179,18 @@ module Crecto
         q
       end
 
-      private def self.update(changeset)
+      private def self.update(changeset, tx)
         fields_values = instance_fields_and_values(changeset.instance)
 
         q = update_begin(changeset.instance.class.table_name, fields_values)
         q.push "WHERE"
         q.push "#{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}"
 
-        execute_exec(q.join(" "), fields_values[:values])
+        execute_exec(q.join(" "), fields_values[:values], tx)
         execute_query("SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field} = #{changeset.instance.pkey_value}")
       end
 
-      private def self.update(queryable, query, query_hash)
+      private def self.update(queryable, query, query_hash, tx : DB::Transaction?)
         fields_values = instance_fields_and_values(query_hash)
         params = [] of DbValue | Array(DbValue)
 
@@ -169,7 +198,7 @@ module Crecto
         q.push wheres(queryable, query, params) if query.wheres.any?
         q.push or_wheres(queryable, query, params) if query.or_wheres.any?
 
-        execute_exec(q.join(" "), fields_values[:values] + params)
+        execute_exec(q.join(" "), fields_values[:values] + params, tx)
       end
 
       private def self.delete_begin(table_name)
@@ -177,24 +206,24 @@ module Crecto
         q.push "#{table_name}"
       end
 
-      private def self.delete(changeset)
+      private def self.delete(changeset, tx : DB::Transaction?)
         q = delete_begin(changeset.instance.class.table_name)
         q.push "WHERE"
         q.push "#{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}"
 
-        sel = execute_query("SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}")
-        execute_exec(q.join(" "))
+        sel = execute_query("SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}") if !tx.nil?
+        return execute_exec(q.join(" "), tx) if !tx.nil?
         sel
       end
 
-      private def self.delete(queryable, query)
+      private def self.delete(queryable, query, tx : DB::Transaction?)
         params = [] of DbValue | Array(DbValue)
 
         q = delete_begin(queryable.table_name)
         q.push wheres(queryable, query, params) if query.wheres.any?
         q.push or_wheres(queryable, query, params) if query.or_wheres.any?
 
-        execute_exec(q.join(" "), params)
+        execute_exec(q.join(" "), params, tx)
       end
 
       private def self.wheres(queryable, query, params)
@@ -296,7 +325,7 @@ module Crecto
       end
 
       private def self.instance_fields_and_values(query_hash : Hash)
-        {fields: query_hash.keys, values: query_hash.values.map { |v| v.is_a?(Time) ? v.to_s.split(" ")[0..1].join(" ") : v }}
+        {fields: query_hash.keys, values: query_hash.values.map { |v| v.is_a?(Time) ? v.to_s.split(" ")[0..1].join(" ") : v.as(DbValue) }}
       end
 
       private def self.instance_fields_and_values(queryable_instance)
