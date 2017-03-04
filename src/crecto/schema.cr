@@ -3,7 +3,7 @@ module Crecto
   #
   # example:
   # ```
-  # class User < Crecot::Model
+  # class User < Crecto::Model
   #   schema "users" do
   #     field :name, String
   #   end
@@ -13,7 +13,7 @@ module Crecto
   # In the above example, the `User` class will map to the "users" database table.
   # The `:name` field will map to a column in the "users" table named "name", which is a String (varchar)
   #
-  # Schema assumes the data store table also has `id`, `created-at` and `updated_at` at fields
+  # Schema assumes the data store table also has `id`, `created_at` and `updated_at` at fields
   #
   # `field` accepts some optional parameters
   #
