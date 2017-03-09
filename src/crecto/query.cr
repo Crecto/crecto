@@ -255,7 +255,7 @@ module Crecto
       # Query.limit(50)
       # ```
       def limit(lim)
-        @limit = limit
+        @limit = lim
         self
       end
 
