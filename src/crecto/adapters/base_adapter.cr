@@ -1,11 +1,8 @@
 module Crecto
   module Adapters
     #
-    # Adapter module for PostgresSQL
-    #
-    # Uses [crystal-pg](https://github.com/will/crystal-pg) for now.
-    #
-    # Other adapters should follow this same pattern
+    # BaseAdapter module
+    # Extended by actual adapters
     module BaseAdapter
 
       macro extended
