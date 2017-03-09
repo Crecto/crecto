@@ -168,7 +168,7 @@ module Crecto
           end
         end
         q.push where_clauses.join(" AND ")
-        q.join("")
+        q.join(" ")
       end
 
       private def or_wheres(queryable, query, params)
@@ -179,7 +179,7 @@ module Crecto
           where_clauses += add_where(where.as(Hash), queryable, params)
         end
         q.push where_clauses.join(" OR")
-        q.join("")
+        q.join(" ")
       end
 
       private def add_where(where : NamedTuple, params)
