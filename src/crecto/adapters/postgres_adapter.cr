@@ -7,7 +7,6 @@ module Crecto
     #
     # Other adapters should follow this same pattern
     module Postgres
-      @@CRECTO_DB : DB::Database?
       @@ENV_KEY = "PG_URL"
       extend BaseAdapter
 
@@ -38,8 +37,6 @@ module Crecto
         tx.connection.exec(query_string)
       end
 
-      ###
-
       private def self.get(queryable, id)
         q = ["SELECT *"]
         q.push "FROM #{queryable.table_name}"
@@ -48,8 +45,6 @@ module Crecto
 
         execute(q.join(" "), [id])
       end
-
-      ###
 
       private def self.insert(changeset, tx : DB::Transaction?)
         fields_values = instance_fields_and_values(changeset.instance)
@@ -84,8 +79,6 @@ module Crecto
         execute(position_args(q.join(" ")), fields_values[:values], tx)
       end
 
-      ###
-
       private def self.delete(changeset, tx : DB::Transaction?)
         q = delete_begin(changeset.instance.class.table_name)
         q.push "WHERE"
@@ -114,8 +107,6 @@ module Crecto
 
         exec_execute(position_args(q.join(" ")), params, tx)
       end
-
-      ###
 
       private def self.instance_fields_and_values(query_hash : Hash)
         {fields: query_hash.keys.join(", "), values: query_hash.values}

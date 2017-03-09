@@ -8,6 +8,10 @@ module Crecto
     # Other adapters should follow this same pattern
     module BaseAdapter
 
+      macro extended
+        @@CRECTO_DB : DB::Database?
+      end
+
       def get_db : DB::Database
         @@CRECTO_DB = DB.open(ENV[@@ENV_KEY]) if @@CRECTO_DB.nil?
         @@CRECTO_DB.as(DB::Database)

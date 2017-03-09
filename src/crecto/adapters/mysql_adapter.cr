@@ -7,7 +7,6 @@ module Crecto
     #
     # Other adapters should follow this same pattern
     module Mysql
-      @@CRECTO_DB : DB::Database?
       @@ENV_KEY = "MYSQL_URL"
       extend BaseAdapter
 
@@ -34,8 +33,6 @@ module Crecto
         get_db().exec(query_string)
       end
 
-      ###
-
       private def self.get(queryable, id)
         q = ["SELECT *"]
         q.push "FROM #{queryable.table_name}"
@@ -44,8 +41,6 @@ module Crecto
 
         execute(q.join(" "), [id])
       end
-
-      ###
 
       private def self.insert(changeset, tx : DB::Transaction?)
         fields_values = instance_fields_and_values(changeset.instance)
@@ -79,8 +74,6 @@ module Crecto
         execute("SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field} = #{changeset.instance.pkey_value}")
       end
 
-      ###
-
       private def self.delete(changeset, tx : DB::Transaction?)
         q = delete_begin(changeset.instance.class.table_name)
         q.push "WHERE"
@@ -100,8 +93,6 @@ module Crecto
 
         exec_execute(q.join(" "), params, tx)
       end
-
-      ###
 
       private def self.instance_fields_and_values(query_hash : Hash)
         {fields: query_hash.keys, values: query_hash.values.map { |v| v.is_a?(Time) ? v.to_s.split(" ")[0..1].join(" ") : v.as(DbValue) }}
