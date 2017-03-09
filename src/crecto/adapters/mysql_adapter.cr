@@ -1,9 +1,9 @@
 module Crecto
   module Adapters
     #
-    # Adapter module for PostgresSQL
+    # Adapter module for MySQL
     #
-    # Uses [crystal-pg](https://github.com/will/crystal-pg) for now.
+    # Uses [crystal-mysql](https://github.com/crystal-lang/crystal-mysql) for now.
     #
     # Other adapters should follow this same pattern
     module Mysql
@@ -238,7 +238,7 @@ module Crecto
           end
         end
         q.push where_clauses.join(" AND ")
-        q.join("")
+        q.join(" ")
       end
 
       private def self.or_wheres(queryable, query, params)
