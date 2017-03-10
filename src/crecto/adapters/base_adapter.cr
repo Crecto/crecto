@@ -118,7 +118,13 @@ module Crecto
         params = [] of DbValue | Array(DbValue)
 
         q = ["SELECT"]
-        q.push query.selects.map { |s| "#{queryable.table_name}.#{s}" }.join(", ")
+
+        if query.distincts.nil?
+          q.push query.selects.map { |s| "#{queryable.table_name}.#{s}" }.join(", ")
+        else
+          q.push "DISTINCT #{query.distincts}"
+        end
+        
         q.push "FROM #{queryable.table_name}"
         q.push joins(queryable, query, params) if query.joins.any?
         q.push wheres(queryable, query, params) if query.wheres.any?
@@ -126,6 +132,7 @@ module Crecto
         q.push order_bys(query) if query.order_bys.any?
         q.push limit(query) unless query.limit.nil?
         q.push offset(query) unless query.offset.nil?
+        q.push "GROUP BY #{query.group_bys}" if !query.group_bys.nil?
 
         execute(position_args(q.join(" ")), params)
       end
