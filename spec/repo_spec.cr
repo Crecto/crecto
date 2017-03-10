@@ -539,6 +539,34 @@ describe Crecto do
       end
     end
 
+    describe "#distinct" do
+      it "should return a single user" do
+        user = quick_create_user("bill")
+        2.times { quick_create_post(user) }
+
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:posts))
+        users.size.should eq(2)
+
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:posts).distinct("users.id"))
+        users[0].name.should be nil
+        users.size.should eq(1)
+      end
+    end
+
+    describe "#group_by" do
+      it "should return a single user" do
+        user = quick_create_user("fred")
+        2.times { quick_create_post(user) }
+
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:posts))
+        users.size.should eq(2)
+
+        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:posts).group_by("users.id"))
+        users[0].name.should eq("fred")
+        users.size.should eq(1)
+      end
+    end
+
     describe "joins through" do
       it "should load the association accross join table" do
         user = User.new

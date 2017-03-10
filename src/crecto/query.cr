@@ -5,6 +5,7 @@ module Crecto
     # `Query.select('id').where(name: "fred").join(:posts).order_by("users.name").limit(1).offset(4)`
     #
     class Query
+      property distincts : String?
       property selects : Array(String)
       property wheres = [] of WhereType
       property or_wheres = [] of WhereType
@@ -13,11 +14,21 @@ module Crecto
       property order_bys = [] of String
       property limit : Int32?
       property offset : Int32?
+      property group_bys : String?
+
+      # Adds `DISTINCT` to the query
+      #
+      # ```
+      # Query.distinct("users.name")
+      # ```
+      def self.distinct(dist : String)
+        self.new.distinct(dist)
+      end
 
       # Fields to select, separated by comma.  Default is "*"
       #
       # ```
-      # Query.select(['id', 'name'])
+      # Query.select(["id", "name"])
       # ```
       def self.select(selects : Array(String))
         self.new.select(selects)
@@ -131,8 +142,28 @@ module Crecto
         self.new.offset(off)
       end
 
+      # Query GROUP BY
+      #
+      # ```
+      # Query.where(name: "Bill").join(:posts).group_by("users.id")
+      # ```
+      def self.group_by(gb : String)
+        self.new.group_by(gb)
+      end
+
       def initialize
         @selects = ["*"]
+        # @selects = Array(String).new
+      end
+
+      # Adds `DISTINCT` to the query
+      #
+      # ```
+      # Query.distinct("users.name")
+      # ```
+      def distinct(dist : String)
+        @distincts = dist
+        self
       end
 
       # Fields to select, separated by comma.  Default is "*"
@@ -266,6 +297,16 @@ module Crecto
       # ```
       def offset(off)
         @offset = off
+        self
+      end
+
+      # Query GROUP BY
+      #
+      # ```
+      # Query.where(name: "Bill").join(:posts).group_by("users.id")
+      # ```
+      def group_by(gb : String)
+        @group_bys = gb
         self
       end
     end
