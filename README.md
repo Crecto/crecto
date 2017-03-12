@@ -216,6 +216,14 @@ Crecto::Repo.insert(user)
 
 query = Crecto::Repo::Query.where("settings @> '{\"one\":\"test\"}'")
 users = Crecto::Repo.all(UserJson, query)
+
+#
+# Database Logging
+#
+
+# By default nothing is logged.  To enable pass any type of IO to the logger.  For STDOUT use:
+Crecto::DbLogger.set_handler(STDOUT)
+
 ```
 
 ## Contributing
