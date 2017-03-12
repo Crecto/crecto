@@ -62,7 +62,7 @@ require "crecto"
 - [x] Transactions / Multi
 - [ ] Association / dependent options (`dependent: :delete_all`, `dependent: :nilify_all`, etc)
 - [ ] Unique constraint
-- [ ] Combine database adapters (base class). Currently there is unecessary duplication
+- [x] Combine database adapters (base class). Currently there is unecessary duplication
 
 ## Usage
 

@@ -148,8 +148,8 @@ module Crecto
 
       {% for field in json_fields %}
         def {{field.id}}=(val)
-          s = jsonize(val)
-          @{{field.id}} = JSON::Any.new(s)
+          json = jsonize(val)
+          @{{field.id}} = JSON::Any.new(json)
         end
       {% end %}
 
