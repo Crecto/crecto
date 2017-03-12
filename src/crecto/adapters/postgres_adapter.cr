@@ -109,10 +109,9 @@ module Crecto
       end
 
       private def self.instance_fields_and_values(query_hash : Hash)
-        {fields: query_hash.keys.join(", "), values: query_hash.values}
+        values = query_hash.values.map{|x| x.is_a?(JSON::Any) ? x.to_json : x.as(DbValue)}
+        {fields: query_hash.keys.join(", "), values: values}
       end
-
-      
     end
   end
 end

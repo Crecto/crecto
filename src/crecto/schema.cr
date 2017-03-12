@@ -55,7 +55,7 @@ module Crecto
       include Crecto::Schema::BelongsTo
 
       # macro constants
-      VALID_FIELD_TYPES = [String, Int64, Int32, Float32, Float64, Bool, Time, Int32 | Int64, Float32 | Float64]
+      VALID_FIELD_TYPES = [String, Int64, Int32, Float32, Float64, Bool, Time, Int32 | Int64, Float32 | Float64, Json]
       VALID_FIELD_OPTIONS = [:primary_key, :virtual]
       FIELDS = [] of NamedTuple(name: Symbol, type: String)
 
@@ -126,7 +126,13 @@ module Crecto
       def initialize
       end
 
-      {% mapping = FIELDS.map { |field| field[:name].id.stringify + ": {type: " + (field[:type].id == "Int64" ? "DbBigInt" : field[:type].id.stringify) + ", nilable: true}" } %}
+      {% json_fields = [] of String %}
+
+      {% mapping = FIELDS.map do |field|
+        json_fields.push(field[:name]) if field[:type].id.stringify == "Json"
+        field[:name].id.stringify + ": {type: " + (field[:type].id == "Int64" ? "DbBigInt" : field[:type].id.stringify) + ", nilable: true}"
+      end %}
+
       {% mapping.push(PRIMARY_KEY_FIELD.id.stringify + ": {type: DbBigInt, nilable: true}") %}
 
       {% unless CREATED_AT_FIELD == nil %}
@@ -139,6 +145,13 @@ module Crecto
 
       DB.mapping({ {{mapping.uniq.join(", ").id}} })
       JSON.mapping({ {{mapping.uniq.join(", ").id}} })
+
+      {% for field in json_fields %}
+        def {{field.id}}=(val)
+          s = jsonize(val)
+          @{{field.id}} = JSON::Any.new(s)
+        end
+      {% end %}
 
       # Builds a hash from all `FIELDS` defined
       def to_query_hash
@@ -160,6 +173,22 @@ module Crecto
         {% end %}
 
         query_hash
+      end
+
+      def jsonize(obj)
+        case obj
+        when Array
+          obj.map { |o| jsonize(o) }.as(JSON::Type)
+        when Hash
+          h = {} of String => JSON::Type
+          obj.each { |k, v| h[k] = jsonize(v) }
+          h.as(JSON::Type)
+        when Int32
+          obj.to_i64.as(JSON::Type)
+        when Time
+          obj.to_json.as(JSON::Type)
+        else obj.as(JSON::Type)
+        end
       end
 
       def get_changeset

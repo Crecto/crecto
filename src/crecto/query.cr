@@ -43,7 +43,7 @@ module Crecto
         self.new.where(**wheres)
       end
 
-      # Query WHERe with a string
+      # Query WHERE with a string
       #
       # ```
       # Query.where("users.id > ?", [10])
@@ -52,7 +52,7 @@ module Crecto
         self.new.where(where_string, params)
       end
 
-      # Query WHERe with a Symbol and DbValue
+      # Query WHERE with a Symbol and DbValue
       #
       # ```
       # Query.where(:name, "Conan")
@@ -68,6 +68,15 @@ module Crecto
       # ```
       def self.where(where_sym : Symbol, params : Array(DbValue | PkeyValue))
         self.new.where(where_sym, params)
+      end
+
+      # Query WHERE with a String
+      #
+      # ```
+      # Query.where("name IS NOT NULL")
+      # ```
+      def self.where(where_string : String)
+        self.new.where(where_string)
       end
 
       # Key => Value pair(s) used in query `OR WHERE`
@@ -197,7 +206,7 @@ module Crecto
         self
       end
 
-      # Query where with a Symbol and DbValue
+      # Query WHERE with a Symbol and DbValue
       #
       # ```
       # Query.where(:name, "Conan")
@@ -217,6 +226,15 @@ module Crecto
         w[where_sym] = params.map { |x| x.as(DbValue) }
         @wheres.push(w)
         self
+      end
+
+      # Query WHERE with a String
+      #
+      # ```
+      # Query.where("name IS NOT NULL")
+      # ```
+      def where(where_string : String)
+        where(where_string, Array(String).new)
       end
 
       # Key => Value pair(s) used in query `OR WHERE`
