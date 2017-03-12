@@ -1,5 +1,8 @@
 BEGIN;
 
+DROP INDEX IF EXISTS users_json_f2f2f9sd;
+DROP TABLE IF EXISTS users_json;
+
 DROP INDEX IF EXISTS users_4ijlkjdf;
 DROP TABLE IF EXISTS users;
 DROP INDEX IF EXISTS users_different_defaults_kljl3kj;
@@ -19,6 +22,25 @@ DROP TABLE IF EXISTS user_projects;
 
 DROP INDEX IF EXISTS projects_88fsssfsf;
 DROP TABLE IF EXISTS projects;
+
+CREATE TABLE users_json(
+  id INTEGER NOT NULL,
+  settings jsonb,
+  created_at timestamp without time zone,
+  updated_at timestamp without time zone
+);
+
+CREATE SEQUENCE users_json_id_seq
+  START WITH 1121
+  INCREMENT BY 1
+  NO MINVALUE
+  NO MAXVALUE
+  CACHE 1;
+
+ALTER SEQUENCE users_json_id_seq OWNED BY users_json.id;
+ALTER TABLE ONLY users_json ADD CONSTRAINT users_json_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY users_json ALTER COLUMN id SET DEFAULT nextval('users_json_id_seq'::regclass);
+CREATE UNIQUE INDEX users_json_f2f2f9sd on users_json (id);
 
 CREATE TABLE users(
   id INTEGER NOT NULL,
