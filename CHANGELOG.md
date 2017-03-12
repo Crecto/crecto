@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * `BaseAdapter` database adapters refactor
 * `#distinct` queries
 * 'Json' field type (postgres only)
+* Database logging
 
 # [0.4.0] 2017-02-26
 * `Repo.get` now raises `NoResults` error if no record is found

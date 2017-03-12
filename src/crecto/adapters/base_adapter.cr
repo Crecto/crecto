@@ -4,7 +4,6 @@ module Crecto
     # BaseAdapter module
     # Extended by actual adapters
     module BaseAdapter
-
       macro extended
         @@CRECTO_DB : DB::Database?
       end
@@ -84,11 +83,17 @@ module Crecto
       end
 
       def execute(query_string, params)
-        get_db().query(query_string, params)
+        start = Time.now
+        results = get_db().query(query_string, params)
+        DbLogger.log(query_string, Time.new - start, params)
+        results
       end
 
       def execute(query_string)
-        get_db().query(query_string)
+        start = Time.now
+        results = get_db().query(query_string)
+        DbLogger.log(query_string, Time.new - start)
+        results
       end
 
       def aggregate(queryable, ag, field)
@@ -124,7 +129,6 @@ module Crecto
         else
           q.push "DISTINCT #{query.distincts}"
         end
-        
         q.push "FROM #{queryable.table_name}"
         q.push joins(queryable, query, params) if query.joins.any?
         q.push wheres(queryable, query, params) if query.wheres.any?
@@ -198,8 +202,8 @@ module Crecto
         where.keys.map do |key|
           [where[key]].flatten.each { |param| params.push(param) }
 
-          resp = " #{queryable.table_name}.#{key.to_s}"
-          resp += if where[key].is_a?(Array)
+          results = " #{queryable.table_name}.#{key.to_s}"
+          results += if where[key].is_a?(Array)
                     " IN (" + where[key].as(Array).map { |p| "?" }.join(", ") + ")"
                   else
                     "=?"
@@ -264,7 +268,6 @@ module Crecto
       private def instance_fields_and_values(queryable_instance)
         instance_fields_and_values(queryable_instance.to_query_hash)
       end
-
 
       private def position_args(query_string : String)
         query = ""

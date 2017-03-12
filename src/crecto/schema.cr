@@ -129,9 +129,9 @@ module Crecto
       {% json_fields = [] of String %}
 
       {% mapping = FIELDS.map do |field|
-        json_fields.push(field[:name]) if field[:type].id.stringify == "Json"
-        field[:name].id.stringify + ": {type: " + (field[:type].id == "Int64" ? "DbBigInt" : field[:type].id.stringify) + ", nilable: true}"
-      end %}
+           json_fields.push(field[:name]) if field[:type].id.stringify == "Json"
+           field[:name].id.stringify + ": {type: " + (field[:type].id == "Int64" ? "DbBigInt" : field[:type].id.stringify) + ", nilable: true}"
+         end %}
 
       {% mapping.push(PRIMARY_KEY_FIELD.id.stringify + ": {type: DbBigInt, nilable: true}") %}
 

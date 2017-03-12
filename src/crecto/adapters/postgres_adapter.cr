@@ -24,7 +24,7 @@ module Crecto
 
       def self.execute(query_string, tx : DB::Transaction?)
         return execute(query_string) if tx.nil?
-        get_db().query(query_string)
+        tx.connection.query(query_string)
       end
 
       def self.exec_execute(query_string, params, tx : DB::Transaction?)
@@ -109,7 +109,7 @@ module Crecto
       end
 
       private def self.instance_fields_and_values(query_hash : Hash)
-        values = query_hash.values.map{|x| x.is_a?(JSON::Any) ? x.to_json : x.as(DbValue)}
+        values = query_hash.values.map { |x| x.is_a?(JSON::Any) ? x.to_json : x.as(DbValue) }
         {fields: query_hash.keys.join(", "), values: values}
       end
     end
