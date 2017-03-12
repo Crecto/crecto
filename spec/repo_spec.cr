@@ -592,7 +592,7 @@ describe Crecto do
     describe "json type" do
       it "store and retrieve records" do
         u = UserJson.new
-        u.settings = {"one" => "stuff", "two" => 123, "three" => 130912039123090}
+        u.settings = {one: "stuff", two: 123, three: 130912039123090}
 
         changeset = Crecto::Repo.insert(u)
         id = changeset.instance.id
