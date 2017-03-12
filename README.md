@@ -62,7 +62,7 @@ require "crecto"
 - [x] Transactions / Multi
 - [ ] Association / dependent options (`dependent: :delete_all`, `dependent: :nilify_all`, etc)
 - [ ] Unique constraint
-- [ ] Combine database adapters (base class). Currently there is unecessary duplication
+- [x] Combine database adapters (base class). Currently there is unecessary duplication
 
 ## Usage
 
@@ -200,6 +200,22 @@ Crecto::Repo.transaction(multi)
 # check for errors
 # If there are any errors in any of the transactions, the database will rollback as if none of the transactions happened
 multi.errors.any?
+
+#
+# JSON type (Postgres only)
+#
+
+class User < Crecto::Model
+  field :settings, Json
+end
+
+user = User.new
+user.settings = {"one" => "test", "two" => 123, "three" => 12321319323298}
+
+Crecto::Repo.insert(user)
+
+query = Crecto::Repo::Query.where("settings @> '{\"one\":\"test\"}'")
+users = Crecto::Repo.all(UserJson, query)
 ```
 
 ## Contributing

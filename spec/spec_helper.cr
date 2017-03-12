@@ -164,3 +164,9 @@ class Thing < Crecto::Model
     belongs_to :user, UserDifferentDefaults, foreign_key: :user_different_defaults_id
   end
 end
+
+class UserJson < Crecto::Model
+  schema "users_json" do
+    field :settings, Json
+  end
+end
