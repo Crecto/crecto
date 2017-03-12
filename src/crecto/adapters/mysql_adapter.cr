@@ -25,12 +25,23 @@ module Crecto
         tx.connection.exec(query_string, params)
       end
 
-      def self.exec_execute(query_string, params)
-        get_db().exec(query_string, params)
+      def self.exec_execute(query_string, tx : DB::Transaction?)
+        return exec_execute(query_string) if tx.nil?
+        tx.connection.exec(query_string)
+      end
+
+      def self.exec_execute(query_string, params : Array)
+        start = Time.now
+        resp = get_db().exec(query_string, params)
+        DbLogger.log(query_string, Time.new - start, params)
+        resp
       end
 
       def self.exec_execute(query_string)
-        get_db().exec(query_string)
+        start = Time.now
+        resp = get_db().exec(query_string)
+        DbLogger.log(query_string, Time.new - start)
+        resp
       end
 
       private def self.get(queryable, id)

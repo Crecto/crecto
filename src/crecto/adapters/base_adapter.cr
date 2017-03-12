@@ -4,7 +4,6 @@ module Crecto
     # BaseAdapter module
     # Extended by actual adapters
     module BaseAdapter
-
       macro extended
         @@CRECTO_DB : DB::Database?
       end
@@ -80,15 +79,21 @@ module Crecto
       end
 
       def run_on_instance(operation, changeset)
-        run_on_instance(operation, changeset, nil)
+        resp = run_on_instance(operation, changeset, nil)
       end
 
       def execute(query_string, params)
-        get_db().query(query_string, params)
+        start = Time.now
+        resp = get_db().query(query_string, params)
+        DbLogger.log(query_string, Time.new - start, params)
+        resp
       end
 
       def execute(query_string)
-        get_db().query(query_string)
+        start = Time.now
+        resp = get_db().query(query_string)
+        DbLogger.log(query_string, Time.new - start)
+        resp
       end
 
       def aggregate(queryable, ag, field)
@@ -124,7 +129,6 @@ module Crecto
         else
           q.push "DISTINCT #{query.distincts}"
         end
-        
         q.push "FROM #{queryable.table_name}"
         q.push joins(queryable, query, params) if query.joins.any?
         q.push wheres(queryable, query, params) if query.wheres.any?
@@ -264,7 +268,6 @@ module Crecto
       private def instance_fields_and_values(queryable_instance)
         instance_fields_and_values(queryable_instance.to_query_hash)
       end
-
 
       private def position_args(query_string : String)
         query = ""
