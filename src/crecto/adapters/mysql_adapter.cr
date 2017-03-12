@@ -32,16 +32,16 @@ module Crecto
 
       def self.exec_execute(query_string, params : Array)
         start = Time.now
-        resp = get_db().exec(query_string, params)
+        results = get_db().exec(query_string, params)
         DbLogger.log(query_string, Time.new - start, params)
-        resp
+        results
       end
 
       def self.exec_execute(query_string)
         start = Time.now
-        resp = get_db().exec(query_string)
+        results = get_db().exec(query_string)
         DbLogger.log(query_string, Time.new - start)
-        resp
+        results
       end
 
       private def self.get(queryable, id)

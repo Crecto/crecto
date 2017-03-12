@@ -79,21 +79,21 @@ module Crecto
       end
 
       def run_on_instance(operation, changeset)
-        resp = run_on_instance(operation, changeset, nil)
+        run_on_instance(operation, changeset, nil)
       end
 
       def execute(query_string, params)
         start = Time.now
-        resp = get_db().query(query_string, params)
+        results = get_db().query(query_string, params)
         DbLogger.log(query_string, Time.new - start, params)
-        resp
+        results
       end
 
       def execute(query_string)
         start = Time.now
-        resp = get_db().query(query_string)
+        results = get_db().query(query_string)
         DbLogger.log(query_string, Time.new - start)
-        resp
+        results
       end
 
       def aggregate(queryable, ag, field)
@@ -202,8 +202,8 @@ module Crecto
         where.keys.map do |key|
           [where[key]].flatten.each { |param| params.push(param) }
 
-          resp = " #{queryable.table_name}.#{key.to_s}"
-          resp += if where[key].is_a?(Array)
+          results = " #{queryable.table_name}.#{key.to_s}"
+          results += if where[key].is_a?(Array)
                     " IN (" + where[key].as(Array).map { |p| "?" }.join(", ") + ")"
                   else
                     "=?"
