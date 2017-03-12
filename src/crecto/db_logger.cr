@@ -1,14 +1,21 @@
+require "colorize"
+
 module Crecto
   module DbLogger
     @@log_handler : IO?
+    @@tty = true
 
     def self.log(string, elapsed) : Nil
-      return if @@log_handler.nil?
-      @@log_handler.not_nil! << "\e[36m#{"%7.7s" % elapsed_text(elapsed)} \e[34m#{string}\e[0m\n"
+      if handler = @@log_handler
+        handler << if @@tty
+          "#{("%7.7s" % elapsed_text(elapsed)).colorize(:magenta) } #{string.colorize(:blue)}\n"
+        else
+          "#{"%7.7s" % elapsed_text(elapsed)} #{string}\n"
+        end
+      end
     end
 
     def self.log(string, elapsed, params) : Nil
-      return if @@log_handler.nil?
       params.each do |param|
         string = string.sub(/(\$\d+|\?)/, "'#{param}'")
       end
@@ -17,6 +24,7 @@ module Crecto
 
     def self.set_handler(io : IO)
       @@log_handler = io
+      @@tty = @@log_handler.not_nil!.tty?
     end
 
     private def self.elapsed_text(elapsed) : String
