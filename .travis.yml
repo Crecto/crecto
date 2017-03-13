@@ -1,10 +1,15 @@
 language: crystal
 services:
+  - mysql
   - postgresql
 addons:
   postgresql: "9.4"
 before_script:
+  - mysql -e 'create database crecto_test'
+  - mysql -Dcrecto_test < spec/migrations/mysql_migrations.sql
   - psql -c 'create database crecto_test;' -U postgres
   - psql $PG_URL < spec/migrations/pg_users.sql
 env:
-  - PG_URL=postgres://postgres@localhost:5432/crecto_test
+  matrix:
+    - PG_URL=postgres://postgres@localhost:5432/crecto_test
+    - MYSQL_URL=mysql://root@localhost/crecto_test
