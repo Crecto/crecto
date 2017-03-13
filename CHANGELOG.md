@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * `#distinct` queries
 * 'Json' field type (postgres only)
 * Database logging
+* travis runs postgres AND mysql specs / adapter query specs [@neovintage](https://github.com/neovintage)
 
 # [0.4.0] 2017-02-26
 * `Repo.get` now raises `NoResults` error if no record is found
