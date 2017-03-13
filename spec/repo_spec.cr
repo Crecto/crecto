@@ -141,7 +141,11 @@ describe Crecto do
           quick_create_user_with_things("test", 10)
           quick_create_user_with_things("test", 11)
 
-          Crecto::Repo.aggregate(User, :avg, :things).as(PG::Numeric).to_f.should eq 10.0
+          if Crecto::Repo::ADAPTER == Crecto::Adapters::Postgres
+            Crecto::Repo.aggregate(User, :avg, :things).as(PG::Numeric).to_f.should eq 10.0
+          else
+            Crecto::Repo.aggregate(User, :avg, :things).as(Float64).to_f.should eq 10.0
+          end
         end
 
         it "should return the correct :count" do
@@ -195,7 +199,11 @@ describe Crecto do
           quick_create_user_with_things("nope", 12)
           query = Crecto::Repo::Query.where(name: "test")
 
-          Crecto::Repo.aggregate(User, :avg, :things, query).as(PG::Numeric).to_f.should eq 10.0
+          if Crecto::Repo::ADAPTER == Crecto::Adapters::Mysql
+            Crecto::Repo.aggregate(User, :avg, :things, query).as(Float64).to_f.should eq 10.0
+          else
+            Crecto::Repo.aggregate(User, :avg, :things, query).as(PG::Numeric).to_f.should eq 10.0
+          end
         end
 
         it "should return the correct :count" do
@@ -589,6 +597,7 @@ describe Crecto do
       end
     end
 
+    {% if `echo $PG_URL`.includes?("postgres") %}
     describe "json type" do
       it "store and retrieve records" do
         u = UserJson.new
@@ -606,7 +615,16 @@ describe Crecto do
         user.settings.not_nil!["two"].should eq(123)
         user.settings.not_nil!["three"].should eq(130912039123090)
       end
+
+      describe "#delete_all" do
+        it "should remove all records" do
+          Crecto::Repo.delete_all(UserJson)
+          users = Crecto::Repo.all(UserJson)
+          users.size.should eq 0
+        end
+      end
     end
+    {% end %}
 
     # keep this at the end
     describe "#delete_all" do
@@ -618,7 +636,6 @@ describe Crecto do
         Crecto::Repo.delete_all(User)
         Crecto::Repo.delete_all(UserDifferentDefaults)
         Crecto::Repo.delete_all(UserLargeDefaults)
-        Crecto::Repo.delete_all(UserJson)
 
         user_projects = Crecto::Repo.all(UserProject)
         user_projects.size.should eq 0
@@ -639,9 +656,6 @@ describe Crecto do
         users.size.should eq 0
 
         users = Crecto::Repo.all(UserLargeDefaults)
-        users.size.should eq 0
-
-        users = Crecto::Repo.all(UserJson)
         users.size.should eq 0
       end
     end
