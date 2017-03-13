@@ -1,5 +1,6 @@
 language: crystal
 services:
+  - mysql
   - postgresql
 addons:
   postgresql: "9.4"
@@ -10,5 +11,5 @@ before_script:
   - psql $PG_URL < spec/migrations/pg_users.sql
 env:
   matrix:
-    - PG_URL=postgresql
-    - MYSQL_URL=mysql
+    - PG_URL=postgres://postgres@localhost:5432/crecto_test
+    - MYSQL_URL=mysql://root@localhost/crecto_test
