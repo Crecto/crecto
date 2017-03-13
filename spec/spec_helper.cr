@@ -1,8 +1,19 @@
-require "pg"
-require "mysql"
+{% if `echo $PG_URL`.includes?("postgres") %}
+  require "pg"
+{% else %}
+  class PG
+    class Numeric
+      def to_f
+      end
+    end
+  end
+  require "mysql"
+{% end %}
 
 require "spec"
 require "../src/crecto"
+
+alias TestFloat = PG::Numeric | Float64
 
 class User < Crecto::Model
   schema "users" do

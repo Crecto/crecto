@@ -30,7 +30,7 @@ end
 if Crecto::Repo::ADAPTER == Crecto::Adapters::Mysql
 
   describe "Crecto::Adapters::Mysql" do
-    Spec.after_each do
+    Spec.before_each do
       Crecto::Adapters.clear_sql
     end
 

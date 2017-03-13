@@ -141,11 +141,7 @@ describe Crecto do
           quick_create_user_with_things("test", 10)
           quick_create_user_with_things("test", 11)
 
-          if Crecto::Repo::ADAPTER == Crecto::Adapters::Postgres
-            Crecto::Repo.aggregate(User, :avg, :things).as(PG::Numeric).to_f.should eq 10.0
-          else
-            Crecto::Repo.aggregate(User, :avg, :things).as(Float64).to_f.should eq 10.0
-          end
+          Crecto::Repo.aggregate(User, :avg, :things).as(TestFloat).to_f.should eq 10.0
         end
 
         it "should return the correct :count" do
@@ -199,11 +195,7 @@ describe Crecto do
           quick_create_user_with_things("nope", 12)
           query = Crecto::Repo::Query.where(name: "test")
 
-          if Crecto::Repo::ADAPTER == Crecto::Adapters::Mysql
-            Crecto::Repo.aggregate(User, :avg, :things, query).as(Float64).to_f.should eq 10.0
-          else
-            Crecto::Repo.aggregate(User, :avg, :things, query).as(PG::Numeric).to_f.should eq 10.0
-          end
+          Crecto::Repo.aggregate(User, :avg, :things, query).as(TestFloat).to_f.should eq 10.0
         end
 
         it "should return the correct :count" do

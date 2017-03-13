@@ -32,7 +32,7 @@ end
 if Crecto::Repo::ADAPTER == Crecto::Adapters::Postgres
 
 describe "Crecto::Adapters::Postgres" do
-  Spec.after_each do
+  Spec.before_each do
     Crecto::Adapters.clear_sql
   end
 
