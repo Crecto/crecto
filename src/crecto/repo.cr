@@ -433,6 +433,7 @@ module Crecto
 
     private def self.belongs_to_preload(results, queryable, preload)
       ids = results.map { |r| queryable.foreign_key_value_for_association(preload, r) }
+      return if ids.empty?
       query = Crecto::Repo::Query.where(id: ids)
       relation_items = all(queryable.klass_for_association(preload), query)
 
