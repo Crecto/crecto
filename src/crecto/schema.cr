@@ -143,7 +143,7 @@ module Crecto
         {% mapping.push(UPDATED_AT_FIELD.id.stringify + ": {type: Time, nilable: true}") %}
       {% end %}
 
-      DB.mapping({ {{mapping.uniq.join(", ").id}} })
+      DB.mapping({ {{mapping.uniq.join(", ").id}} }, false)
       JSON.mapping({ {{mapping.uniq.join(", ").id}} })
 
       {% for field in json_fields %}
