@@ -109,6 +109,16 @@ module Crecto
       REQUIRED_LENGTHS[self.to_s].push({field: field, is: opts[:is]?, min: opts[:min]?, max: opts[:max]?})
     end
 
+    # Validate the length of *field* value using the following opts:
+    #
+    # * is: Int32
+    # * min: Int32
+    # * max: Int32
+    #
+    def validate_length(fields : Array(Symbol), **opts)
+      fields.each { |field| validate_length(field, **opts) }
+    end
+
     # TODO: not done
     def validate_number
     end
