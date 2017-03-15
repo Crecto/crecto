@@ -4,6 +4,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+* added validate_length with array parameter [@metacortex](https://github.com/metacortex)
 
 # [0.4.1] 2017-03-14
 * `BaseAdapter` database adapters refactor
@@ -11,8 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * 'Json' field type (postgres only)
 * Database logging
 * travis runs postgres AND mysql specs / adapter query specs [@neovintage](https://github.com/neovintage)
-* Fix to support unscript mapping [@haucnlee](https://github.com/haucnlee)
-* Fix empty preloads [@haucnlee](https://github.com/haucnlee)
+* Fix to support unscript mapping [@huacnlee](https://github.com/huacnlee)
+* Fix empty preloads [@huacnlee](https://github.com/huacnlee)
 
 # [0.4.0] 2017-02-26
 * `Repo.get` now raises `NoResults` error if no record is found
