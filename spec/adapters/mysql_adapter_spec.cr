@@ -88,6 +88,16 @@ if Crecto::Repo::ADAPTER == Crecto::Adapters::Mysql
       end
     end
 
+    it "should generate IS NULL query" do
+      quick_create_user("nullable")
+      Crecto::Adapters.clear_sql
+      query = Crecto::Repo::Query.where(things: nil)
+      Crecto::Repo.all(User, query)
+      check_sql do |sql|
+        sql.should eq(["SELECT users.* FROM users WHERE  users.things IS NULL"])
+      end
+    end
+
   end
 
 end

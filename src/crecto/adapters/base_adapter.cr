@@ -200,11 +200,13 @@ module Crecto
 
       private def add_where(where : Hash, queryable, params)
         where.keys.map do |key|
-          [where[key]].flatten.each { |param| params.push(param) }
+          [where[key]].flatten.each { |param| params.push(param) unless param.is_a?(Nil) }
 
           results = " #{queryable.table_name}.#{key.to_s}"
           results += if where[key].is_a?(Array)
                     " IN (" + where[key].as(Array).map { |p| "?" }.join(", ") + ")"
+                  elsif where[key].is_a?(Nil)
+                    " IS NULL"
                   else
                     "=?"
                   end
