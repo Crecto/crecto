@@ -92,11 +92,12 @@ module Crecto
     #
     # ```
     # user = Crecto::Repo.get(User, 1)
-    # post = Repo.all(user, :post)
+    # post = Repo.get(user, :post)
     # ```
     def self.get(queryable_instance, association_name : Symbol)
       results = all(queryable_instance, association_name)
-      results[0] if results.any?
+      raise NoResults.new("No Results") unless results.any?
+      results[0]
     end
 
     # Return a single instance of *queryable* using the *query* param
