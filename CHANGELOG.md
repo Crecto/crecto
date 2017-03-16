@@ -5,6 +5,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 * added validate_length with array parameter [@metacortex](https://github.com/metacortex)
+* supports IS NULL in .where query - `.where(name: nil)`
 
 # [0.4.1] 2017-03-14
 * `BaseAdapter` database adapters refactor
