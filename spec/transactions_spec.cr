@@ -64,7 +64,7 @@ describe Crecto do
         multi.update(user)
         Crecto::Repo.transaction(multi)
 
-        user = Crecto::Repo.get(User, user.id)
+        user = Crecto::Repo.get!(User, user.id)
         user.name.should eq("this should have changed 89ffsf")
       end
 

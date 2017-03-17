@@ -268,13 +268,15 @@ describe Crecto do
         id = changeset.instance.id
         user = Crecto::Repo.get(User, id)
         user.is_a?(User).should eq(true)
-        user.id.should eq(id)
-        user.some_date.as(Time).to_local.epoch_ms.should be_close(now.epoch_ms, 2000)
+        user.not_nil!.id.should eq(id)
+        user.not_nil!.some_date.as(Time).to_local.epoch_ms.should be_close(now.epoch_ms, 2000)
       end
+    end
 
+    describe "#get!" do
       it "should raise NoResults error if not in db" do
         expect_raises(Crecto::NoResults) do
-          user = Crecto::Repo.get(User, 99999)
+          user = Crecto::Repo.get!(User, 99999)
         end
       end
     end
@@ -387,7 +389,7 @@ describe Crecto do
         end
 
         # should not update the last
-        user = Crecto::Repo.get(User, id3)
+        user = Crecto::Repo.get!(User, id3)
         user.things.should eq(2334234)
       end
     end

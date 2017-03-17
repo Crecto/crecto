@@ -54,7 +54,7 @@ module Crecto
       results
     end
 
-    # Return a single insance of *queryable* by primary key with *id*.
+    # Return a single nilable insance of *queryable* by primary key with *id*.
     #
     # ```
     # user = Repo.get(User, 1)
@@ -63,11 +63,24 @@ module Crecto
       q = ADAPTER.run(:get, queryable, id).as(DB::ResultSet)
       results = queryable.from_rs(q)
       q.close
-      raise NoResults.new("No Results") unless results.any?
-      results.first
+      results.first if results.any?
     end
 
     # Return a single insance of *queryable* by primary key with *id*.
+    # Raises `NoResults` error if the record does not exist
+    #
+    # ```
+    # user = Repo.get(User, 1)
+    # ```
+    def self.get!(queryable, id)
+      if result = get(queryable, id)
+        result
+      else
+        raise NoResults.new("No Results")
+      end
+    end
+
+    # Return a single nilable insance of *queryable* by primary key with *id*.
     # Can pass a Query for the purpose of preloading associations
     #
     # ```
@@ -79,16 +92,32 @@ module Crecto
       results = queryable.from_rs(q)
       q.close
 
-      raise NoResults.new("No Results") unless results.any?
+      if results.any?
+        if query.preloads.any?
+          add_preloads(results, queryable, query.preloads)
+        end
 
-      if query.preloads.any?
-        add_preloads(results, queryable, query.preloads)
+        results.first
       end
-
-      results.first
     end
 
-    # Return a *queryable* instance
+    # Return a single insance of *queryable* by primary key with *id*.
+    # Can pass a Query for the purpose of preloading associations
+    # Raises `NoResults` error if the record does not exist
+    #
+    # ```
+    # query = Query.preload(:posts)
+    # user = Repo.get(User, 1, query)
+    # ```
+    def self.get!(queryable, id, query : Query)
+      if result = get(queryable, id, query : Query)
+        result
+      else
+        raise NoResults.new("No Results")
+      end
+    end
+
+    # Return a single nilable instance of *queryable*
     #
     # ```
     # user = Crecto::Repo.get(User, 1)
@@ -96,8 +125,22 @@ module Crecto
     # ```
     def self.get(queryable_instance, association_name : Symbol)
       results = all(queryable_instance, association_name)
-      raise NoResults.new("No Results") unless results.any?
-      results[0]
+      results.first if results.any?
+    end
+
+    # Return a single instance of *queryable*
+    # Raises `NoResults` error if the record does not exist
+    #
+    # ```
+    # user = Crecto::Repo.get(User, 1)
+    # post = Repo.get(user, :post)
+    # ```
+    def self.get!(queryable_instance, association_name : Symbol)
+      if result = get(queryable_instance, association_name : Symbol)
+        result
+      else
+        raise NoResults.new("No Results")
+      end
     end
 
     # Return a single instance of *queryable* using the *query* param
