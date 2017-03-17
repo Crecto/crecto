@@ -271,9 +271,20 @@ describe Crecto do
         user.not_nil!.id.should eq(id)
         user.not_nil!.some_date.as(Time).to_local.epoch_ms.should be_close(now.epoch_ms, 2000)
       end
+
+      it "should return nil if not in db" do
+        user = Crecto::Repo.get(User, 99999)
+        user.nil?.should eq true
+      end
     end
 
     describe "#get!" do
+      it "should return a user" do
+        user = quick_create_user("lkjfl3kj3lj")
+        user = Crecto::Repo.get!(User, user.id)
+        user.name.should eq "lkjfl3kj3lj"
+      end
+
       it "should raise NoResults error if not in db" do
         expect_raises(Crecto::NoResults) do
           user = Crecto::Repo.get!(User, 99999)
