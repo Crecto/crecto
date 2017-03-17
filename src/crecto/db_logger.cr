@@ -26,6 +26,11 @@ module Crecto
       @@log_handler = io
       @@tty = @@log_handler.not_nil!.tty?
     end
+  
+    def self.unset_handler
+      @@log_handler = nil
+      @@tty = true
+    end
 
     private def self.elapsed_text(elapsed) : String
       minutes = elapsed.total_minutes
