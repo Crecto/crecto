@@ -299,6 +299,25 @@ describe Crecto do
       end
     end
 
+    describe "#get_by!" do
+      it "should return a row" do
+        user = User.new
+        user.name = "fridge"
+        changeset = Crecto::Repo.insert(user)
+        id = changeset.instance.id
+
+        user = Crecto::Repo.get_by!(User, name: "fridge", id: id)
+        user.id.should eq(id)
+        user.name.should eq("fridge")
+      end
+
+      it "should not return a row" do
+        expect_raises(Crecto::NoResults) do
+          user = Crecto::Repo.get_by!(User, id: 99999)
+        end
+      end
+    end
+
     describe "#update" do
       it "should update the model" do
         u = User.new

@@ -143,7 +143,7 @@ module Crecto
       end
     end
 
-    # Return a single instance of *queryable* using the *query* param
+    # Return a single nilable instance of *queryable* using the *query* param
     #
     # ```
     # user = Repo.get_by(User, name: "fred", age: 21)
@@ -153,6 +153,20 @@ module Crecto
       results = queryable.from_rs(q)
       q.close
       results.first if results.any?
+    end
+
+    # Return a single instance of *queryable* using the *query* param
+    # Raises `NoResults` error if the record does not exist
+    #
+    # ```
+    # user = Repo.get_by(User, name: "fred", age: 21)
+    # ```
+    def self.get_by!(queryable, **opts)
+      if result = get_by(queryable, **opts)
+        result
+      else
+        raise NoResults.new("No Results")
+      end
     end
 
     # Insert a schema instance into the data store.
