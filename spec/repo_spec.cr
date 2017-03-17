@@ -268,13 +268,26 @@ describe Crecto do
         id = changeset.instance.id
         user = Crecto::Repo.get(User, id)
         user.is_a?(User).should eq(true)
-        user.id.should eq(id)
-        user.some_date.as(Time).to_local.epoch_ms.should be_close(now.epoch_ms, 2000)
+        user.not_nil!.id.should eq(id)
+        user.not_nil!.some_date.as(Time).to_local.epoch_ms.should be_close(now.epoch_ms, 2000)
+      end
+
+      it "should return nil if not in db" do
+        user = Crecto::Repo.get(User, 99999)
+        user.nil?.should eq true
+      end
+    end
+
+    describe "#get!" do
+      it "should return a user" do
+        user = quick_create_user("lkjfl3kj3lj")
+        user = Crecto::Repo.get!(User, user.id)
+        user.name.should eq "lkjfl3kj3lj"
       end
 
       it "should raise NoResults error if not in db" do
         expect_raises(Crecto::NoResults) do
-          user = Crecto::Repo.get(User, 99999)
+          user = Crecto::Repo.get!(User, 99999)
         end
       end
     end
@@ -294,6 +307,25 @@ describe Crecto do
       it "should not return a row" do
         user = Crecto::Repo.get_by(User, id: 99999)
         user.nil?.should be_true
+      end
+    end
+
+    describe "#get_by!" do
+      it "should return a row" do
+        user = User.new
+        user.name = "fridge"
+        changeset = Crecto::Repo.insert(user)
+        id = changeset.instance.id
+
+        user = Crecto::Repo.get_by!(User, name: "fridge", id: id)
+        user.id.should eq(id)
+        user.name.should eq("fridge")
+      end
+
+      it "should not return a row" do
+        expect_raises(Crecto::NoResults) do
+          user = Crecto::Repo.get_by!(User, id: 99999)
+        end
       end
     end
 
@@ -387,7 +419,7 @@ describe Crecto do
         end
 
         # should not update the last
-        user = Crecto::Repo.get(User, id3)
+        user = Crecto::Repo.get!(User, id3)
         user.things.should eq(2334234)
       end
     end

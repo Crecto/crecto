@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## Unreleased
 * added validate_length with array parameter [@metacortex](https://github.com/metacortex)
 * supports IS NULL in .where query - `.where(name: nil)`
+* schema refactor
+* **(breaking change)** added `#get!` and `#get_by` to Repo.  `#get` and `#get_by` will return nil if no record exists (nilable), where `#get!` and `#get_by` will raise an errorif no record exists (not nilable)
 
 # [0.4.1] 2017-03-14
 * `BaseAdapter` database adapters refactor
