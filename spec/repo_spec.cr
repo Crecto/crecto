@@ -75,6 +75,15 @@ describe Crecto do
         users.size.should be > 0
       end
 
+      it "should allow IS NULL queries" do
+        quick_create_user("is null guy")
+
+        query = Crecto::Repo::Query.where(things: nil)
+        users = Crecto::Repo.all(User, query)
+
+        users.size.should be > 1
+      end
+
       describe "#or_where" do
         it "should return the correct set" do
           user = User.new
