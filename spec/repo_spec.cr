@@ -84,6 +84,15 @@ describe Crecto do
         users.size.should be > 1
       end
 
+      it "should allow LIKE queries" do
+        name = "fj3fj-20ffja"
+        quick_create_user("fj3fj-20ffja")
+
+        query = Crecto::Repo::Query.where("name LIKE ?", "%#{name}%")
+        users = Crecto::Repo.all(User, query)
+        users.size.should be > 0
+      end
+
       describe "#or_where" do
         it "should return the correct set" do
           user = User.new

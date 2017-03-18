@@ -79,6 +79,15 @@ module Crecto
         self.new.where(where_string)
       end
 
+      # Query WHERE with a String and String parameter
+      #
+      # ```
+      # Query.where("name LIKE ?", "%phyllis%")
+      # ```
+      def self.where(where_string : String, param : DbValue | PkeyValue)
+        self.new.where(where_string, param)
+      end
+
       # Key => Value pair(s) used in query `OR WHERE`
       #
       # ```
@@ -235,6 +244,15 @@ module Crecto
       # ```
       def where(where_string : String)
         where(where_string, Array(String).new)
+      end
+
+      # Query WHERE with a String and String parameter
+      #
+      # ```
+      # Query.where("name LIKE ?", "%phyllis%")
+      # ```
+      def where(where_string : String, param : DbValue | PkeyValue)
+        where(where_string, [param])
       end
 
       # Key => Value pair(s) used in query `OR WHERE`
