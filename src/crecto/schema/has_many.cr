@@ -1,9 +1,6 @@
 module Crecto
   module Schema
     module HasMany
-      # :nodoc:
-      VALID_HAS_MANY_OPTIONS = [:foreign_key]
-
       macro has_many(association_name, klass, **opts)
 
         property {{association_name.id}} : Array({{klass}})?
@@ -14,6 +11,18 @@ module Crecto
 
           if opts[:foreign_key]
             foreign_key = opts[:foreign_key]
+          end
+        %}
+
+        {%
+          on_replace = opts[:dependent] || opts[:on_replace]
+
+          if on_replace
+            if on_replace == :destroy
+              DESTROY_ASSOCIATIONS << association_name.id.symbolize
+            elsif on_replace == :nilify
+              NILIFY_ASSOCIATIONS << association_name.id.symbolize
+            end
           end
         %}
 

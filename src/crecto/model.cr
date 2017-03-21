@@ -18,6 +18,14 @@ module Crecto
       include Crecto::Schema::BelongsTo
       extend Crecto::Changeset({{@type}})
 
+      def self.destroy_associations
+        DESTROY_ASSOCIATIONS
+      end
+
+      def self.nilify_associations
+        NILIFY_ASSOCIATIONS
+      end
+
       # Class variables
       @@changeset_fields = [] of Symbol
       @@initial_values = {} of Symbol => DbValue

@@ -26,9 +26,9 @@ class User < Crecto::Model
     field :pageviews, Int32 | Int64
     has_many :posts, Post, foreign_key: :user_id
     has_one :post, Post
-    has_many :addresses, Address
-    has_many :user_projects, UserProject
-    has_many :projects, Project, through: :user_projects
+    has_many :addresses, Address, dependent: :destroy
+    has_many :user_projects, UserProject, on_replace: :destroy
+    has_many :projects, Project, through: :user_projects, on_replace: :nilify
   end
 
   validate_required :name

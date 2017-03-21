@@ -48,6 +48,9 @@ module Crecto
     set_association: Proc(Model, (Array(Crecto::Model) | Model), Nil),
     through: Symbol?)).new
 
+    DESTROY_ASSOCIATIONS = [] of Symbol
+    NILIFY_ASSOCIATIONS = [] of Symbol
+
     # schema block macro
     macro schema(table_name, &block)
 
