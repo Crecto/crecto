@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * supports IS NULL in .where query - `.where(name: nil)`
 * schema refactor
 * **(breaking change)** added `#get!` and `#get_by` to Repo.  `#get` and `#get_by` will return nil if no record exists (nilable), where `#get!` and `#get_by` will raise an errorif no record exists (not nilable)
+* using `belongs_to` association will auto set the foreign key (`belongs_to :user, User` will assume `field :user_id, PkeyValue`)
 
 # [0.4.1] 2017-03-14
 * `BaseAdapter` database adapters refactor
