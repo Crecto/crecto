@@ -4,6 +4,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+
+# [0.4.2] 2017-03-21
 * added validate_length with array parameter [@metacortex](https://github.com/metacortex)
 * supports IS NULL in .where query - `.where(name: nil)`
 * schema refactor
@@ -65,6 +67,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Query
 * Postgres Adapter
 
+[0.4.2]: https://github.com/fridgerator/crecto/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/fridgerator/crecto/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/fridgerator/crecto/compare/v0.3.5...v0.4.0
 [0.3.5]: https://github.com/fridgerator/crecto/compare/v0.3.4...v0.3.5
