@@ -4,6 +4,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+* update to crystal-db 0.4.0
 
 # [0.4.2] 2017-03-21
 * added validate_length with array parameter [@metacortex](https://github.com/metacortex)
