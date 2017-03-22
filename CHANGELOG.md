@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * 'Json' field type (postgres only)
 * Database logging
 * travis runs postgres AND mysql specs / adapter query specs [@neovintage](https://github.com/neovintage)
-* Fix to support unscript mapping [@huacnlee](https://github.com/huacnlee)
+* Fix to support unstrict schema mapping (#41) [@huacnlee](https://github.com/huacnlee)
 * Fix empty preloads [@huacnlee](https://github.com/huacnlee)
 
 # [0.4.0] 2017-02-26
