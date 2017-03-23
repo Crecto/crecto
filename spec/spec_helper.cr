@@ -1,6 +1,6 @@
 {% if `echo $PG_URL`.includes?("postgres") %}
   require "pg"
-{% else %}
+{% elsif `echo $MYSQL_URL`.includes?("mysql") %}
   class PG
     class Numeric
       def to_f
@@ -8,6 +8,14 @@
     end
   end
   require "mysql"
+{% elsif `echo $SQLITE3_PATH`.includes?("sqlite") %}
+  class PG
+    class Numeric
+      def to_f
+      end
+    end
+  end
+  require "sqlite3"
 {% end %}
 
 require "spec"

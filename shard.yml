@@ -19,3 +19,9 @@ development_dependencies:
   pg:
     github: will/crystal-pg
     version: 0.13.3
+
+  sqlite3:
+    github: Zhomart/crystal-sqlite3
+    # github: crystal-lang/crystal-sqlite3
+    # version: 0.8.1
+    branch: master
