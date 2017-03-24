@@ -8,6 +8,8 @@ module Crecto
                 Crecto::Adapters::Mysql
               elsif DB.drivers.keys.includes?("postgres") || DB.drivers.keys.includes?("postgresql")
                 Crecto::Adapters::Postgres
+              elsif DB.drivers.keys.includes?("sqlite3")
+                Crecto::Adapters::SQLite3
               else
                 raise Crecto::InvalidAdapter.new("Invalid or no adapter specified")
               end
@@ -181,7 +183,8 @@ module Crecto
 
       if query.nil?
         changeset.add_error("insert_error", "Insert Failed")
-      elsif ADAPTER == Crecto::Adapters::Postgres || (ADAPTER == Crecto::Adapters::Mysql && tx.nil?)
+      elsif ADAPTER == Crecto::Adapters::Postgres || (ADAPTER == Crecto::Adapters::Mysql && tx.nil?) ||
+            (ADAPTER == Crecto::Adapters::SQLite3 && tx.nil?)
         new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first
         changeset = new_instance.class.changeset(new_instance) if new_instance
       end

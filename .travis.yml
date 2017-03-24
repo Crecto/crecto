@@ -4,12 +4,20 @@ services:
   - postgresql
 addons:
   postgresql: "9.4"
+  apt:
+    sources:
+      - travis-ci/sqlite3
+    packages:
+      - sqlite3
 before_script:
   - mysql -e 'create database crecto_test'
   - mysql -Dcrecto_test < spec/migrations/mysql_migrations.sql
   - psql -c 'create database crecto_test;' -U postgres
   - psql $PG_URL < spec/migrations/pg_users.sql
+  - sqlite3 --version
+  - sqlite3 ./crecto_test.db < spec/migrations/sqlite3_migrations.sql
 env:
   matrix:
     - PG_URL=postgres://postgres@localhost:5432/crecto_test
     - MYSQL_URL=mysql://root@localhost/crecto_test
+    - SQLITE3_PATH=sqlite3://./crecto_test.db

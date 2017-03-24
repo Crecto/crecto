@@ -76,12 +76,15 @@ describe Crecto do
       end
 
       it "should allow IS NULL queries" do
+        Crecto::Repo.delete_all(Post)
+        Crecto::Repo.delete_all(User)
         quick_create_user("is null guy")
+        quick_create_user_with_things("guy", 321)
 
         query = Crecto::Repo::Query.where(things: nil)
         users = Crecto::Repo.all(User, query)
 
-        users.size.should be > 1
+        users.size.should eq 1
       end
 
       it "should allow LIKE queries" do
@@ -440,7 +443,7 @@ describe Crecto do
         user = Crecto::Repo.insert(user).instance
 
         post = Post.new
-        post.user_id = user.id.as(Int32)
+        post.user_id = user.id # user.id is (Int32 | Int64)
         Crecto::Repo.insert(post)
         post = Crecto::Repo.insert(post).instance
 
@@ -454,7 +457,7 @@ describe Crecto do
         user = Crecto::Repo.insert(user).instance
 
         post = Post.new
-        post.user_id = user.id.as(Int32)
+        post.user_id = user.id
         Crecto::Repo.insert(post)
         post = Crecto::Repo.insert(post).instance
 
@@ -471,12 +474,12 @@ describe Crecto do
         user = Crecto::Repo.insert(user).instance
 
         post = Post.new
-        post.user_id = user.id.as(Int32)
+        post.user_id = user.id
         Crecto::Repo.insert(post)
         post = Crecto::Repo.insert(post).instance
 
         address = Address.new
-        address.user_id = user.id.as(Int32)
+        address.user_id = user.id
         Crecto::Repo.insert(address)
 
         posts = Crecto::Repo.all(user, :posts).as(Array(Post))
@@ -496,7 +499,7 @@ describe Crecto do
         user = Crecto::Repo.insert(user).instance
 
         post = Post.new
-        post.user_id = user.id.as(Int32)
+        post.user_id = user.id
         post = Crecto::Repo.insert(post).instance
         post.user = user
 
@@ -511,7 +514,7 @@ describe Crecto do
         user = Crecto::Repo.insert(user).instance
 
         post = Post.new
-        post.user_id = user.id.as(Int32)
+        post.user_id = user.id
         Crecto::Repo.insert(post)
         Crecto::Repo.insert(post)
 
@@ -553,7 +556,7 @@ describe Crecto do
         user = Crecto::Repo.insert(user).instance
 
         post = Post.new
-        post.user_id = user.id.as(Int32)
+        post.user_id = user.id
         post = Crecto::Repo.insert(post).instance
 
         posts = Crecto::Repo.all(Post, Crecto::Repo::Query.where(id: post.id).preload(:user))
@@ -701,5 +704,6 @@ describe Crecto do
         users.size.should eq 0
       end
     end
+
   end
 end

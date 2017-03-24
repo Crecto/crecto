@@ -142,7 +142,7 @@ describe Crecto do
         user = Crecto::Repo.insert(user).instance
 
         post = Post.new
-        post.user_id = user.id.as(Int32)
+        post.user_id = user.id
         post = Crecto::Repo.insert(post).instance
 
         User.foreign_key_value_for_association(:posts, post).should eq(post.user_id)
