@@ -61,7 +61,7 @@ class UserDifferentDefaults < Crecto::Model
   updated_at_field nil
 
   schema "users_different_defaults" do
-    field :user_id, Int32, primary_key: true
+    field :user_id, PkeyValue, primary_key: true
     field :name, String
     has_many :things, Thing
   end
@@ -178,7 +178,7 @@ end
 
 class Thing < Crecto::Model
   schema "things" do
-    field :user_different_defaults_id, Int32
+    field :user_different_defaults_id, PkeyValue
     belongs_to :user, UserDifferentDefaults, foreign_key: :user_different_defaults_id
   end
 end
