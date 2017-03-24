@@ -15,6 +15,10 @@ module Crecto
           end
         %}
 
+        {% unless FIELDS.select{|f| f[:name] == foreign_key.id.symbolize}.size > 0 %}
+          field :{{foreign_key.id}}, PkeyValue
+        {% end %}
+
         def {{association_name.id}}=(val : {{klass}}?)
           @{{association_name.id}} = val
           return if val.nil?

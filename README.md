@@ -50,6 +50,7 @@ require "crecto"
 
 #### Roadmap (in no particular order)
 
+- [ ] `default` option for fields
 - [x] has_one
 - [ ] insert_all
 - [x] MySQL adapter

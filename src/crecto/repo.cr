@@ -22,7 +22,6 @@ module Crecto
       q = ADAPTER.run(:all, queryable, query).as(DB::ResultSet)
 
       results = queryable.from_rs(q.as(DB::ResultSet))
-      q.as(DB::ResultSet).close
 
       if query.preloads.any?
         add_preloads(results, queryable, query.preloads)
@@ -50,7 +49,6 @@ module Crecto
     def self.all(queryable, query = Query.new) : Array
       q = ADAPTER.run(:all, queryable, query).as(DB::ResultSet)
       results = queryable.from_rs(q)
-      q.close
       results
     end
 
@@ -62,7 +60,6 @@ module Crecto
     def self.get(queryable, id)
       q = ADAPTER.run(:get, queryable, id).as(DB::ResultSet)
       results = queryable.from_rs(q)
-      q.close
       results.first if results.any?
     end
 
@@ -90,7 +87,6 @@ module Crecto
     def self.get(queryable, id, query : Query)
       q = ADAPTER.run(:get, queryable, id).as(DB::ResultSet)
       results = queryable.from_rs(q)
-      q.close
 
       if results.any?
         if query.preloads.any?
@@ -151,7 +147,6 @@ module Crecto
     def self.get_by(queryable, **opts)
       q = ADAPTER.run(:all, queryable, Query.where(**opts).limit(1)).as(DB::ResultSet)
       results = queryable.from_rs(q)
-      q.close
       results.first if results.any?
     end
 
@@ -188,7 +183,6 @@ module Crecto
         changeset.add_error("insert_error", "Insert Failed")
       elsif ADAPTER == Crecto::Adapters::Postgres || (ADAPTER == Crecto::Adapters::Mysql && tx.nil?)
         new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first
-        query.as(DB::ResultSet).close
         changeset = new_instance.class.changeset(new_instance) if new_instance
       end
 
@@ -228,7 +222,6 @@ module Crecto
         changeset.add_error("update_error", "Update Failed")
       else
         new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first
-        query.as(DB::ResultSet).close
         changeset = new_instance.class.changeset(new_instance) if new_instance
       end
 
@@ -276,16 +269,17 @@ module Crecto
       changeset = queryable_instance.class.changeset(queryable_instance)
       return changeset unless changeset.valid?
 
+      # destroy child associations
+      changeset.instance.class.destroy_associations.each do |destroy_assoc|
+        q = Crecto::Repo::Query.where(user_id: changeset.instance.id)
+      end
       query = ADAPTER.run_on_instance(:delete, changeset, tx)
 
       if query.nil?
         changeset.add_error("delete_error", "Delete Failed")
-      else
-        if tx.nil?
-          new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first
-          query.as(DB::ResultSet).close
-          changeset = new_instance.class.changeset(new_instance) if new_instance
-        end
+      elsif tx.nil?
+        new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first
+        changeset = new_instance.class.changeset(new_instance) if new_instance
       end
 
       changeset.action = :delete
@@ -331,7 +325,6 @@ module Crecto
     def self.query(queryable, sql : String, params = [] of DbValue) : Array
       q = ADAPTER.run(:sql, sql, params).as(DB::ResultSet)
       results = queryable.from_rs(q)
-      q.close
       results
     end
 

@@ -43,8 +43,6 @@ end
 
 class UserProject < Crecto::Model
   schema "user_projects" do
-    field :user_id, Int32
-    field :project_id, Int32
     belongs_to :user, User
     belongs_to :project, Project
   end
@@ -159,7 +157,6 @@ end
 
 class Address < Crecto::Model
   schema "addresses" do
-    field :user_id, Int32
     belongs_to :user, User
   end
 end
