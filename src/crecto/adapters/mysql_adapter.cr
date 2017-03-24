@@ -3,9 +3,6 @@ module Crecto
     #
     # Adapter module for MySQL
     #
-    # Uses [crystal-mysql](https://github.com/crystal-lang/crystal-mysql) for now.
-    #
-    # Other adapters should follow this same pattern
     module Mysql
       @@ENV_KEY = "MYSQL_URL"
       extend BaseAdapter
