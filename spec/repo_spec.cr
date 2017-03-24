@@ -76,6 +76,7 @@ describe Crecto do
       end
 
       it "should allow IS NULL queries" do
+        Crecto::Repo.delete_all(Post)
         Crecto::Repo.delete_all(User)
         quick_create_user("is null guy")
         quick_create_user_with_things("guy", 321)
