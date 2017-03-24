@@ -29,8 +29,10 @@ CREATE TABLE users_different_defaults(
 
 CREATE UNIQUE INDEX users_different_defaults_kljl3kj on users_different_defaults (user_id);
 
+/* INTEGER can store big numbers, this is the only type that supports
+   auto_increment ROWID*/
 CREATE TABLE users_large_defaults(
-  id BIGINT NOT NULL PRIMARY KEY,
+  id INTEGER NOT NULL PRIMARY KEY,
   name varchar(255) NOT NULL
 );
 
