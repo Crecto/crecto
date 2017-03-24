@@ -22,7 +22,7 @@ module Crecto
         def {{association_name.id}}=(val : {{klass}}?)
           @{{association_name.id}} = val
           return if val.nil?
-          @{{foreign_key.id}} = val.pkey_value.as(Int32)
+          @{{foreign_key.id}} = val.pkey_value.as(PkeyValue)
         end
 
         ASSOCIATIONS.push({

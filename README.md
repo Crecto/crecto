@@ -76,7 +76,7 @@ require "crecto"
 class User < Crecto::Model
 
   schema "users" do
-    field :age, Int32
+    field :age, Int32 # or use `PkeyValue` alias: `field :age, PkeyValue`
     field :name, String
     field :is_admin, Bool
     field :temporary_info, Float64, virtual: true
@@ -90,7 +90,6 @@ end
 class Post < Crecto::Model
   
   schema "posts" do
-    field :user_id, PkValue
     belongs_to :user, User
   end
 end
