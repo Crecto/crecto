@@ -23,6 +23,10 @@ require "../src/crecto"
 
 alias TestFloat = PG::Numeric | Float64
 
+Repo  = Crecto::Repo
+Query = Crecto::Repo::Query
+Multi = Crecto::Multi
+
 class User < Crecto::Model
   schema "users" do
     field :name, String

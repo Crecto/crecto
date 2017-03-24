@@ -139,11 +139,11 @@ describe Crecto do
       it "should return the correct foreign key value for associations" do
         user = User.new
         user.name = "tester"
-        user = Crecto::Repo.insert(user).instance
+        user = Repo.insert(user).instance
 
         post = Post.new
         post.user_id = user.id
-        post = Crecto::Repo.insert(post).instance
+        post = Repo.insert(post).instance
 
         User.foreign_key_value_for_association(:posts, post).should eq(post.user_id)
         Post.foreign_key_value_for_association(:user, post).should eq(user.id)

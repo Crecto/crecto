@@ -7,7 +7,7 @@ describe Crecto do
         user = User.new
         user.name = "test"
 
-        multi = Crecto::Multi.new
+        multi = Multi.new
         multi.insert(user)
 
         multi.inserts[0].should eq({sortorder: 1, instance: user})
@@ -19,10 +19,10 @@ describe Crecto do
       it "should add to the @deletes" do
         user = User.new
         user.name = "test"
-        changeset = Crecto::Repo.insert(user)
+        changeset = Repo.insert(user)
         user = changeset.instance
 
-        multi = Crecto::Multi.new
+        multi = Multi.new
         multi.delete(changeset)
 
         multi.deletes[0].should eq({sortorder: 1, instance: user})
@@ -32,8 +32,8 @@ describe Crecto do
 
     describe "#delete_all" do
       it "should add to the @delete_alls" do
-        multi = Crecto::Multi.new
-        query = Crecto::Repo::Query.new
+        multi = Multi.new
+        query = Query.new
         multi.delete_all(User, query)
 
         multi.delete_alls[0].should eq({sortorder: 1, queryable: User, query: query})
@@ -45,12 +45,12 @@ describe Crecto do
       it "should add to the @updates" do
         user = User.new
         user.name = "test"
-        changeset = Crecto::Repo.insert(user)
+        changeset = Repo.insert(user)
         user = changeset.instance
 
         user.name = "chnage"
 
-        multi = Crecto::Multi.new
+        multi = Multi.new
         multi.update(user)
 
         multi.updates[0].should eq({sortorder: 1, instance: user})
@@ -60,8 +60,8 @@ describe Crecto do
 
     describe "#update_all" do
       it "should add to the @update_alls" do
-        multi = Crecto::Multi.new
-        query = Crecto::Repo::Query.new
+        multi = Multi.new
+        query = Query.new
         multi.update_all(User, query, {name: "update all changed"})
 
         multi.update_alls[0].should eq({sortorder: 1, queryable: User, query: query, update_hash: {:name => "update all changed"}})
@@ -74,7 +74,7 @@ describe Crecto do
         user = User.new
         user.name = "test"
 
-        multi = Crecto::Multi.new
+        multi = Multi.new
         multi.insert(user)
         multi.update(user)
         multi.delete(user)
