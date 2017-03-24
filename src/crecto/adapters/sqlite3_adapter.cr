@@ -1,11 +1,8 @@
 module Crecto
   module Adapters
     #
-    # Adapter module for MySQL
+    # Adapter module for SQLite3
     #
-    # Uses [crystal-mysql](https://github.com/crystal-lang/crystal-mysql) for now.
-    #
-    # Other adapters should follow this same pattern
     module SQLite3
       @@ENV_KEY = "SQLITE3_PATH"
       extend BaseAdapter
