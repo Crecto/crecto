@@ -4,10 +4,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+
+## [0.4.4] 2017-03-24
 * force all Int type fields to `PkeyValue`
 * Sqlite3 adapter - [@Zhomart](https://github.com/Zhomart)
 
-# [0.4.3] 2017-03-21
+## [0.4.3] 2017-03-21
 * update to crystal-db 0.4.0
 
 # [0.4.2] 2017-03-21
@@ -17,7 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * **(breaking change)** added `#get!` and `#get_by` to Repo.  `#get` and `#get_by` will return nil if no record exists (nilable), where `#get!` and `#get_by` will raise an errorif no record exists (not nilable)
 * using `belongs_to` association will auto set the foreign key (`belongs_to :user, User` will assume `field :user_id, PkeyValue`)
 
-# [0.4.1] 2017-03-14
+## [0.4.1] 2017-03-14
 * `BaseAdapter` database adapters refactor
 * `#distinct` queries
 * 'Json' field type (postgres only)
@@ -26,29 +28,29 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Fix to support unstrict schema mapping (#41) [@huacnlee](https://github.com/huacnlee)
 * Fix empty preloads [@huacnlee](https://github.com/huacnlee)
 
-# [0.4.0] 2017-02-26
+## [0.4.0] 2017-02-26
 * `Repo.get` now raises `NoResults` error if no record is found
 * MULTI + TRANSACTIONS!
 
-# [0.3.5] 2017-02-21
+## [0.3.5] 2017-02-21
 * `Repo#aggregate` methods
 * `has_one` relation type
 * added explicit `require "json"`
 * `update_all` method override to allow for named tuples
 
-# [0.3.4] 2017-01-06
+## [0.3.4] 2017-01-06
 * fixed has_many through preloads when join association doesn’t exist
 * include [`JSON.mapping`](https://crystal-lang.org/api/0.20.4/JSON.html#mapping-macro) in schema
 
-# [0.3.3] 2016-12-31
+## [0.3.3] 2016-12-31
 * close DB::ResultSet after usage (to free pool)
 
-# [0.3.1] 2016-12-28
+## [0.3.1] 2016-12-28
 * Mysql Adapter
 * moved association `preload` to `Query` instead of `Repo.all` option
 * joins queries and `has_many through` associations
 
-# [0.3.0] 2016-12-17
+## [0.3.0] 2016-12-17
 * Check for result.rows.size in queries - [@neovintage](https://github.com/neovintage)
 * `or_where` queries
 * `update_all` queries
@@ -72,6 +74,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Query
 * Postgres Adapter
 
+[0.4.4]: https://github.com/fridgerator/crecto/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/fridgerator/crecto/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/fridgerator/crecto/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/fridgerator/crecto/compare/v0.4.0...v0.4.1
