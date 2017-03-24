@@ -5,6 +5,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 * force all Int type fields to `PkeyValue`
+* Sqlite3 adapter - [@Zhomart](https://github.com/Zhomart)
 
 # [0.4.3] 2017-03-21
 * update to crystal-db 0.4.0

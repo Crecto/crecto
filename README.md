@@ -18,7 +18,7 @@ dependencies:
     github: fridgerator/crecto
 ```
 
-Include a database adapter (currently only postgres and mysql have been tested)
+Include a database adapter:
 
 #### Postgres
 
@@ -46,6 +46,19 @@ require "mysql"
 require "crecto"
 ```
 
+#### Sqlite
+
+Include [crystal-sqlite3](https://github.com/crystal-lang/crystal-sqlite3) in your project
+
+Make sure you have `ENV["SQLITE3_PATH"]` set
+
+in your appplication:
+
+```
+require "sqlite3"
+require "crecto"
+```
+
 ## TODO
 
 #### Roadmap (in no particular order)
@@ -54,7 +67,7 @@ require "crecto"
 - [x] has_one
 - [ ] insert_all
 - [x] MySQL adapter
-- [ ] SQLite adapter
+- [x] SQLite adapter
 - [x] Associations
 - [x] Preload
 - [x] Joins
@@ -68,6 +81,7 @@ require "crecto"
 ## Usage
 
 ```crystal
+require "#{adapter}" # see above
 require "crecto"
 
 #
