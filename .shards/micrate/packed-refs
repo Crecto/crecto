@@ -1,0 +1,13 @@
+# pack-refs with: peeled fully-peeled 
+ecca0c19a715d849d258263dc02617caf1a58c31 refs/heads/crystal-db
+8f0690c0473380784c9149012a688855b56bbcb8 refs/heads/feature/warn-unordered-migrations
+627fb9a11e757ccbda0e0e5f6df727a99cd01a9e refs/heads/master
+ff214a3f5d49c50411722168fcce5ad15863790c refs/pull/5/head
+081a1fac3015b2388ae3463a1de0af6f47cfba35 refs/pull/5/merge
+8a7db21ae9f0f1d37781d55f6962c37dadfb0693 refs/tags/v0.1.0
+7f65764847abeda45b98817ed6287a66d24b2869 refs/tags/v0.2.0
+^c873b8ab8bc775849544bb8b37a8b4c98bb08791
+63acd45e55ccedbe4b736a8621ab3c22d70f1550 refs/tags/v0.2.1
+^50771c3c7ee69d890e17f355f6e2e543cd1f6340
+80f07d0cc7b01e9efa51f68c6f4f635f531e49a4 refs/tags/v0.2.2
+^627fb9a11e757ccbda0e0e5f6df727a99cd01a9e

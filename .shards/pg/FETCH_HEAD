@@ -1,0 +1,84 @@
+cafe77fa167af6224222cfced78cb48a67b57951	not-for-merge	branch '0.6.1' of https://github.com/will/crystal-pg
+cafe3d7640fb2301b9690d09f7e8ffd8442184f8	not-for-merge	branch 'array' of https://github.com/will/crystal-pg
+cafe954f4c85b08b1107fd287dfaaa5dbbe20c22	not-for-merge	branch 'crystal-nightly-travis' of https://github.com/will/crystal-pg
+cafe9047542b8bf30a6bb22f99fd9a0c82323a0c	not-for-merge	branch 'fulltime' of https://github.com/will/crystal-pg
+cafe681e9fbc520b5152632e22571bbef88a68d1	not-for-merge	branch 'master' of https://github.com/will/crystal-pg
+cafe91510c63fd835ccdde2cf1c743279ab677a9	not-for-merge	branch 'mutex' of https://github.com/will/crystal-pg
+cafe2fd34e91940051801d72f75f27b6b8351aa1	not-for-merge	branch 'newtravisyml' of https://github.com/will/crystal-pg
+cafe536def2de20b3cd77ba415c6e87dbeb116a5	not-for-merge	branch 'next-crystal' of https://github.com/will/crystal-pg
+cafe56ce1a5d96d762bdfaf7d9ceda49f1406e5f	not-for-merge	branch 'numeric-bigrational' of https://github.com/will/crystal-pg
+cafe558edafdbfc15c8ca52d5dd590208233dac6	not-for-merge	branch 'pr34' of https://github.com/will/crystal-pg
+cafea71294209b8f2197187ae49ba5771941a6ab	not-for-merge	'refs/pull/15/head' of https://github.com/will/crystal-pg
+56873c8bc2a5f9887bedc1ffa282bf5790ece3f2	not-for-merge	'refs/pull/16/head' of https://github.com/will/crystal-pg
+8e60c969aa586ae47b08692238cd5fd165833747	not-for-merge	'refs/pull/18/head' of https://github.com/will/crystal-pg
+be96386bf716e583de119dff31471b3fc3b0b1dd	not-for-merge	'refs/pull/19/head' of https://github.com/will/crystal-pg
+7de0d1e619108631de1a3367a05a11fc83b1ff92	not-for-merge	'refs/pull/19/merge' of https://github.com/will/crystal-pg
+5091d9c9c35b179d534ef0b37ffa707e8ea5d7c2	not-for-merge	'refs/pull/2/head' of https://github.com/will/crystal-pg
+43aea050eec3f5014fadbb2e6d838fdedb90e88f	not-for-merge	'refs/pull/21/head' of https://github.com/will/crystal-pg
+8fae0a05169f62f48f27393fe5796985a72047c6	not-for-merge	'refs/pull/22/head' of https://github.com/will/crystal-pg
+cafe6c00218567403e144bc3a5af99b4fe5cdfcb	not-for-merge	'refs/pull/25/head' of https://github.com/will/crystal-pg
+89ce24c6b44abba8627d5ed12a891fc7fb3fc2f0	not-for-merge	'refs/pull/27/head' of https://github.com/will/crystal-pg
+cafe954f4c85b08b1107fd287dfaaa5dbbe20c22	not-for-merge	'refs/pull/28/head' of https://github.com/will/crystal-pg
+4d254bc5a80764c452d7b7ba9195e734a080650a	not-for-merge	'refs/pull/3/head' of https://github.com/will/crystal-pg
+53b48ec7054138728d0e372c083fa466f3a7f664	not-for-merge	'refs/pull/30/head' of https://github.com/will/crystal-pg
+37770e06d1787f7ec58d2c1f16c0ef011caf9a1e	not-for-merge	'refs/pull/31/head' of https://github.com/will/crystal-pg
+3c31c812217a20edac559557a654467be0a2b5a6	not-for-merge	'refs/pull/34/head' of https://github.com/will/crystal-pg
+d2186fdbff60bb57d977cc0391fbc9675d25dd18	not-for-merge	'refs/pull/34/merge' of https://github.com/will/crystal-pg
+cafe536def2de20b3cd77ba415c6e87dbeb116a5	not-for-merge	'refs/pull/36/head' of https://github.com/will/crystal-pg
+f1b11f495dee0db9a4755b0fa0696aae1d2f1adc	not-for-merge	'refs/pull/36/merge' of https://github.com/will/crystal-pg
+cafe04e1650c2ab3cca3dc9c56e971ac3005c74b	not-for-merge	'refs/pull/37/head' of https://github.com/will/crystal-pg
+1540a98e031ad3f0a81444dfcdf8feeef7cc6315	not-for-merge	'refs/pull/39/head' of https://github.com/will/crystal-pg
+527c49b8f7d84f5b930bca720b7a42eb5e20b787	not-for-merge	'refs/pull/39/merge' of https://github.com/will/crystal-pg
+cafe8d51703753dd40bf1a1067c8150620f52b88	not-for-merge	'refs/pull/4/head' of https://github.com/will/crystal-pg
+a43fa05e4c0b8a882f40b06b94356b477a478b54	not-for-merge	'refs/pull/44/head' of https://github.com/will/crystal-pg
+a9d1373519258ddc9bd721b919ca339d25c64a9d	not-for-merge	'refs/pull/44/merge' of https://github.com/will/crystal-pg
+35084eb6570b41228112c535fbdd4c08e15b3cde	not-for-merge	'refs/pull/45/head' of https://github.com/will/crystal-pg
+cafe87582f4c6677d4191231afbbe2ad98a10b15	not-for-merge	'refs/pull/47/head' of https://github.com/will/crystal-pg
+19b4623cd5fcd505523daa2144fea10b2bb24cfc	not-for-merge	'refs/pull/49/head' of https://github.com/will/crystal-pg
+badbad58b8b184b5372ea1fee7c654d22c40f829	not-for-merge	'refs/pull/55/head' of https://github.com/will/crystal-pg
+a6e29e227e2708f88b3e478c50957701825643e1	not-for-merge	'refs/pull/55/merge' of https://github.com/will/crystal-pg
+cafe3d7640fb2301b9690d09f7e8ffd8442184f8	not-for-merge	'refs/pull/57/head' of https://github.com/will/crystal-pg
+1a83bff0b013f7180418d68bdaa743814f90a0b3	not-for-merge	'refs/pull/60/head' of https://github.com/will/crystal-pg
+6b8089d34a29233ba199b40ef3249897a8dbe7e6	not-for-merge	'refs/pull/62/head' of https://github.com/will/crystal-pg
+e046e4841613f59a57a67a4cb17163b0c92f47e3	not-for-merge	'refs/pull/62/merge' of https://github.com/will/crystal-pg
+bd8542d9d94d74f4ccbd9f0969c45dcae26502ad	not-for-merge	'refs/pull/66/head' of https://github.com/will/crystal-pg
+98da3ee832406d038dbfa9ee61d28a833df050c4	not-for-merge	'refs/pull/67/head' of https://github.com/will/crystal-pg
+309551d6673a6dc16b3b2edc5f24763625ce23d2	not-for-merge	'refs/pull/69/head' of https://github.com/will/crystal-pg
+966032031ec36238f18cb4b2b159be783d46e036	not-for-merge	'refs/pull/7/head' of https://github.com/will/crystal-pg
+61b327d444b921f472887366dc4b6f854bca38b8	not-for-merge	'refs/pull/70/head' of https://github.com/will/crystal-pg
+334aa4dca5716286352732d06cccf5bc71ce3456	not-for-merge	'refs/pull/70/merge' of https://github.com/will/crystal-pg
+522475aee913556fe3a70c1f7fce6173b142a757	not-for-merge	'refs/pull/71/head' of https://github.com/will/crystal-pg
+424609f0bb5c942648e7129f3cc6e479391863c0	not-for-merge	'refs/pull/72/head' of https://github.com/will/crystal-pg
+9f937ebf647411628a32648a3bda139bd2d2bb84	not-for-merge	'refs/pull/72/merge' of https://github.com/will/crystal-pg
+94482ee0f646ac94e770c3ac0d3b3db92f2b336d	not-for-merge	'refs/pull/75/head' of https://github.com/will/crystal-pg
+872191474db715994a500882bcfdd82fe9df03f9	not-for-merge	'refs/pull/76/head' of https://github.com/will/crystal-pg
+4104718b3f9402603d0e2d970ba1430951b4d3d4	not-for-merge	'refs/pull/78/head' of https://github.com/will/crystal-pg
+cf34d8143018c1d54db3556f3f3ad521918f943e	not-for-merge	'refs/pull/79/head' of https://github.com/will/crystal-pg
+b69e07e56c88e1d43b8bee4236f7fd0221ea452d	not-for-merge	'refs/pull/79/merge' of https://github.com/will/crystal-pg
+824f4f97af9d2a8e67b07e01fb28e63c6f412901	not-for-merge	'refs/pull/80/head' of https://github.com/will/crystal-pg
+1c0e6eb8553d29538603cd76ce737c12a8880322	not-for-merge	'refs/pull/86/head' of https://github.com/will/crystal-pg
+af9ab4fd51d63fd4f5135154da3f1a43c23f92ee	not-for-merge	'refs/pull/87/head' of https://github.com/will/crystal-pg
+ef30de8be3189a5cdbd62980c4e30e237589f2a0	not-for-merge	tag 'v0.1.0' of https://github.com/will/crystal-pg
+30e36190780dc23d5ad347a08fd9281662382e4f	not-for-merge	tag 'v0.10.0' of https://github.com/will/crystal-pg
+91b9f2fe56cf413c61282d09fe2583ab5e1c05a3	not-for-merge	tag 'v0.11.0' of https://github.com/will/crystal-pg
+6eea91e4128a8506910d24f326b8f76a5ca611d6	not-for-merge	tag 'v0.12.0' of https://github.com/will/crystal-pg
+9b41e3a9e97f68ac654791450c39ee539f3cf81e	not-for-merge	tag 'v0.13.0' of https://github.com/will/crystal-pg
+3847400f8c540b0c10de6c4148ea96b6764d5669	not-for-merge	tag 'v0.13.1' of https://github.com/will/crystal-pg
+e2f969c9a510e5cc4880cd83bc1537a30e558ec1	not-for-merge	tag 'v0.13.2' of https://github.com/will/crystal-pg
+d1afde08e199f17bb4027175342fad1b57a4e50c	not-for-merge	tag 'v0.13.3' of https://github.com/will/crystal-pg
+ec78172664d656b5c139fd0948bdfbc5cc8e02cd	not-for-merge	tag 'v0.2.0' of https://github.com/will/crystal-pg
+f2d6c0806d5b623b8d6845cc9836f18d5b9bc421	not-for-merge	tag 'v0.3.0' of https://github.com/will/crystal-pg
+17a961c726168eb0a4d96a0a5ec2bda9bdb38c7c	not-for-merge	tag 'v0.3.1' of https://github.com/will/crystal-pg
+f97c3a5f967385ffcbfa1c7d17d2bbfad0de27f2	not-for-merge	tag 'v0.3.2' of https://github.com/will/crystal-pg
+8bcaeed369243190e39c0eb7a89af752293069b6	not-for-merge	tag 'v0.4.0' of https://github.com/will/crystal-pg
+fe0d6b9b30f49a2f2db17d9d842543978a42a405	not-for-merge	tag 'v0.4.1' of https://github.com/will/crystal-pg
+744a894efe0f5b5f1510b3c9bd2b1e7be2a02658	not-for-merge	tag 'v0.4.2' of https://github.com/will/crystal-pg
+aadabd5aa4fb49e6a013754c0580151904fbb504	not-for-merge	tag 'v0.4.3' of https://github.com/will/crystal-pg
+86edae710ccbb0712f05a9295327e934fc88fd31	not-for-merge	tag 'v0.5.0' of https://github.com/will/crystal-pg
+df617c63d2aaa23e73200e1e24246fb4e40901f4	not-for-merge	tag 'v0.6.0' of https://github.com/will/crystal-pg
+6b8d163747886440db4afacdf839b7ef3a02c6cd	not-for-merge	tag 'v0.6.1' of https://github.com/will/crystal-pg
+4bf52bede732d3da5d0b93570ba005fac26687d9	not-for-merge	tag 'v0.7.0' of https://github.com/will/crystal-pg
+9393b45f2759d08e8bb6330adc68ab9f6673d01c	not-for-merge	tag 'v0.7.1' of https://github.com/will/crystal-pg
+8dc63d7635ddc5e0a46338a25a7edce3e7915cc5	not-for-merge	tag 'v0.8.0' of https://github.com/will/crystal-pg
+a2b029b42612a728e8010b2be5f8a34056dcdeed	not-for-merge	tag 'v0.9.0' of https://github.com/will/crystal-pg
+0e5d572dbd665ee0e52429c47d07e2bc32144213	not-for-merge	tag 'v0.9.1' of https://github.com/will/crystal-pg

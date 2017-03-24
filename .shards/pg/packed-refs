@@ -1,0 +1,82 @@
+# pack-refs with: peeled fully-peeled 
+cafe77fa167af6224222cfced78cb48a67b57951 refs/heads/0.6.1
+cafe3d7640fb2301b9690d09f7e8ffd8442184f8 refs/heads/array
+cafe954f4c85b08b1107fd287dfaaa5dbbe20c22 refs/heads/crystal-nightly-travis
+cafe0b858007ad09ee67253c90d41ed7647628c4 refs/heads/master
+cafe91510c63fd835ccdde2cf1c743279ab677a9 refs/heads/mutex
+cafe536def2de20b3cd77ba415c6e87dbeb116a5 refs/heads/next-crystal
+cafe56ce1a5d96d762bdfaf7d9ceda49f1406e5f refs/heads/numeric-bigrational
+cafe558edafdbfc15c8ca52d5dd590208233dac6 refs/heads/pr34
+cafea71294209b8f2197187ae49ba5771941a6ab refs/pull/15/head
+56873c8bc2a5f9887bedc1ffa282bf5790ece3f2 refs/pull/16/head
+8e60c969aa586ae47b08692238cd5fd165833747 refs/pull/18/head
+be96386bf716e583de119dff31471b3fc3b0b1dd refs/pull/19/head
+7de0d1e619108631de1a3367a05a11fc83b1ff92 refs/pull/19/merge
+5091d9c9c35b179d534ef0b37ffa707e8ea5d7c2 refs/pull/2/head
+43aea050eec3f5014fadbb2e6d838fdedb90e88f refs/pull/21/head
+8fae0a05169f62f48f27393fe5796985a72047c6 refs/pull/22/head
+cafe6c00218567403e144bc3a5af99b4fe5cdfcb refs/pull/25/head
+89ce24c6b44abba8627d5ed12a891fc7fb3fc2f0 refs/pull/27/head
+cafe954f4c85b08b1107fd287dfaaa5dbbe20c22 refs/pull/28/head
+4d254bc5a80764c452d7b7ba9195e734a080650a refs/pull/3/head
+53b48ec7054138728d0e372c083fa466f3a7f664 refs/pull/30/head
+37770e06d1787f7ec58d2c1f16c0ef011caf9a1e refs/pull/31/head
+3c31c812217a20edac559557a654467be0a2b5a6 refs/pull/34/head
+d2186fdbff60bb57d977cc0391fbc9675d25dd18 refs/pull/34/merge
+cafe536def2de20b3cd77ba415c6e87dbeb116a5 refs/pull/36/head
+f1b11f495dee0db9a4755b0fa0696aae1d2f1adc refs/pull/36/merge
+cafe04e1650c2ab3cca3dc9c56e971ac3005c74b refs/pull/37/head
+1540a98e031ad3f0a81444dfcdf8feeef7cc6315 refs/pull/39/head
+0ef82808564de4ffe571443b351c1b54ae832811 refs/pull/39/merge
+cafe8d51703753dd40bf1a1067c8150620f52b88 refs/pull/4/head
+a43fa05e4c0b8a882f40b06b94356b477a478b54 refs/pull/44/head
+a9d1373519258ddc9bd721b919ca339d25c64a9d refs/pull/44/merge
+35084eb6570b41228112c535fbdd4c08e15b3cde refs/pull/45/head
+cafe87582f4c6677d4191231afbbe2ad98a10b15 refs/pull/47/head
+19b4623cd5fcd505523daa2144fea10b2bb24cfc refs/pull/49/head
+badbad58b8b184b5372ea1fee7c654d22c40f829 refs/pull/55/head
+a6e29e227e2708f88b3e478c50957701825643e1 refs/pull/55/merge
+cafe3d7640fb2301b9690d09f7e8ffd8442184f8 refs/pull/57/head
+505cfac4b224ee48b905ad62c89700f68cef9e00 refs/pull/60/head
+408ffe33dea02be627b97c2eefd02e5f24e2a977 refs/pull/60/merge
+6b8089d34a29233ba199b40ef3249897a8dbe7e6 refs/pull/62/head
+e046e4841613f59a57a67a4cb17163b0c92f47e3 refs/pull/62/merge
+966032031ec36238f18cb4b2b159be783d46e036 refs/pull/7/head
+ef30de8be3189a5cdbd62980c4e30e237589f2a0 refs/tags/v0.1.0
+^cafe093b13fc04aa401008a1eac7387e0595b42b
+30e36190780dc23d5ad347a08fd9281662382e4f refs/tags/v0.10.0
+^cafe27841d0b88149d5a1819d6611588fd526484
+91b9f2fe56cf413c61282d09fe2583ab5e1c05a3 refs/tags/v0.11.0
+^cafea286df21bb006f1e3be0320daa5192b9c7b4
+ec78172664d656b5c139fd0948bdfbc5cc8e02cd refs/tags/v0.2.0
+^cafe54bbda922428d75203d4491ef99886ec29d5
+f2d6c0806d5b623b8d6845cc9836f18d5b9bc421 refs/tags/v0.3.0
+^cafef1a27b7e226ba0cdab69d0ec1ed9a0a509fe
+17a961c726168eb0a4d96a0a5ec2bda9bdb38c7c refs/tags/v0.3.1
+^cafe46048e59c0e19b10bb1762d44360c83b4f40
+f97c3a5f967385ffcbfa1c7d17d2bbfad0de27f2 refs/tags/v0.3.2
+^cafec29f14262444fc4ab35e4805b1dc7eede02f
+8bcaeed369243190e39c0eb7a89af752293069b6 refs/tags/v0.4.0
+^cafebf50b0f72d4c9dc1b755e96b92b8c61a9f3f
+fe0d6b9b30f49a2f2db17d9d842543978a42a405 refs/tags/v0.4.1
+^cafe6a9fc391499412ae47503126d1f53982aaf5
+744a894efe0f5b5f1510b3c9bd2b1e7be2a02658 refs/tags/v0.4.2
+^cafeea1435549b2be9682a5b5242424c6bc4fac3
+aadabd5aa4fb49e6a013754c0580151904fbb504 refs/tags/v0.4.3
+^cafe4a4957611fe386e9430ca054e299c1dd2521
+86edae710ccbb0712f05a9295327e934fc88fd31 refs/tags/v0.5.0
+^cafe78e29a48c100bdc7f6d5abb072ac3cd2c932
+df617c63d2aaa23e73200e1e24246fb4e40901f4 refs/tags/v0.6.0
+^cafeabad52ad9bc6e6096bf10b92b6efdcd9730f
+6b8d163747886440db4afacdf839b7ef3a02c6cd refs/tags/v0.6.1
+^cafe77fa167af6224222cfced78cb48a67b57951
+4bf52bede732d3da5d0b93570ba005fac26687d9 refs/tags/v0.7.0
+^cafe04e1650c2ab3cca3dc9c56e971ac3005c74b
+9393b45f2759d08e8bb6330adc68ab9f6673d01c refs/tags/v0.7.1
+^cafe2eba287cc1758820ecbfa72ac15a1c29cd40
+8dc63d7635ddc5e0a46338a25a7edce3e7915cc5 refs/tags/v0.8.0
+^cafe3e90b4a239aa9819482543c63503a6a3f477
+a2b029b42612a728e8010b2be5f8a34056dcdeed refs/tags/v0.9.0
+^cafe74083faacb8aedd7097e768504fa7b0a7d57
+0e5d572dbd665ee0e52429c47d07e2bc32144213 refs/tags/v0.9.1
+^67b5e09c5311782bcd29a88a922907745a782784
