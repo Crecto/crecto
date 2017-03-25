@@ -149,7 +149,7 @@ module Crecto
         query_hash = {} of Symbol => DbValue
 
         {% for field in FIELDS %}
-          if self.{{field[:name].id}} && @@changeset_fields.includes?({{field[:name]}})
+          if @@changeset_fields.includes?({{field[:name]}})
             query_hash[{{field[:name]}}] = self.{{field[:name].id}}
             query_hash[{{field[:name]}}] = query_hash[{{field[:name]}}].as(Time).to_utc if query_hash[{{field[:name]}}].is_a?(Time)
           end
