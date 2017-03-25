@@ -118,6 +118,7 @@ CREATE UNIQUE INDEX addresses_dfd7fs7ss ON addresses (id);
 
 CREATE TABLE projects(
   id INTEGER NOT NULL,
+  name VARCHAR(255),
   created_at timestamp without time zone,
   updated_at timestamp without time zone
 );

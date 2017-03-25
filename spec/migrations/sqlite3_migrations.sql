@@ -58,6 +58,7 @@ CREATE UNIQUE INDEX addresses_dfd7fs7ss ON addresses (id);
 
 CREATE TABLE projects(
   id INTEGER NOT NULL PRIMARY KEY,
+  name VARCHAR(255),
   created_at DATETIME,
   updated_at DATETIME
 );
