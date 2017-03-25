@@ -4,3 +4,4 @@
 * [Schema](schema.md)
 	* [Associations](associations.md)
 	* [Validations](validations.md)
+* [Repo](repo.md)
