@@ -4,7 +4,7 @@
     <head>
         <meta charset="UTF-8">
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-        <title>Introduction · GitBook</title>
+        <title>Crecto · GitBook</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="description" content="">
         <meta name="generator" content="GitBook 3.2.2">
@@ -57,6 +57,8 @@
     <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
 
     
+    <link rel="next" href="schema.html" />
+    
     
 
     </head>
@@ -90,11 +92,56 @@
                 <a href="./">
             
                     
-                    Introduction
+                    Crecto
             
                 </a>
             
 
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="schema.html">
+            
+                <a href="schema.html">
+            
+                    
+                    Schema
+            
+                </a>
+            
+
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.2.1" data-path="associations.html">
+            
+                <a href="associations.html">
+            
+                    
+                    Associations
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2.2" data-path="validations.html">
+            
+                <a href="validations.html">
+            
+                    
+                    Validations
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+            </ul>
             
         </li>
     
@@ -128,7 +175,7 @@
     <!-- Title -->
     <h1>
         <i class="fa fa-circle-o-notch fa-spin"></i>
-        <a href="." >Introduction</a>
+        <a href="." >Crecto</a>
     </h1>
 </div>
 
@@ -143,7 +190,82 @@
     
                                 <section class="normal markdown-section">
                                 
-                                <h1 id="introduction">Introduction</h1>
+                                <h1 id="crecto">Crecto</h1>
+<p>Database wrapper for Crystal.  Inspired by <a href="https://github.com/elixir-ecto/ecto" target="_blank">Ecto</a> for Elixir language.</p>
+<hr>
+<p><a href="https://travis-ci.org/fridgerator/crecto" target="_blank"><img src="https://travis-ci.org/fridgerator/crecto.svg?branch=master" alt="Build Status"></a> <a href="https://gitter.im/crecto/Lobby?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge" target="_blank"><img src="https://badges.gitter.im/crecto/Lobby.svg" alt="Join the chat at https://gitter.im/crecto/Lobby"></a> <strong><a href="http://docs.crecto.com" target="_blank">Api Docs</a></strong></p>
+<h2 id="installation">Installation</h2>
+<p>Add crecto to your <code>shard.yml</code>:</p>
+<pre><code class="lang-yaml"><span class="hljs-attr">dependencies:</span>
+<span class="hljs-attr">  crecto:</span>
+<span class="hljs-attr">    github:</span> fridgerator/crecto
+</code></pre>
+<p>Include a crystal database driver</p>
+<pre><code>require &quot;pg&quot; # or &quot;mysql&quot; or &quot;sqlite3&quot;
+require &quot;crecto&quot;
+</code></pre><p>Set the approprate environment variable:</p>
+<pre><code>ENV[&quot;PG_URL&quot;] = &quot;postgres://localhost:5432/crecto-database&quot; # -or-
+ENV[&quot;PG_URL&quot;] = &quot;msyql://localhost:3306/crecto-database&quot; # -or-
+ENV[&quot;SQlITE3_PATH&quot;] = &quot;sqlite3://path/to/db.db&quot;
+</code></pre><h2 id="quick-start">Quick Start</h2>
+<pre><code># shortcut variables, optional
+Repo  = Crecto::Repo
+Query = Crecto::Repo::Query
+Multi = Crecto::Multi
+
+class User &lt; Crecto::Model
+
+  schema &quot;users&quot; do
+    field :age, Int32 # or use `PkeyValue` alias: `field :age, PkeyValue`
+    field :name, String
+    field :is_admin, Bool
+    field :temporary_info, Float64, virtual: true # virtual fields do not persist in the database
+  end
+
+  validate_required [:name, :age]
+end
+
+# Create using the Repo
+user = User.new
+user.name = &quot;tester&quot;
+user.age = 36
+
+changeset = Repo.insert(user)
+changeset.errors? # false
+changeset.instance # &lt;#user, id: 1000, name: &quot;tester&quot;, age: 36&gt;
+
+# Get
+user = Repo.get!(User, 1000)
+
+# Update
+user.name = &quot;tested&quot;
+changeset = Repo.update(user)
+
+# Delete
+Repo.delete(user)
+</code></pre><h2 id="contributing">Contributing</h2>
+<ol>
+<li>Fork it ( <a href="https://github.com/fridgerator/crecto/fork" target="_blank">https://github.com/fridgerator/crecto/fork</a> )</li>
+<li>Create your feature branch (git checkout -b my-new-feature)</li>
+<li>Commit your changes (git commit -am &apos;Add some feature&apos;)</li>
+<li>Push to the branch (git push origin my-new-feature)</li>
+<li>Create a new Pull Request</li>
+</ol>
+<h3 id="development-notes">Development Notes</h3>
+<p>When developing against crecto, the database must exist in Postgres prior to
+testing. The environment variable <code>PG_URL</code> must be set to the database that will
+be used for testing. A couple commands have been set up to ease development:</p>
+<ul>
+<li><code>make migrate</code> - This will remigrate the testing schema to the database.</li>
+<li><code>make spec</code> - Runs the crystal specs for crecto</li>
+<li><code>make all</code> - Runs the migration and subsequently runs specs</li>
+</ul>
+<h2 id="thanks--inspiration">Thanks / Inspiration</h2>
+<ul>
+<li><a href="https://github.com/elixir-ecto/ecto" target="_blank">Ecto</a></li>
+<li><a href="https://github.com/waterlink/active_record.cr" target="_blank">active_record.cr</a></li>
+<li><a href="https://github.com/dantebronto/crystal-api-backend" target="_blank">crystal-api-backend</a></li>
+</ul>
 
                                 
                                 </section>
@@ -172,6 +294,10 @@
             
                 
                 
+                <a href="schema.html" class="navigation navigation-next navigation-unique" aria-label="Next page: Schema">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
             
         
     </div>
@@ -179,7 +305,7 @@
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Introduction","level":"1.1","depth":1,"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"README.md","mtime":"2017-03-24T21:14:00.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-03-24T21:14:27.845Z"},"basePath":".","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Crecto","level":"1.1","depth":1,"next":{"title":"Schema","level":"1.2","depth":1,"path":"schema.md","ref":"schema.md","articles":[{"title":"Associations","level":"1.2.1","depth":2,"path":"associations.md","ref":"associations.md","articles":[]},{"title":"Validations","level":"1.2.2","depth":2,"path":"validations.md","ref":"validations.md","articles":[]}]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"README.md","mtime":"2017-03-25T03:55:31.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-03-25T05:51:26.109Z"},"basePath":".","book":{"language":""}});
         });
     </script>
 </div>
