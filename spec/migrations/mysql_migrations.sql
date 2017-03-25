@@ -18,7 +18,7 @@ CREATE TABLE users(
   yep bool,
   pageviews bigint,
   some_date DATETIME,
-  created_at DATETIME,  
+  created_at DATETIME,
   updated_at DATETIME
 );
 
@@ -64,6 +64,7 @@ CREATE UNIQUE INDEX addresses_dfd7fs7ss ON addresses (id);
 CREATE TABLE projects(
   id INTEGER NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (id),
+  name VARCHAR(255),
   created_at DATETIME,
   updated_at DATETIME
 );
