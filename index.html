@@ -4,7 +4,7 @@
     <head>
         <meta charset="UTF-8">
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-        <title>Crecto · GitBook</title>
+        <title>Crecto · crecto</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="description" content="">
         <meta name="generator" content="GitBook 3.2.2">
@@ -201,49 +201,52 @@
 <span class="hljs-attr">    github:</span> fridgerator/crecto
 </code></pre>
 <p>Include a crystal database driver</p>
-<pre><code>require &quot;pg&quot; # or &quot;mysql&quot; or &quot;sqlite3&quot;
-require &quot;crecto&quot;
-</code></pre><p>Set the approprate environment variable:</p>
-<pre><code>ENV[&quot;PG_URL&quot;] = &quot;postgres://localhost:5432/crecto-database&quot; # -or-
-ENV[&quot;PG_URL&quot;] = &quot;msyql://localhost:3306/crecto-database&quot; # -or-
-ENV[&quot;SQlITE3_PATH&quot;] = &quot;sqlite3://path/to/db.db&quot;
-</code></pre><h2 id="quick-start">Quick Start</h2>
-<pre><code># shortcut variables, optional
-Repo  = Crecto::Repo
-Query = Crecto::Repo::Query
-Multi = Crecto::Multi
+<pre><code class="lang-crystal"><span class="hljs-keyword">require</span> <span class="hljs-string">&quot;pg&quot;</span> <span class="hljs-comment"># or &quot;mysql&quot; or &quot;sqlite3&quot;</span>
+<span class="hljs-keyword">require</span> <span class="hljs-string">&quot;crecto&quot;</span>
+</code></pre>
+<p>Set the approprate environment variable:</p>
+<pre><code class="lang-crystal">ENV[<span class="hljs-string">&quot;PG_URL&quot;</span>] = <span class="hljs-string">&quot;postgres://localhost:5432/crecto-database&quot;</span> <span class="hljs-comment"># -or-</span>
+ENV[<span class="hljs-string">&quot;PG_URL&quot;</span>] = <span class="hljs-string">&quot;msyql://localhost:3306/crecto-database&quot;</span> <span class="hljs-comment"># -or-</span>
+ENV[<span class="hljs-string">&quot;SQlITE3_PATH&quot;</span>] = <span class="hljs-string">&quot;sqlite3://path/to/db.db&quot;</span>
+</code></pre>
+<h2 id="quick-start">Quick Start</h2>
+<pre><code class="lang-crystal"><span class="hljs-comment"># shortcut variables, optional</span>
+Repo  = <span class="hljs-symbol">Crecto:</span>:Repo
+Query = <span class="hljs-symbol">Crecto:</span>:<span class="hljs-symbol">Repo:</span>:Query
+Multi = <span class="hljs-symbol">Crecto:</span>:Multi
 
-class User &lt; Crecto::Model
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">User</span> &lt; <span class="hljs-title">Crecto::Model</span></span>
 
-  schema &quot;users&quot; do
-    field :age, Int32 # or use `PkeyValue` alias: `field :age, PkeyValue`
+  schema <span class="hljs-string">&quot;users&quot;</span> <span class="hljs-keyword">do</span>
+    field :age, Int32 <span class="hljs-comment"># or use `PkeyValue` alias: `field :age, PkeyValue`</span>
     field :name, String
     field :is_admin, Bool
-    field :temporary_info, Float64, virtual: true # virtual fields do not persist in the database
-  end
+    field :temporary_info, Float64, <span class="hljs-symbol">virtual:</span> <span class="hljs-literal">true</span> <span class="hljs-comment"># virtual fields do not persist in the database</span>
+  <span class="hljs-keyword">end</span>
 
   validate_required [:name, :age]
-end
+<span class="hljs-keyword">end</span>
 
-# Create using the Repo
+<span class="hljs-comment"># Create using the Repo</span>
 user = User.new
-user.name = &quot;tester&quot;
-user.age = 36
+user.name = <span class="hljs-string">&quot;tester&quot;</span>
+user.age = <span class="hljs-number">36</span>
 
 changeset = Repo.insert(user)
-changeset.errors? # false
-changeset.instance # &lt;#user, id: 1000, name: &quot;tester&quot;, age: 36&gt;
+changeset.errors? <span class="hljs-comment"># false</span>
+changeset.instance <span class="hljs-comment"># &lt;#user, id: 1000, name: &quot;tester&quot;, age: 36&gt;</span>
 
-# Get
-user = Repo.get!(User, 1000)
+<span class="hljs-comment"># Get</span>
+user = Repo.get!(User, <span class="hljs-number">1000</span>)
 
-# Update
-user.name = &quot;tested&quot;
+<span class="hljs-comment"># Update</span>
+user.name = <span class="hljs-string">&quot;tested&quot;</span>
 changeset = Repo.update(user)
 
-# Delete
+<span class="hljs-comment"># Delete</span>
 Repo.delete(user)
-</code></pre><h2 id="contributing">Contributing</h2>
+</code></pre>
+<h2 id="contributing">Contributing</h2>
 <ol>
 <li>Fork it ( <a href="https://github.com/fridgerator/crecto/fork" target="_blank">https://github.com/fridgerator/crecto/fork</a> )</li>
 <li>Create your feature branch (git checkout -b my-new-feature)</li>
@@ -305,7 +308,7 @@ be used for testing. A couple commands have been set up to ease development:</p>
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Crecto","level":"1.1","depth":1,"next":{"title":"Schema","level":"1.2","depth":1,"path":"schema.md","ref":"schema.md","articles":[{"title":"Associations","level":"1.2.1","depth":2,"path":"associations.md","ref":"associations.md","articles":[]},{"title":"Validations","level":"1.2.2","depth":2,"path":"validations.md","ref":"validations.md","articles":[]}]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"README.md","mtime":"2017-03-25T03:55:31.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-03-25T05:51:26.109Z"},"basePath":".","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Crecto","level":"1.1","depth":1,"next":{"title":"Schema","level":"1.2","depth":1,"path":"schema.md","ref":"schema.md","articles":[{"title":"Associations","level":"1.2.1","depth":2,"path":"associations.md","ref":"associations.md","articles":[]},{"title":"Validations","level":"1.2.2","depth":2,"path":"validations.md","ref":"validations.md","articles":[]}]},"dir":"ltr"},"config":{"plugins":["github","edit-link"],"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"fontsettings":{"theme":"night","family":"sans","size":2},"github":{"url":"https://github.com/fridgerator/crecto"},"edit-link":{"label":"Edit This Page","base":"https://github.com/fridgerator/crecto/edit/gh-pages/"},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"crecto","gitbook":"*"},"file":{"path":"README.md","mtime":"2017-03-25T06:02:35.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-03-25T06:03:41.896Z"},"basePath":".","book":{"language":""}});
         });
     </script>
 </div>
@@ -313,6 +316,14 @@ be used for testing. A couple commands have been set up to ease development:</p>
         
     <script src="gitbook/gitbook.js"></script>
     <script src="gitbook/theme.js"></script>
+    
+        
+        <script src="gitbook/gitbook-plugin-github/plugin.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-edit-link/plugin.js"></script>
+        
     
         
         <script src="gitbook/gitbook-plugin-search/search-engine.js"></script>

@@ -4,7 +4,7 @@
     <head>
         <meta charset="UTF-8">
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-        <title>Validations · GitBook</title>
+        <title>Validations · crecto</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="description" content="">
         <meta name="generator" content="GitBook 3.2.2">
@@ -194,34 +194,40 @@
 <p>Crecto has several validations that are defined in the schema</p>
 <h2 id="required-validation">Required validation</h2>
 <p>Validates fields that are required before saving to the database</p>
-<pre><code>validate_required :name  # single field
-validate_require [:name, :age]  # multiple fields
-</code></pre><h2 id="format-validation">Format validation</h2>
-<p>Validates that a field matches a regex pattern</p>
-<pre><code>validate_format :name, /[*a-zA-z/    # single field
-validate_format [:first_name, :last_name], /[*a-zA-z/    # multiple fields
-</code></pre><h2 id="inclusion-validation">Inclusion validation</h2>
-<p>Validates that a field is included in an array or range</p>
-<pre><code>validate_inclusion :age, (21..150)            # single field
-validate_incluson [:one_field, :other_field], [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]        # multiple fields
-</code></pre><h2 id="exclusion-validation">Exclusion validation</h2>
-<p>Validates that a field is excluded fram an array or range</p>
-<pre><code>validate_exclusion :age, (0..20)             # single field
-validate_exclusion [:one_field, :other_field], [&quot;x&quot;, &quot;y&quot;, &quot;z&quot;]        # multiple fields
-</code></pre><h2 id="validate-length">Validate length</h2>
-<p>Validates lengths with <code>:min</code>, <code>:max</code>, <code>:is</code></p>
-<pre><code>validate_length :password, min: 8, max: 26
-validate_length :zip, is: 5
-</code></pre><h2 id="multiple-validation">Multiple validation</h2>
-<p>Assign multiple validations for one or many field(s)</p>
-<pre><code>validates [:first_name, :last_name],
-    precense: true,
-    format: {pattern: /^[a-zA-Z]+$/},
-    exclusion: {in: [&quot;foo&quot;, &quot;bar&quot;]},
-    length: {min: 3, max: 30}
-
-validates :rank, inclusion: {in: 1..100}
+<pre><code class="lang-crystal">validate_required :name  <span class="hljs-comment"># single field</span>
+validate_require [:name, :age]  <span class="hljs-comment"># multiple fields</span>
 </code></pre>
+<h2 id="format-validation">Format validation</h2>
+<p>Validates that a field matches a regex pattern</p>
+<pre><code class="lang-crystal">validate_format :name, <span class="hljs-regexp">/[*a-zA-z/</span>    <span class="hljs-comment"># single field</span>
+validate_format [:first_name, :last_name], <span class="hljs-regexp">/[*a-zA-z/</span>    <span class="hljs-comment"># multiple fields</span>
+</code></pre>
+<h2 id="inclusion-validation">Inclusion validation</h2>
+<p>Validates that a field is included in an array or range</p>
+<pre><code class="lang-crystal">validate_inclusion :age, (<span class="hljs-number">21</span>..<span class="hljs-number">150</span>)            <span class="hljs-comment"># single field</span>
+validate_incluson [:one_field, :other_field], [<span class="hljs-string">&quot;a&quot;</span>, <span class="hljs-string">&quot;b&quot;</span>, <span class="hljs-string">&quot;c&quot;</span>]        <span class="hljs-comment"># multiple fields</span>
+</code></pre>
+<h2 id="exclusion-validation">Exclusion validation</h2>
+<p>Validates that a field is excluded fram an array or range</p>
+<pre><code class="lang-crystal">validate_exclusion :age, (<span class="hljs-number">0</span>..<span class="hljs-number">20</span>)             <span class="hljs-comment"># single field</span>
+validate_exclusion [:one_field, :other_field], [<span class="hljs-string">&quot;x&quot;</span>, <span class="hljs-string">&quot;y&quot;</span>, <span class="hljs-string">&quot;z&quot;</span>]        <span class="hljs-comment"># multiple fields</span>
+</code></pre>
+<h2 id="validate-length">Validate length</h2>
+<p>Validates lengths with <code>:min</code>, <code>:max</code>, <code>:is</code></p>
+<pre><code class="lang-crystal">validate_length :password, <span class="hljs-symbol">min:</span> <span class="hljs-number">8</span>, <span class="hljs-symbol">max:</span> <span class="hljs-number">26</span>
+validate_length :zip, <span class="hljs-symbol">is:</span> <span class="hljs-number">5</span>
+</code></pre>
+<h2 id="multiple-validation">Multiple validation</h2>
+<p>Assign multiple validations for one or many field(s)</p>
+<pre><code class="lang-crystal">validates [:first_name, :last_name],
+    <span class="hljs-symbol">precense:</span> <span class="hljs-literal">true</span>,
+    <span class="hljs-symbol">format:</span> {<span class="hljs-symbol">pattern:</span> /^[a-zA-Z]+$/},
+    <span class="hljs-symbol">exclusion:</span> {<span class="hljs-symbol">in:</span> [<span class="hljs-string">&quot;foo&quot;</span>, <span class="hljs-string">&quot;bar&quot;</span>]},
+    <span class="hljs-symbol">length:</span> {<span class="hljs-symbol">min:</span> <span class="hljs-number">3</span>, <span class="hljs-symbol">max:</span> <span class="hljs-number">30</span>}
+
+validates :rank, <span class="hljs-symbol">inclusion:</span> {<span class="hljs-symbol">in:</span> <span class="hljs-number">1</span>..<span class="hljs-number">100</span>}
+</code></pre>
+
                                 
                                 </section>
                             
@@ -260,7 +266,7 @@ validates :rank, inclusion: {in: 1..100}
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Validations","level":"1.2.2","depth":2,"previous":{"title":"Associations","level":"1.2.1","depth":2,"path":"associations.md","ref":"associations.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"validations.md","mtime":"2017-03-25T05:49:43.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-03-25T05:51:26.109Z"},"basePath":".","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Validations","level":"1.2.2","depth":2,"previous":{"title":"Associations","level":"1.2.1","depth":2,"path":"associations.md","ref":"associations.md","articles":[]},"dir":"ltr"},"config":{"plugins":["github","edit-link"],"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"fontsettings":{"theme":"night","family":"sans","size":2},"github":{"url":"https://github.com/fridgerator/crecto"},"edit-link":{"label":"Edit This Page","base":"https://github.com/fridgerator/crecto/edit/gh-pages/"},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"crecto","gitbook":"*"},"file":{"path":"validations.md","mtime":"2017-03-25T06:03:13.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-03-25T06:03:41.896Z"},"basePath":".","book":{"language":""}});
         });
     </script>
 </div>
@@ -268,6 +274,14 @@ validates :rank, inclusion: {in: 1..100}
         
     <script src="gitbook/gitbook.js"></script>
     <script src="gitbook/theme.js"></script>
+    
+        
+        <script src="gitbook/gitbook-plugin-github/plugin.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-edit-link/plugin.js"></script>
+        
     
         
         <script src="gitbook/gitbook-plugin-search/search-engine.js"></script>

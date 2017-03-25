@@ -4,7 +4,7 @@
 
 The schema is defined in models:
 
-```
+```crystal
 class User < Crecto::Model
   schema "users" do  # table name
     field :name, String
@@ -32,7 +32,7 @@ end
 * All Int type fields (`Int32`, `Int64`) are automatically cast to `PkeyValue`.  `PkeyValue` is just an alias to `Int32 | Int64 | Nil`
 * By default, `schema` assumes 3 fields exist in the database: `id`, `created_at`, `updated_at`.  These can be overriden:
 
-```
+```crystal
 field :user_id, primary_key: true
 created_at_field "inserted_at"
 updated_at_field nil

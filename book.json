@@ -1,0 +1,19 @@
+{
+  "title": "crecto",
+  "plugins": [
+    "github", "edit-link"
+  ],
+  "pluginsConfig": {
+    "fontsettings": {
+      "theme": "night",
+      "size": 2
+    },
+    "github": {
+      "url": "https://github.com/fridgerator/crecto"
+    },
+    "edit-link": {
+      "base": "https://github.com/fridgerator/crecto/edit/gh-pages/",
+      "label": "Edit This Page"
+    }
+  }
+}

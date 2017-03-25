@@ -4,7 +4,7 @@ Crecto supports `has_many`, `belongs_to`, `has_many through:` and `has_one` asso
 
 ## Has Many
 
-```
+```crystal
 class User < Crecto::Model
 	schema "users" do
 		has_many :posts, Post
@@ -18,7 +18,7 @@ end
 
 ## Belongs To
 
-```
+```crystal
 class Post < Crecto::Model
 	schema "posts" do
 		belongs_to :user, User
@@ -33,7 +33,7 @@ end
 
 ## Has Many Through
 
-```
+```crystal
 class User < Crecto::Model
 	schema "users" do
 		has_many :user_posts, UserPost
@@ -58,7 +58,7 @@ end
 
 ## Has One
 
-```
+```crystal
 class User < Crecto::Model
 	schema "users" do
 		has_one :post, Post

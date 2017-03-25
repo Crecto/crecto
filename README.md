@@ -18,14 +18,14 @@ dependencies:
 
 Include a crystal database driver
 
-```
+```crystal
 require "pg" # or "mysql" or "sqlite3"
 require "crecto"
 ```
 
 Set the approprate environment variable:
 
-```
+```crystal
 ENV["PG_URL"] = "postgres://localhost:5432/crecto-database" # -or-
 ENV["PG_URL"] = "msyql://localhost:3306/crecto-database" # -or-
 ENV["SQlITE3_PATH"] = "sqlite3://path/to/db.db"
@@ -33,7 +33,7 @@ ENV["SQlITE3_PATH"] = "sqlite3://path/to/db.db"
 
 ## Quick Start
 
-```
+```crystal
 # shortcut variables, optional
 Repo  = Crecto::Repo
 Query = Crecto::Repo::Query

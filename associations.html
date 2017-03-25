@@ -4,7 +4,7 @@
     <head>
         <meta charset="UTF-8">
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-        <title>Associations · GitBook</title>
+        <title>Associations · crecto</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="description" content="">
         <meta name="generator" content="GitBook 3.2.2">
@@ -195,57 +195,61 @@
                                 <h1 id="associations">Associations</h1>
 <p>Crecto supports <code>has_many</code>, <code>belongs_to</code>, <code>has_many through:</code> and <code>has_one</code> associations</p>
 <h2 id="has-many">Has Many</h2>
-<pre><code>class User &lt; Crecto::Model
-    schema &quot;users&quot; do
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">User</span> &lt; <span class="hljs-title">Crecto::Model</span></span>
+    schema <span class="hljs-string">&quot;users&quot;</span> <span class="hljs-keyword">do</span>
         has_many :posts, Post
-    end
-end
-</code></pre><ul>
+    <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<ul>
 <li><p><code>posts</code> getter and setter will be defined on the <code>User</code> model</p>
 </li>
 <li><p>Assumes the foreign key to be <code>user_id</code>. To specify a different foreign key use: <code>has_many :posts, Post, foreign_key: :uid</code></p>
 </li>
 </ul>
 <h2 id="belongs-to">Belongs To</h2>
-<pre><code>class Post &lt; Crecto::Model
-    schema &quot;posts&quot; do
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Post</span> &lt; <span class="hljs-title">Crecto::Model</span></span>
+    schema <span class="hljs-string">&quot;posts&quot;</span> <span class="hljs-keyword">do</span>
         belongs_to :user, User
-    end
-end
-</code></pre><ul>
+    <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<ul>
 <li><p><code>user</code> getter and setters will be defined on the <code>Post</code> model</p>
 </li>
 <li><p>Assumes the foreign key to be <code>user_id</code>. To specify a different foreign key use: <code>belongs_to :user, User, foreign_key: :uid</code></p>
 </li>
 </ul>
 <h2 id="has-many-through">Has Many Through</h2>
-<pre><code>class User &lt; Crecto::Model
-    schema &quot;users&quot; do
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">User</span> &lt; <span class="hljs-title">Crecto::Model</span></span>
+    schema <span class="hljs-string">&quot;users&quot;</span> <span class="hljs-keyword">do</span>
         has_many :user_posts, UserPost
-        has_many :posts, Post, through: :user_posts
-    end
-end
+        has_many :posts, Post, <span class="hljs-symbol">through:</span> :user_posts
+    <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
 
-class UserPost &lt; Crecto::Model
-    schema &quot;user_posts&quot; do
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">UserPost</span> &lt; <span class="hljs-title">Crecto::Model</span></span>
+    schema <span class="hljs-string">&quot;user_posts&quot;</span> <span class="hljs-keyword">do</span>
         belongs_to :user, User
         belongs_to :post, Post
-    end
-end
+    <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
 
-class Post &lt; Crecto::Model
-    schema &quot;posts&quot; do
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Post</span> &lt; <span class="hljs-title">Crecto::Model</span></span>
+    schema <span class="hljs-string">&quot;posts&quot;</span> <span class="hljs-keyword">do</span>
         has_many :user_posts, UserPost
-        has_many :users, User, through: :user_posts
-    end
-end
-</code></pre><h2 id="has-one">Has One</h2>
-<pre><code>class User &lt; Crecto::Model
-    schema &quot;users&quot; do
-        has_one :post, Post
-    end
-end
+        has_many :users, User, <span class="hljs-symbol">through:</span> :user_posts
+    <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
 </code></pre>
+<h2 id="has-one">Has One</h2>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">User</span> &lt; <span class="hljs-title">Crecto::Model</span></span>
+    schema <span class="hljs-string">&quot;users&quot;</span> <span class="hljs-keyword">do</span>
+        has_one :post, Post
+    <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+
                                 
                                 </section>
                             
@@ -288,7 +292,7 @@ end
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Associations","level":"1.2.1","depth":2,"next":{"title":"Validations","level":"1.2.2","depth":2,"path":"validations.md","ref":"validations.md","articles":[]},"previous":{"title":"Schema","level":"1.2","depth":1,"path":"schema.md","ref":"schema.md","articles":[{"title":"Associations","level":"1.2.1","depth":2,"path":"associations.md","ref":"associations.md","articles":[]},{"title":"Validations","level":"1.2.2","depth":2,"path":"validations.md","ref":"validations.md","articles":[]}]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"associations.md","mtime":"2017-03-25T05:33:02.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-03-25T05:51:26.109Z"},"basePath":".","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Associations","level":"1.2.1","depth":2,"next":{"title":"Validations","level":"1.2.2","depth":2,"path":"validations.md","ref":"validations.md","articles":[]},"previous":{"title":"Schema","level":"1.2","depth":1,"path":"schema.md","ref":"schema.md","articles":[{"title":"Associations","level":"1.2.1","depth":2,"path":"associations.md","ref":"associations.md","articles":[]},{"title":"Validations","level":"1.2.2","depth":2,"path":"validations.md","ref":"validations.md","articles":[]}]},"dir":"ltr"},"config":{"plugins":["github","edit-link"],"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"fontsettings":{"theme":"night","family":"sans","size":2},"github":{"url":"https://github.com/fridgerator/crecto"},"edit-link":{"label":"Edit This Page","base":"https://github.com/fridgerator/crecto/edit/gh-pages/"},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"crecto","gitbook":"*"},"file":{"path":"associations.md","mtime":"2017-03-25T06:03:34.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-03-25T06:03:41.896Z"},"basePath":".","book":{"language":""}});
         });
     </script>
 </div>
@@ -296,6 +300,14 @@ end
         
     <script src="gitbook/gitbook.js"></script>
     <script src="gitbook/theme.js"></script>
+    
+        
+        <script src="gitbook/gitbook-plugin-github/plugin.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-edit-link/plugin.js"></script>
+        
     
         
         <script src="gitbook/gitbook-plugin-search/search-engine.js"></script>

@@ -4,7 +4,7 @@
     <head>
         <meta charset="UTF-8">
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-        <title>Schema · GitBook</title>
+        <title>Schema · crecto</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="description" content="">
         <meta name="generator" content="GitBook 3.2.2">
@@ -195,36 +195,38 @@
                                 <h1 id="schema">Schema</h1>
 <!-- toc -->
 <p>The schema is defined in models:</p>
-<pre><code>class User &lt; Crecto::Model
-  schema &quot;users&quot; do  # table name
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">User</span> &lt; <span class="hljs-title">Crecto::Model</span></span>
+  schema <span class="hljs-string">&quot;users&quot;</span> <span class="hljs-keyword">do</span>  <span class="hljs-comment"># table name</span>
     field :name, String
     field :age, Int32
     field :is_admin, Bool
-    field :temp_info, Float64, virtual: true # virtual fields are not represented in the database and will not persist
-    field :user_info, Json # Json field types are only supported by postgres, and will be auto mapped to [JSON::Any](https://crystal-lang.org/api/0.21.1/JSON/Any.html)
+    field :temp_info, Float64, <span class="hljs-symbol">virtual:</span> <span class="hljs-literal">true</span> <span class="hljs-comment"># virtual fields are not represented in the database and will not persist</span>
+    field :user_info, Json <span class="hljs-comment"># Json field types are only supported by postgres, and will be auto mapped to [JSON::Any](https://crystal-lang.org/api/0.21.1/JSON/Any.html)</span>
     field :some_date, Time
 
     has_many :posts, Post
 
     validate_required [:name, :age]
-  end
-end
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
 
-class Post &lt; Crecto::Model
-  schema &quot;post&quot; do
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Post</span> &lt; <span class="hljs-title">Crecto::Model</span></span>
+  schema <span class="hljs-string">&quot;post&quot;</span> <span class="hljs-keyword">do</span>
     field :content, String
 
     belongs_to :user, User
-  end
-end
-</code></pre><ul>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<ul>
 <li>All Int type fields (<code>Int32</code>, <code>Int64</code>) are automatically cast to <code>PkeyValue</code>.  <code>PkeyValue</code> is just an alias to <code>Int32 | Int64 | Nil</code></li>
 <li>By default, <code>schema</code> assumes 3 fields exist in the database: <code>id</code>, <code>created_at</code>, <code>updated_at</code>.  These can be overriden:</li>
 </ul>
-<pre><code>field :user_id, primary_key: true
-created_at_field &quot;inserted_at&quot;
-updated_at_field nil
+<pre><code class="lang-crystal">field :user_id, <span class="hljs-symbol">primary_key:</span> <span class="hljs-literal">true</span>
+created_at_field <span class="hljs-string">&quot;inserted_at&quot;</span>
+updated_at_field <span class="hljs-literal">nil</span>
 </code></pre>
+
                                 
                                 </section>
                             
@@ -267,7 +269,7 @@ updated_at_field nil
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Schema","level":"1.2","depth":1,"next":{"title":"Associations","level":"1.2.1","depth":2,"path":"associations.md","ref":"associations.md","articles":[]},"previous":{"title":"Crecto","level":"1.1","depth":1,"path":"README.md","ref":"README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"schema.md","mtime":"2017-03-25T05:31:36.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-03-25T05:51:26.109Z"},"basePath":".","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Schema","level":"1.2","depth":1,"next":{"title":"Associations","level":"1.2.1","depth":2,"path":"associations.md","ref":"associations.md","articles":[]},"previous":{"title":"Crecto","level":"1.1","depth":1,"path":"README.md","ref":"README.md","articles":[]},"dir":"ltr"},"config":{"plugins":["github","edit-link"],"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"fontsettings":{"theme":"night","family":"sans","size":2},"github":{"url":"https://github.com/fridgerator/crecto"},"edit-link":{"label":"Edit This Page","base":"https://github.com/fridgerator/crecto/edit/gh-pages/"},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"crecto","gitbook":"*"},"file":{"path":"schema.md","mtime":"2017-03-25T06:02:56.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-03-25T06:03:41.896Z"},"basePath":".","book":{"language":""}});
         });
     </script>
 </div>
@@ -275,6 +277,14 @@ updated_at_field nil
         
     <script src="gitbook/gitbook.js"></script>
     <script src="gitbook/theme.js"></script>
+    
+        
+        <script src="gitbook/gitbook-plugin-github/plugin.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-edit-link/plugin.js"></script>
+        
     
         
         <script src="gitbook/gitbook-plugin-search/search-engine.js"></script>
