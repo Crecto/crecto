@@ -7,40 +7,26 @@ module Crecto
       #
       # Query data store using a *query*
       #
-      def run(conn : DB::Database, operation : Symbol, queryable, query : Crecto::Repo::Query)
+      def run(conn : DB::Database | DB::Transaction, operation : Symbol, queryable, query : Crecto::Repo::Query)
         case operation
         when :all
           all(conn, queryable, query)
         when :delete_all
-          delete(conn, queryable, query, nil)
+          delete(conn, queryable, query)
         end
       end
 
-      def run(conn : DB::Database, operation : Symbol, queryable, query : Crecto::Repo::Query, tx : DB::Transaction?)
-        case operation
-        when :delete_all
-          delete(conn, queryable, query, tx)
-        end
-      end
-
-      def run(conn : DB::Database, operation : Symbol, queryable, query : Crecto::Repo::Query, query_hash : Hash)
+      def run(conn : DB::Database | DB::Transaction, operation : Symbol, queryable, query : Crecto::Repo::Query, query_hash : Hash)
         case operation
         when :update_all
-          update(conn, queryable, query, query_hash, nil)
-        end
-      end
-
-      def run(conn : DB::Database, operation : Symbol, queryable, query : Crecto::Repo::Query, query_hash : Hash, tx : DB::Transaction?)
-        case operation
-        when :update_all
-          update(conn, queryable, query, query_hash, tx)
+          update(conn, queryable, query, query_hash)
         end
       end
 
       #
       # Query data store using an *id*, returning a single record.
       #
-      def run(conn : DB::Database, operation : Symbol, queryable, id : Int32 | Int64 | String | Nil)
+      def run(conn : DB::Database | DB::Transaction, operation : Symbol, queryable, id : Int32 | Int64 | String | Nil)
         case operation
         when :get
           get(conn, queryable, id)
@@ -50,7 +36,7 @@ module Crecto
       #
       # Query data store using *sql*, returning multiple rows
       #
-      def run(conn : DB::Database, operation : Symbol, sql : String, params : Array(DbValue))
+      def run(conn : DB::Database | DB::Transaction, operation : Symbol, sql : String, params : Array(DbValue))
         case operation
         when :sql
           execute(conn, position_args(sql), params)
@@ -58,31 +44,35 @@ module Crecto
       end
 
       # Query data store in relation to a *queryable_instance* of Schema
-      def run_on_instance(conn : DB::Database, operation, changeset, tx : DB::Transaction?)
+      def run_on_instance(conn : DB::Database | DB::Transaction, operation, changeset)
         case operation
         when :insert
-          insert(conn, changeset, tx)
+          insert(conn, changeset)
         when :update
-          update(conn, changeset, tx)
+          update(conn, changeset)
         when :delete
-          delete(conn, changeset, tx)
+          delete(conn, changeset)
         end
-      end
-
-      def run_on_instance(conn : DB::Database, operation, changeset)
-        run_on_instance(conn, operation, changeset, nil)
       end
 
       def execute(conn, query_string, params)
         start = Time.now
-        results = conn.query(query_string, params)
+        results = if conn.is_a?(DB::Database)
+          conn.query(query_string, params)
+        else
+          conn.connection.query(query_string, params)
+        end
         DbLogger.log(query_string, Time.new - start, params)
         results
       end
 
       def execute(conn, query_string)
         start = Time.now
-        results = conn.query(query_string)
+        results = if conn.is_a?(DB::Database)
+          conn.query(query_string)
+        else
+          conn.connection.query(query_string)
+        end
         DbLogger.log(query_string, Time.new - start)
         results
       end
@@ -130,7 +120,7 @@ module Crecto
         execute(conn, position_args(q.join(" ")), params)
       end
 
-      private def update(conn, queryable, query, query_hash, tx : DB::Transaction?)
+      private def update(conn, queryable, query, query_hash)
         fields_values = instance_fields_and_values(query_hash)
         params = [] of DbValue | Array(DbValue)
 
@@ -138,7 +128,7 @@ module Crecto
         q.push wheres(queryable, query, params) if query.wheres.any?
         q.push or_wheres(queryable, query, params) if query.or_wheres.any?
 
-        exec_execute(conn, position_args(q.join(" ")), fields_values[:values] + params, tx)
+        exec_execute(conn, position_args(q.join(" ")), fields_values[:values] + params)
       end
 
       private def delete_begin(table_name)
@@ -146,14 +136,23 @@ module Crecto
         q.push "#{table_name}"
       end
 
-      private def delete(conn, queryable, query : Crecto::Repo::Query, tx : DB::Transaction?)
+      private def delete(conn, changeset)
+        q = delete_begin(changeset.instance.class.table_name)
+        q.push "WHERE"
+        q.push "#{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}"
+        q.push "RETURNING *" if conn.is_a?(DB::Database)
+
+        exec_execute(conn, q.join(" "))
+      end
+
+      private def delete(conn, queryable, query : Crecto::Repo::Query)
         params = [] of DbValue | Array(DbValue)
 
         q = delete_begin(queryable.table_name)
         q.push wheres(queryable, query, params) if query.wheres.any?
         q.push or_wheres(queryable, query, params) if query.or_wheres.any?
 
-        execute(conn, position_args(q.join(" ")), params, tx)
+        exec_execute(conn, position_args(q.join(" ")), params)
       end
 
       private def wheres(queryable, query, params)

@@ -166,7 +166,7 @@ module Crecto
       changeset.instance.updated_at_to_now
       changeset.instance.created_at_to_now
 
-      query = config.adapter.run_on_instance(config.get_connection, :insert, changeset, tx)
+      query = config.adapter.run_on_instance(tx || config.get_connection, :insert, changeset)
 
       if query.nil?
         changeset.add_error("insert_error", "Insert Failed")
@@ -206,7 +206,7 @@ module Crecto
 
       changeset.instance.updated_at_to_now
 
-      query = config.adapter.run_on_instance(config.get_connection, :update, changeset, tx)
+      query = config.adapter.run_on_instance(tx || config.get_connection, :update, changeset)
 
       if query.nil?
         changeset.add_error("update_error", "Update Failed")
@@ -239,15 +239,15 @@ module Crecto
     # Repo.update_all(User, query, {count: 1, date: Time.now})
     # ```
     def update_all(queryable, query, update_hash : Hash, tx : DB::Transaction?)
-      config.adapter.run(config.get_connection, :update_all, queryable, query, update_hash, tx)
+      config.adapter.run(tx || config.get_connection, :update_all, queryable, query, update_hash)
     end
 
     def update_all(queryable, query, update_hash : Hash)
-      config.adapter.run(config.get_connection, :update_all, queryable, query, update_hash, nil)
+      config.adapter.run(config.get_connection, :update_all, queryable, query, update_hash)
     end
 
     def update_all(queryable, query, update_hash : NamedTuple)
-      update_all(queryable, query, update_hash.to_h, nil)
+      update_all(queryable, query, update_hash.to_h)
     end
 
     # Delete a shema instance from the data store.
@@ -259,7 +259,7 @@ module Crecto
       changeset = queryable_instance.class.changeset(queryable_instance)
       return changeset unless changeset.valid?
 
-      query = config.adapter.run_on_instance(config.get_connection, :delete, changeset, tx)
+      query = config.adapter.run_on_instance(tx || config.get_connection, :delete, changeset)
 
       if query.nil?
         changeset.add_error("delete_error", "Delete Failed")
@@ -299,7 +299,7 @@ module Crecto
 
     def delete_all(queryable, query : Query?, tx : DB::Transaction?)
       query = Query.new if query.nil?
-      config.adapter.run(config.get_connection, :delete_all, queryable, query, tx)
+      config.adapter.run(tx || config.get_connection, :delete_all, queryable, query)
     end
 
     # Run aribtrary sql queries. `query` will cast the output as that

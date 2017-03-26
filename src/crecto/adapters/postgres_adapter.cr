@@ -6,31 +6,14 @@ module Crecto
     module Postgres
       extend BaseAdapter
 
-      def self.run(conn : DB::Database, operation : Symbol, queryable, query : Crecto::Repo::Query, tx : DB::Transaction?)
-        case operation
-        when :delete_all
-          exec_delete(conn, queryable, query, tx)
-        end
+      def self.exec_execute(conn, query_string, params)
+        return execute(conn, query_string, params) if conn.is_a?(DB::Database)
+        conn.connection.exec(query_string, params)
       end
 
-      def self.execute(conn, query_string, params, tx : DB::Transaction?)
-        return execute(conn, query_string, params) if tx.nil?
-        tx.connection.query(query_string, params)
-      end
-
-      def self.execute(conn, query_string, tx : DB::Transaction?)
-        return execute(conn, query_string) if tx.nil?
-        tx.connection.query(query_string)
-      end
-
-      def self.exec_execute(conn, query_string, params, tx : DB::Transaction?)
-        return execute(conn, query_string, params) if tx.nil?
-        tx.connection.exec(query_string, params)
-      end
-
-      def self.exec_execute(conn, query_string, tx : DB::Transaction?)
-        return execute(conn, query_string) if tx.nil?
-        tx.connection.exec(query_string)
+      def self.exec_execute(conn, query_string)
+        return execute(conn, query_string) if conn.is_a?(DB::Database)
+        conn.connection.exec(query_string)
       end
 
       private def self.get(conn, queryable, id)
@@ -42,7 +25,7 @@ module Crecto
         execute(conn, q.join(" "), [id])
       end
 
-      private def self.insert(conn, changeset, tx : DB::Transaction?)
+      private def self.insert(conn, changeset)
         fields_values = instance_fields_and_values(changeset.instance)
 
         q = ["INSERT INTO"]
@@ -52,7 +35,7 @@ module Crecto
         q.push "(#{(1..fields_values[:values].size).map { "?" }.join(", ")})"
         q.push "RETURNING *"
 
-        execute(conn, position_args(q.join(" ")), fields_values[:values], tx)
+        execute(conn, position_args(q.join(" ")), fields_values[:values])
       end
 
       private def self.update_begin(table_name, fields_values)
@@ -64,7 +47,7 @@ module Crecto
         q.push "(#{(1..fields_values[:values].size).map { "?" }.join(", ")})"
       end
 
-      private def self.update(conn, changeset, tx)
+      private def self.update(conn, changeset)
         fields_values = instance_fields_and_values(changeset.instance)
 
         q = update_begin(changeset.instance.class.table_name, fields_values)
@@ -72,36 +55,17 @@ module Crecto
         q.push "#{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}"
         q.push "RETURNING *"
 
-        execute(conn, position_args(q.join(" ")), fields_values[:values], tx)
+        execute(conn, position_args(q.join(" ")), fields_values[:values])
       end
 
-      private def self.delete(conn, changeset, tx : DB::Transaction?)
-        q = delete_begin(changeset.instance.class.table_name)
-        q.push "WHERE"
-        q.push "#{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}"
-        q.push "RETURNING *" if tx.nil?
-
-        exec_execute(conn, q.join(" "), tx)
-      end
-
-      private def self.delete(conn, queryable, query : Crecto::Repo::Query, tx : DB::Transaction?)
+      private def self.exec_delete(conn, queryable, query : Crecto::Repo::Query)
         params = [] of DbValue | Array(DbValue)
 
         q = delete_begin(queryable.table_name)
         q.push wheres(queryable, query, params) if query.wheres.any?
         q.push or_wheres(queryable, query, params) if query.or_wheres.any?
 
-        execute(conn, position_args(q.join(" ")), params, tx)
-      end
-
-      private def self.exec_delete(conn, queryable, query : Crecto::Repo::Query, tx : DB::Transaction)
-        params = [] of DbValue | Array(DbValue)
-
-        q = delete_begin(queryable.table_name)
-        q.push wheres(queryable, query, params) if query.wheres.any?
-        q.push or_wheres(queryable, query, params) if query.or_wheres.any?
-
-        exec_execute(conn, position_args(q.join(" ")), params, tx)
+        exec_execute(conn, position_args(q.join(" ")), params)
       end
 
       private def self.instance_fields_and_values(query_hash : Hash)
