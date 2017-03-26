@@ -6,10 +6,6 @@ module Crecto
     module Mysql
       extend BaseAdapter
 
-      #
-      # Query data store using *sql*, returning multiple rows
-      #
-
       def self.exec_execute(conn, query_string, params : Array)
         start = Time.now
         results = if conn.is_a?(DB::Database)

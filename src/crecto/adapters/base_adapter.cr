@@ -77,6 +77,38 @@ module Crecto
         results
       end
 
+      def exec_execute(conn, query_string, params)
+        return execute(conn, query_string, params) if conn.is_a?(DB::Database)
+        conn.connection.exec(query_string, params)
+      end
+
+      def exec_execute(conn, query_string)
+        return execute(conn, query_string) if conn.is_a?(DB::Database)
+        conn.connection.exec(query_string)
+      end
+
+      private def get(conn, queryable, id)
+        q = ["SELECT *"]
+        q.push "FROM #{queryable.table_name}"
+        q.push "WHERE #{queryable.primary_key_field}=$1"
+        q.push "LIMIT 1"
+
+        execute(conn, q.join(" "), [id])
+      end
+
+      private def insert(conn, changeset)
+        fields_values = instance_fields_and_values(changeset.instance)
+
+        q = ["INSERT INTO"]
+        q.push "#{changeset.instance.class.table_name}"
+        q.push "(#{fields_values[:fields]})"
+        q.push "VALUES"
+        q.push "(#{(1..fields_values[:values].size).map { "?" }.join(", ")})"
+        q.push "RETURNING *"
+
+        execute(conn, position_args(q.join(" ")), fields_values[:values])
+      end
+
       def aggregate(conn, queryable, ag, field)
         conn.scalar(build_aggregate_query(queryable, ag, field))
       end
