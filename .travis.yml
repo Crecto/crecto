@@ -18,7 +18,7 @@ before_script:
   - sqlite3 ./crecto_test.db < spec/migrations/sqlite3_migrations.sql
   - if [ ! -z "$PG_URL" ]; then cp ./spec/travis_pg_repo.cr ./spec/repo.cr; fi
   - if [ ! -z "$MYSQL_URL" ]; then cp ./spec/travis_mysql_repo.cr ./spec/repo.cr; fi
-  - if [ ! -z "$SQLITE3_PATH" ]; then cp ./spec/travis_sqlite3_repo.cr ./spec/repo.cr; fi
+  - if [ ! -z "$SQLITE3_PATH" ]; then cp ./spec/travis_sqlite_repo.cr ./spec/repo.cr; fi
 env:
   matrix:
     - PG_URL=postgres://postgres@localhost:5432/crecto_test

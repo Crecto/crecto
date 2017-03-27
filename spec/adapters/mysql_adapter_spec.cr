@@ -90,7 +90,7 @@ if Repo.config.adapter == Crecto::Adapters::Mysql
       Crecto::Adapters.clear_sql
       Repo.delete(changeset.instance)
       check_sql do |sql|
-        sql.should eq([] of String)
+        sql.should eq(["SELECT * FROM users WHERE id=#{changeset.instance.id}"])
       end
     end
 

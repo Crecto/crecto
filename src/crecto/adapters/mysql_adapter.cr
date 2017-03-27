@@ -74,7 +74,7 @@ module Crecto
         q.push "WHERE"
         q.push "#{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}"
 
-        sel = execute(conn, "SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}") if conn.is_a?(DB::TopLevelTransaction)
+        sel = execute(conn, "SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}") if !conn.is_a?(DB::TopLevelTransaction)
         return exec_execute(conn, q.join(" ")) if conn.is_a?(DB::TopLevelTransaction)
         sel
       end
