@@ -1,4 +1,4 @@
-module SQLiteRepo
+module Repo
   extend Crecto::Repo
 
   config do |conf|
