@@ -642,34 +642,34 @@ describe Crecto do
       end
     end
 
-    {% if `echo $PG_URL`.includes?("postgres") %}
-    describe "json type" do
-      it "store and retrieve records" do
-        u = UserJson.new
-        u.settings = {one: "stuff", two: 123, three: 130912039123090}
+    if Repo.config.adapter == Crecto::Adapters::Postgres
+      describe "json type" do
+        it "store and retrieve records" do
+          u = UserJson.new
+          u.settings = {one: "stuff", two: 123, three: 130912039123090}
 
-        changeset = Repo.insert(u)
-        id = changeset.instance.id
+          changeset = Repo.insert(u)
+          id = changeset.instance.id
 
-        query = Query.where("settings @> '{\"one\":\"stuff\"}'")
-        users = Repo.all(UserJson, query)
+          query = Query.where("settings @> '{\"one\":\"stuff\"}'")
+          users = Repo.all(UserJson, query)
 
-        users.size.should be > 0
-        user = users[0]
-        user.settings.not_nil!["one"].should eq("stuff")
-        user.settings.not_nil!["two"].should eq(123)
-        user.settings.not_nil!["three"].should eq(130912039123090)
-      end
+          users.size.should be > 0
+          user = users[0]
+          user.settings.not_nil!["one"].should eq("stuff")
+          user.settings.not_nil!["two"].should eq(123)
+          user.settings.not_nil!["three"].should eq(130912039123090)
+        end
 
-      describe "#delete_all" do
-        it "should remove all records" do
-          Repo.delete_all(UserJson)
-          users = Repo.all(UserJson)
-          users.size.should eq 0
+        describe "#delete_all" do
+          it "should remove all records" do
+            Repo.delete_all(UserJson)
+            users = Repo.all(UserJson)
+            users.size.should eq 0
+          end
         end
       end
     end
-    {% end %}
 
     # keep this at the end
     describe "#delete_all" do

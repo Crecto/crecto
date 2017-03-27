@@ -32,74 +32,78 @@ module Crecto
   end
 end
 
-describe "Crecto::Adapters::Mysql" do
-  Spec.before_each do
-    Crecto::Adapters.clear_sql
-  end
+if Repo.config.adapter == Crecto::Adapters::Mysql
 
-  it "should generate insert query" do
-    MysqlRepo.insert(User.from_json(%({ "name": "chuck" })))
-    check_sql do |sql|
-      sql.should eq([
-        "INSERT INTO users (name, things, nope, yep, some_date, pageviews, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        "SELECT * FROM users WHERE id = LAST_INSERT_ID()"
-      ])
+  describe "Crecto::Adapters::Mysql" do
+    Spec.before_each do
+      Crecto::Adapters.clear_sql
     end
-  end
 
-  it "should generate get query" do
-    user = MysqlRepo.insert(User.from_json("{ \"name\":\"lucy\" }"))
-    Crecto::Adapters.clear_sql
-    MysqlRepo.get(User, user.instance.id)
-    check_sql do |sql|
-      sql.should eq(["SELECT * FROM users WHERE id=? LIMIT 1"])
+    it "should generate insert query" do
+      Repo.insert(User.from_json(%({ "name": "chuck" })))
+      check_sql do |sql|
+        sql.should eq([
+          "INSERT INTO users (name, things, nope, yep, some_date, pageviews, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+          "SELECT * FROM users WHERE id = LAST_INSERT_ID()"
+        ])
+      end
     end
-  end
 
-  it "should generate sql for query syntax" do
-    query = Query
-      .where(name: "fridge")
-      .where("users.things < ?", [124])
-      .order_by("users.name ASC")
-      .order_by("users.things DESC")
-      .limit(1)
-    MysqlRepo.all(User, query)
-    check_sql do |sql|
-      sql.should eq(["SELECT users.* FROM users WHERE  users.name=? AND users.things < ? ORDER BY users.name ASC, users.things DESC LIMIT 1"])
+    it "should generate get query" do
+      user = Repo.insert(User.from_json("{ \"name\":\"lucy\" }"))
+      Crecto::Adapters.clear_sql
+      Repo.get(User, user.instance.id)
+      check_sql do |sql|
+        sql.should eq(["SELECT * FROM users WHERE id=? LIMIT 1"])
+      end
     end
-  end
 
-  it "should generate update queries" do
-    changeset = MysqlRepo.insert(User.from_json(%({ "name": "linus" })))
-    Crecto::Adapters.clear_sql
-    changeset.instance.name = "snoopy"
-    changeset.instance.yep = false
-    MysqlRepo.update(changeset.instance)
-    check_sql do |sql|
-      sql.should eq([
-        "UPDATE users SET name=?, things=?, nope=?, yep=?, some_date=?, pageviews=?, created_at=?, updated_at=? WHERE id=#{changeset.instance.id}",
-        "SELECT * FROM users WHERE id = #{changeset.instance.id}"
-      ])
+    it "should generate sql for query syntax" do
+      query = Query
+        .where(name: "fridge")
+        .where("users.things < ?", [124])
+        .order_by("users.name ASC")
+        .order_by("users.things DESC")
+        .limit(1)
+      Repo.all(User, query)
+      check_sql do |sql|
+        sql.should eq(["SELECT users.* FROM users WHERE  users.name=? AND users.things < ? ORDER BY users.name ASC, users.things DESC LIMIT 1"])
+      end
     end
-  end
 
-  it "should generate delete queries" do
-    changeset = MysqlRepo.insert(User.from_json(%({ "name": "sally" })))
-    Crecto::Adapters.clear_sql
-    MysqlRepo.delete(changeset.instance)
-    check_sql do |sql|
-      sql.should eq([] of String)
+    it "should generate update queries" do
+      changeset = Repo.insert(User.from_json(%({ "name": "linus" })))
+      Crecto::Adapters.clear_sql
+      changeset.instance.name = "snoopy"
+      changeset.instance.yep = false
+      Repo.update(changeset.instance)
+      check_sql do |sql|
+        sql.should eq([
+          "UPDATE users SET name=?, things=?, nope=?, yep=?, some_date=?, pageviews=?, created_at=?, updated_at=? WHERE id=#{changeset.instance.id}",
+          "SELECT * FROM users WHERE id = #{changeset.instance.id}"
+        ])
+      end
     end
-  end
 
-  it "should generate IS NULL query" do
-    quick_create_user("nullable")
-    Crecto::Adapters.clear_sql
-    query = Query.where(things: nil)
-    MysqlRepo.all(User, query)
-    check_sql do |sql|
-      sql.should eq(["SELECT users.* FROM users WHERE  users.things IS NULL"])
+    it "should generate delete queries" do
+      changeset = Repo.insert(User.from_json(%({ "name": "sally" })))
+      Crecto::Adapters.clear_sql
+      Repo.delete(changeset.instance)
+      check_sql do |sql|
+        sql.should eq([] of String)
+      end
     end
+
+    it "should generate IS NULL query" do
+      quick_create_user("nullable")
+      Crecto::Adapters.clear_sql
+      query = Query.where(things: nil)
+      Repo.all(User, query)
+      check_sql do |sql|
+        sql.should eq(["SELECT users.* FROM users WHERE  users.things IS NULL"])
+      end
+    end
+
   end
 
 end

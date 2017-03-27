@@ -21,7 +21,6 @@ describe Crecto do
 
         multi = Multi.new
         multi.insert(user)
-
         multi = Repo.transaction(multi)
 
         users = Repo.all(User, Query.where(name: "this should insert in the transaction"))
@@ -29,6 +28,7 @@ describe Crecto do
       end
 
       it "with a valid delete, should delete the record" do
+        # puts "here"
         user = quick_create_user("this should delete")
 
         multi = Multi.new
@@ -37,6 +37,7 @@ describe Crecto do
 
         users = Repo.all(User, Query.where(id: user.id))
         users.any?.should eq(false)
+        # puts "after here"
       end
 
       it "with a valid delete_all, should delete all records" do
@@ -47,7 +48,6 @@ describe Crecto do
         Repo.delete_all(Post)
 
         multi = Multi.new
-        # `delete_all` needs to use `exec` on tranasaction, not `query`
         multi.delete_all(User)
         Repo.transaction(multi)
 

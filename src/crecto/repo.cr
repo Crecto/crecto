@@ -260,6 +260,7 @@ module Crecto
       return changeset unless changeset.valid?
 
       query = config.adapter.run_on_instance(tx || config.get_connection, :delete, changeset)
+      # puts "after query"
 
       if query.nil?
         changeset.add_error("delete_error", "Delete Failed")
