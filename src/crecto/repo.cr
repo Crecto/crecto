@@ -379,18 +379,18 @@ module Crecto
       multi
     end
 
-    # Calculate the given aggregate `ag` over the given `field`
-    # Aggregate `ag` must be one of (:avg, :count, :max, :min:, :sum)
-    def aggregate(queryable, ag : Symbol, field : Symbol)
-      raise InvalidOption.new("Aggregate must be one of :avg, :count, :max, :min:, :sum") unless [:avg, :count, :max, :min, :sum].includes?(ag)
+    # Calculate the given aggregate `aggregate_function` over the given `field`
+    # Aggregate `aggregate_function` must be one of (:avg, :count, :max, :min:, :sum)
+    def aggregate(queryable, aggregate_function : Symbol, field : Symbol)
+      raise InvalidOption.new("Aggregate must be one of :avg, :count, :max, :min:, :sum") unless [:avg, :count, :max, :min, :sum].includes?(aggregate_function)
 
-      config.adapter.aggregate(config.get_connection, queryable, ag, field)
+      config.adapter.aggregate(config.get_connection, queryable, aggregate_function, field)
     end
 
-    def aggregate(queryable, ag : Symbol, field : Symbol, query : Crecto::Repo::Query)
-      raise InvalidOption.new("Aggregate must be one of :avg, :count, :max, :min:, :sum") unless [:avg, :count, :max, :min, :sum].includes?(ag)
+    def aggregate(queryable, aggregate_function : Symbol, field : Symbol, query : Crecto::Repo::Query)
+      raise InvalidOption.new("Aggregate must be one of :avg, :count, :max, :min:, :sum") unless [:avg, :count, :max, :min, :sum].includes?(aggregate_function)
 
-      config.adapter.aggregate(config.get_connection, queryable, ag, field, query)
+      config.adapter.aggregate(config.get_connection, queryable, aggregate_function, field, query)
     end
 
     private def add_preloads(results, queryable, preloads)
@@ -554,8 +554,8 @@ module Crecto
 
       private def set_url_creds(io)
         return if adapter == Crecto::Adapters::SQLite3
-        io << username unless username.empty?
-        io << ":#{password}" unless password.empty?
+        io << URI.escape(username) unless username.empty?
+        io << ":#{URI.escape(password)}" unless password.empty?
         io << "@" unless username.empty?
       end
 

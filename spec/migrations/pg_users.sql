@@ -20,6 +20,7 @@ DROP TABLE IF EXISTS users_json;
 
 CREATE TABLE users(
   id INTEGER NOT NULL,
+  email character varying UNIQUE NOT NULL,
   name character varying NOT NULL,
   things integer,
   stuff integer,

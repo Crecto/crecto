@@ -28,7 +28,6 @@ describe Crecto do
       end
 
       it "with a valid delete, should delete the record" do
-        # puts "here"
         user = quick_create_user("this should delete")
 
         multi = Multi.new
@@ -37,7 +36,6 @@ describe Crecto do
 
         users = Repo.all(User, Query.where(id: user.id))
         users.any?.should eq(false)
-        # puts "after here"
       end
 
       it "with a valid delete_all, should delete all records" do
