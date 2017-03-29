@@ -1,6 +1,6 @@
 {% if `echo $PG_URL`.includes?("postgres") %}
   require "pg"
-{% else %}
+{% elsif `echo $MYSQL_URL`.includes?("mysql") %}
   class PG
     class Numeric
       def to_f
@@ -8,12 +8,24 @@
     end
   end
   require "mysql"
+{% elsif `echo $SQLITE3_PATH`.includes?("sqlite") %}
+  class PG
+    class Numeric
+      def to_f
+      end
+    end
+  end
+  require "sqlite3"
 {% end %}
 
 require "spec"
 require "../src/crecto"
 
 alias TestFloat = PG::Numeric | Float64
+
+Repo  = Crecto::Repo
+Query = Crecto::Repo::Query
+Multi = Crecto::Multi
 
 class User < Crecto::Model
   schema "users" do
@@ -53,7 +65,7 @@ class UserDifferentDefaults < Crecto::Model
   updated_at_field nil
 
   schema "users_different_defaults" do
-    field :user_id, Int32, primary_key: true
+    field :user_id, PkeyValue, primary_key: true
     field :name, String
     has_many :things, Thing
   end
@@ -170,7 +182,7 @@ end
 
 class Thing < Crecto::Model
   schema "things" do
-    field :user_different_defaults_id, Int32
+    field :user_different_defaults_id, PkeyValue
     belongs_to :user, UserDifferentDefaults, foreign_key: :user_different_defaults_id
   end
 end

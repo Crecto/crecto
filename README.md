@@ -18,7 +18,7 @@ dependencies:
     github: fridgerator/crecto
 ```
 
-Include a database adapter (currently only postgres and mysql have been tested)
+Include a database adapter:
 
 #### Postgres
 
@@ -46,6 +46,19 @@ require "mysql"
 require "crecto"
 ```
 
+#### Sqlite
+
+Include [crystal-sqlite3](https://github.com/crystal-lang/crystal-sqlite3) in your project
+
+Make sure you have `ENV["SQLITE3_PATH"]` set
+
+in your appplication:
+
+```
+require "sqlite3"
+require "crecto"
+```
+
 ## TODO
 
 #### Roadmap (in no particular order)
@@ -54,7 +67,7 @@ require "crecto"
 - [x] has_one
 - [ ] insert_all
 - [x] MySQL adapter
-- [ ] SQLite adapter
+- [x] SQLite adapter
 - [x] Associations
 - [x] Preload
 - [x] Joins
@@ -68,7 +81,13 @@ require "crecto"
 ## Usage
 
 ```crystal
+require "#{adapter}" # see above
 require "crecto"
+
+# shortcut variables, optional
+Repo  = Crecto::Repo
+Query = Crecto::Repo::Query
+Multi = Crecto::Multi
 
 #
 # Define table name, fields and validations in your class
@@ -76,7 +95,7 @@ require "crecto"
 class User < Crecto::Model
 
   schema "users" do
-    field :age, Int32
+    field :age, Int32 # or use `PkeyValue` alias: `field :age, PkeyValue`
     field :name, String
     field :is_admin, Bool
     field :temporary_info, Float64, virtual: true
@@ -90,7 +109,6 @@ end
 class Post < Crecto::Model
   
   schema "posts" do
-    field :user_id, PkValue
     belongs_to :user, User
   end
 end
@@ -114,20 +132,20 @@ changeset.valid? # true
 #
 # Use Repo to insert into database
 #
-changeset = Crecto::Repo.insert(user)
+changeset = Repo.insert(user)
 puts changeset.errors # []
 
 #
 # User Repo to update database
 #
 user.name = "new name"
-changeset = Crecto::Repo.update(user)
+changeset = Repo.update(user)
 puts changeset.instance.name # "new name"
 
 #
 # Query syntax
 #
-query = Crecto::Repo::Query
+query = Query
   .where(name: "new name")
   .where("users.age < ?", [124])
   .order_by("users.name ASC")
@@ -137,66 +155,66 @@ query = Crecto::Repo::Query
 #
 # All
 #
-users = Crecto::Repo.all(User, query)
+users = Repo.all(User, query)
 users.as(Array) unless users.nil?
 
 #
 # Get by primary key
 #
-user = Crecto::Repo.get(User, 1)
+user = Repo.get(User, 1)
 user.as(User) unless user.nil?
 
 #
 # Get by fields
 #
-Crecto::Repo.get_by(User, name: "new name", id: 1121)
+Repo.get_by(User, name: "new name", id: 1121)
 user.as(User) unless user.nil?
 
 #
 # Delete
 #
-changeset = Crecto::Repo.delete(user)
+changeset = Repo.delete(user)
 
 #
 # Associations
 #
 
-user = Crecto::Repo.get(User, id).as(User)
-posts = Crecto::Repo.all(user, :posts)
+user = Repo.get(User, id).as(User)
+posts = Repo.all(user, :posts)
 
 #
 # Preload associations
 #
-users = Crecto::Repo.all(User, Crecto::Query.new, preload: [:posts])
+users = Repo.all(User, Query.new, preload: [:posts])
 users[0].posts # has_many relation is preloaded
 
-posts = Crecto::Repo.all(Post, Crecto::Query.new, preload: [:user])
+posts = Repo.all(Post, Query.new, preload: [:user])
 posts[0].user # belongs_to relation preloaded
 
 #
 # Aggregate functions
 #
 # can use the following aggregate functions: :avg, :count, :max, :min:, :sum
-Crecto::Repo.aggregate(User, :count, :id)
-Crecto::Repo.aggregate(User, :avg, :age, Crecto::Repo::Query.where(name: 'Bill'))
+Repo.aggregate(User, :count, :id)
+Repo.aggregate(User, :avg, :age, Query.where(name: 'Bill'))
 
 #
 # Multi / Transactions
 #
 
 # create the multi instance
-multi = Crecto::Multi.new
+multi = Multi.new
 
 # build the transactions
 multi.insert(insert_user)
 multi.delete(post)
 multi.delete_all(Comment)
 multi.update(update_user)
-multi.update_all(User, Crecto::Repo::Query.where(name: "stan"), {name: "stan the man"})
+multi.update_all(User, Query.where(name: "stan"), {name: "stan the man"})
 multi.insert(new_user)
 
 # insert the multi using a transaction
-Crecto::Repo.transaction(multi)
+Repo.transaction(multi)
 
 # check for errors
 # If there are any errors in any of the transactions, the database will rollback as if none of the transactions happened
@@ -213,10 +231,10 @@ end
 user = User.new
 user.settings = {"one" => "test", "two" => 123, "three" => 12321319323298}
 
-Crecto::Repo.insert(user)
+Repo.insert(user)
 
-query = Crecto::Repo::Query.where("settings @> '{\"one\":\"test\"}'")
-users = Crecto::Repo.all(UserJson, query)
+query = Query.where("settings @> '{\"one\":\"test\"}'")
+users = Repo.all(UserJson, query)
 
 #
 # Database Logging

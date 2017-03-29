@@ -122,11 +122,12 @@ module Crecto
       {% json_fields = [] of String %}
 
       {% mapping = FIELDS.map do |field|
-           json_fields.push(field[:name]) if field[:type].id.stringify == "Json"
-           field[:name].id.stringify + ": {type: " + (field[:type].id == "Int64" ? "DbBigInt" : field[:type].id.stringify) + ", nilable: true}"
-         end %}
+        json_fields.push(field[:name]) if field[:type].id.stringify == "Json"
+        field_type = field[:type].id == "Int64" || field[:type].id == "Int32" ? "PkeyValue" : field[:type].id.stringify
+        "#{field[:name].id.stringify}: {type: #{field_type.id}, nilable: true}"
+      end %}
 
-      {% mapping.push(PRIMARY_KEY_FIELD.id.stringify + ": {type: DbBigInt, nilable: true}") %}
+      {% mapping.push(PRIMARY_KEY_FIELD.id.stringify + ": {type: PkeyValue, nilable: true}") %}
 
       {% unless CREATED_AT_FIELD == nil %}
         {% mapping.push(CREATED_AT_FIELD.id.stringify + ": {type: Time, nilable: true}") %}
@@ -151,7 +152,7 @@ module Crecto
         query_hash = {} of Symbol => DbValue
 
         {% for field in FIELDS %}
-          if self.{{field[:name].id}} && @@changeset_fields.includes?({{field[:name]}})
+          if @@changeset_fields.includes?({{field[:name]}})
             query_hash[{{field[:name]}}] = self.{{field[:name].id}}
             query_hash[{{field[:name]}}] = query_hash[{{field[:name]}}].as(Time).to_utc if query_hash[{{field[:name]}}].is_a?(Time)
           end

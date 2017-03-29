@@ -7,12 +7,19 @@ module Crecto
   # If any changesets have errors, the transaction will never be started.
   #
   class Multi
+    # :nodoc:
     property sortorder = 0
+    # :nodoc:
     property errors = Array(Hash(Symbol, String)).new
+    # :nodoc:
     property inserts = Array(NamedTuple(sortorder: Int32, instance: Crecto::Model)).new
+    # :nodoc:
     property deletes = Array(NamedTuple(sortorder: Int32, instance: Crecto::Model)).new
+    # :nodoc:
     property delete_alls = Array(NamedTuple(sortorder: Int32, queryable: Crecto::Model.class, query: Crecto::Repo::Query)).new
+    # :nodoc:
     property updates = Array(NamedTuple(sortorder: Int32, instance: Crecto::Model)).new
+    # :nodoc:
     property update_alls = Array(NamedTuple(sortorder: Int32, queryable: Crecto::Model.class, query: Crecto::Repo::Query, update_hash: Hash(Symbol, PkeyValue) | Hash(Symbol, DbValue) | Hash(Symbol, Array(DbValue)) | Hash(Symbol, Array(PkeyValue)) | Hash(Symbol, Array(Int32)) | Hash(Symbol, Array(Int64)) | Hash(Symbol, Array(String)) | Hash(Symbol, Int32 | String) | Hash(Symbol, Int32) | Hash(Symbol, Int64) | Hash(Symbol, String) | Hash(Symbol, Int32 | Int64 | String | Nil))).new
 
     def insert(queryable_instance : Crecto::Model)

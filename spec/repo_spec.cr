@@ -14,7 +14,7 @@ describe Crecto do
         u.pageviews = 10000
         u.some_date = Time.now.at_beginning_of_hour
 
-        changeset = Crecto::Repo.insert(u)
+        changeset = Repo.insert(u)
         changeset.instance.id.should_not eq(nil)
         changeset.instance.created_at.should_not eq(nil)
         changeset.instance.updated_at.should_not eq(nil)
@@ -24,7 +24,7 @@ describe Crecto do
         u = UserDifferentDefaults.new
         u.name = "tedd"
 
-        changeset = Crecto::Repo.insert(u)
+        changeset = Repo.insert(u)
 
         changeset.instance.user_id.should_not eq(nil)
         changeset.instance.xyz.should_not eq(nil)
@@ -34,7 +34,7 @@ describe Crecto do
         u = UserDifferentDefaults.new
         u.name = "test"
 
-        changeset = Crecto::Repo.insert(u)
+        changeset = Repo.insert(u)
 
         changeset.is_a?(Crecto::Changeset::Changeset).should eq(true)
         changeset.action.should eq(:insert)
@@ -44,52 +44,55 @@ describe Crecto do
         u = UserLargeDefaults.new
         u.name = "whatever"
 
-        changeset = Crecto::Repo.insert(u)
+        changeset = Repo.insert(u)
         changeset.instance.id.should_not eq(nil)
       end
     end
 
     describe "#all" do
       it "should return rows" do
-        query = Crecto::Repo::Query
+        query = Query
           .where(name: "fridge")
           .where("users.things < ?", [124])
           .order_by("users.name ASC")
           .order_by("users.things DESC")
           .limit(1)
-        users = Crecto::Repo.all(User, query)
+        users = Repo.all(User, query)
         users.size.should be > 0
       end
 
       it "should accept an array" do
-        query = Crecto::Repo::Query
+        query = Query
           .where(name: ["fridge", "steve"])
 
-        users = Crecto::Repo.all(User, query)
+        users = Repo.all(User, query)
         users.size.should be > 0
 
-        query = Crecto::Repo::Query
+        query = Query
           .where(things: [123, 999])
 
-        users = Crecto::Repo.all(User, query)
+        users = Repo.all(User, query)
         users.size.should be > 0
       end
 
       it "should allow IS NULL queries" do
+        Repo.delete_all(Post)
+        Repo.delete_all(User)
         quick_create_user("is null guy")
+        quick_create_user_with_things("guy", 321)
 
-        query = Crecto::Repo::Query.where(things: nil)
-        users = Crecto::Repo.all(User, query)
+        query = Query.where(things: nil)
+        users = Repo.all(User, query)
 
-        users.size.should be > 1
+        users.size.should eq 1
       end
 
       it "should allow LIKE queries" do
         name = "fj3fj-20ffja"
         quick_create_user("fj3fj-20ffja")
 
-        query = Crecto::Repo::Query.where("name LIKE ?", "%#{name}%")
-        users = Crecto::Repo.all(User, query)
+        query = Query.where("name LIKE ?", "%#{name}%")
+        users = Repo.all(User, query)
         users.size.should be > 0
       end
 
@@ -98,18 +101,18 @@ describe Crecto do
           user = User.new
           user.name = "or_where_user"
           user.things = 123
-          Crecto::Repo.insert(user)
+          Repo.insert(user)
 
-          query = Crecto::Repo::Query
+          query = Query
             .or_where(name: "or_where_user", things: 999)
 
-          users = Crecto::Repo.all(User, query)
+          users = Repo.all(User, query)
           users.size.should be > 0
 
-          query = Crecto::Repo::Query
+          query = Query
             .or_where(name: "dlkjf9f9ddf", things: 123)
 
-          users = Crecto::Repo.all(User, query)
+          users = Repo.all(User, query)
           users.size.should be > 0
         end
       end
@@ -117,7 +120,7 @@ describe Crecto do
 
     describe "#query" do
       it "should accept a query" do
-        query = Crecto::Repo.query("select * from users")
+        query = Repo.query("select * from users")
         query.is_a?(DB::ResultSet).should be_true
         query.should_not be_nil
       end
@@ -125,20 +128,20 @@ describe Crecto do
       it "should accept a query with parameters" do
         user = User.new
         user.name = "awesome-dude"
-        Crecto::Repo.insert(user)
+        Repo.insert(user)
 
-        query = Crecto::Repo.query("select * from users where name = ?", ["awesome-dude"])
+        query = Repo.query("select * from users where name = ?", ["awesome-dude"])
         query.should_not be_nil
         query.is_a?(DB::ResultSet).should be_true
       end
 
       it "should accept a query and cast result" do
-        users = Crecto::Repo.query(User, "select * from users")
+        users = Repo.query(User, "select * from users")
         users.size.should be > 0
       end
 
       it "should accept a query with parameters and cast result" do
-        query = Crecto::Repo.query(User, "select * from users where name = ?", ["awesome-dude"])
+        query = Repo.query(User, "select * from users where name = ?", ["awesome-dude"])
         query.size.should eq(1)
         query[0].is_a?(User).should be_true
       end
@@ -147,121 +150,121 @@ describe Crecto do
     describe "#aggregate" do
       it "should raise InvalidOption with an invalid option" do
         expect_raises Crecto::InvalidOption do
-          Crecto::Repo.aggregate(User, :blurb, :id)
+          Repo.aggregate(User, :blurb, :id)
         end
       end
 
       describe "without a query" do
         it "should return the correct :avg" do
-          Crecto::Repo.delete_all(Post)
-          Crecto::Repo.delete_all(User)
+          Repo.delete_all(Post)
+          Repo.delete_all(User)
           quick_create_user_with_things("test", 9)
           quick_create_user_with_things("test", 10)
           quick_create_user_with_things("test", 11)
 
-          Crecto::Repo.aggregate(User, :avg, :things).as(TestFloat).to_f.should eq 10.0
+          Repo.aggregate(User, :avg, :things).as(TestFloat).to_f.should eq 10.0
         end
 
         it "should return the correct :count" do
-          Crecto::Repo.delete_all(Post)
-          Crecto::Repo.delete_all(User)
+          Repo.delete_all(Post)
+          Repo.delete_all(User)
           quick_create_user_with_things("test", 9)
           quick_create_user_with_things("test", 10)
           quick_create_user_with_things("test", 11)
 
-          Crecto::Repo.aggregate(User, :count, :id).should eq 3
+          Repo.aggregate(User, :count, :id).should eq 3
         end
 
         it "should return the correct :max" do
-          Crecto::Repo.delete_all(Post)
-          Crecto::Repo.delete_all(User)
+          Repo.delete_all(Post)
+          Repo.delete_all(User)
           quick_create_user_with_things("test", 9)
           quick_create_user_with_things("test", 10)
           quick_create_user_with_things("test", 11)
 
-          Crecto::Repo.aggregate(User, :max, :things).should eq 11
+          Repo.aggregate(User, :max, :things).should eq 11
         end
 
         it "should return the correct :min" do
-          Crecto::Repo.delete_all(Post)
-          Crecto::Repo.delete_all(User)
+          Repo.delete_all(Post)
+          Repo.delete_all(User)
           quick_create_user_with_things("test", 9)
           quick_create_user_with_things("test", 10)
           quick_create_user_with_things("test", 11)
 
-          Crecto::Repo.aggregate(User, :min, :things).should eq 9
+          Repo.aggregate(User, :min, :things).should eq 9
         end
 
         it "should return the correct :sum" do
-          Crecto::Repo.delete_all(Post)
-          Crecto::Repo.delete_all(User)
+          Repo.delete_all(Post)
+          Repo.delete_all(User)
           quick_create_user_with_things("test", 9)
           quick_create_user_with_things("test", 10)
           quick_create_user_with_things("test", 11)
 
-          Crecto::Repo.aggregate(User, :sum, :things).should eq 30
+          Repo.aggregate(User, :sum, :things).should eq 30
         end
       end
 
       describe "with a query" do
         it "should return the correct :avg" do
-          Crecto::Repo.delete_all(Post)
-          Crecto::Repo.delete_all(User)
+          Repo.delete_all(Post)
+          Repo.delete_all(User)
           quick_create_user_with_things("test", 9)
           quick_create_user_with_things("test", 10)
           quick_create_user_with_things("test", 11)
           quick_create_user_with_things("nope", 12)
-          query = Crecto::Repo::Query.where(name: "test")
+          query = Query.where(name: "test")
 
-          Crecto::Repo.aggregate(User, :avg, :things, query).as(TestFloat).to_f.should eq 10.0
+          Repo.aggregate(User, :avg, :things, query).as(TestFloat).to_f.should eq 10.0
         end
 
         it "should return the correct :count" do
-          Crecto::Repo.delete_all(Post)
-          Crecto::Repo.delete_all(User)
+          Repo.delete_all(Post)
+          Repo.delete_all(User)
           quick_create_user_with_things("test", 9)
           quick_create_user_with_things("test", 10)
           quick_create_user_with_things("test", 11)
           quick_create_user_with_things("nope", 12)
-          query = Crecto::Repo::Query.where(name: "test")
+          query = Query.where(name: "test")
 
-          Crecto::Repo.aggregate(User, :count, :id, query).should eq 3
+          Repo.aggregate(User, :count, :id, query).should eq 3
         end
 
         it "should return the correct :max" do
-          Crecto::Repo.delete_all(Post)
-          Crecto::Repo.delete_all(User)
+          Repo.delete_all(Post)
+          Repo.delete_all(User)
           quick_create_user_with_things("test", 9)
           quick_create_user_with_things("test", 10)
           quick_create_user_with_things("test", 11)
           quick_create_user_with_things("nope", 12)
-          query = Crecto::Repo::Query.where(name: "test")
+          query = Query.where(name: "test")
 
-          Crecto::Repo.aggregate(User, :max, :things, query).should eq 11
+          Repo.aggregate(User, :max, :things, query).should eq 11
         end
 
         it "should return the correct :min" do
-          Crecto::Repo.delete_all(Post)
-          Crecto::Repo.delete_all(User)
+          Repo.delete_all(Post)
+          Repo.delete_all(User)
           quick_create_user_with_things("test", 9)
           quick_create_user_with_things("test", 10)
           quick_create_user_with_things("test", 11)
           quick_create_user_with_things("nope", 12)
-          query = Crecto::Repo::Query.where(name: "test")
+          query = Query.where(name: "test")
 
-          Crecto::Repo.aggregate(User, :min, :things, query).should eq 9
+          Repo.aggregate(User, :min, :things, query).should eq 9
         end
 
         it "should return the correct :sum" do
-          Crecto::Repo.delete_all(Post)
-          Crecto::Repo.delete_all(User)
+          Repo.delete_all(Post)
+          Repo.delete_all(User)
           quick_create_user_with_things("test", 9)
           quick_create_user_with_things("test", 10)
           quick_create_user_with_things("test", 11)
           quick_create_user_with_things("nope", 12)
-          query = Crecto::Repo::Query.where(name: "test")
+          query = Query.where(name: "test")
 
-          Crecto::Repo.aggregate(User, :sum, :things, query).should eq 30
+          Repo.aggregate(User, :sum, :things, query).should eq 30
         end
       end
     end
@@ -273,16 +276,16 @@ describe Crecto do
         user = User.new
         user.name = "test"
         user.some_date = now
-        changeset = Crecto::Repo.insert(user)
+        changeset = Repo.insert(user)
         id = changeset.instance.id
-        user = Crecto::Repo.get(User, id)
+        user = Repo.get(User, id)
         user.is_a?(User).should eq(true)
         user.not_nil!.id.should eq(id)
         user.not_nil!.some_date.as(Time).to_local.epoch_ms.should be_close(now.epoch_ms, 2000)
       end
 
       it "should return nil if not in db" do
-        user = Crecto::Repo.get(User, 99999)
+        user = Repo.get(User, 99999)
         user.nil?.should eq true
       end
     end
@@ -290,13 +293,13 @@ describe Crecto do
     describe "#get!" do
       it "should return a user" do
         user = quick_create_user("lkjfl3kj3lj")
-        user = Crecto::Repo.get!(User, user.id)
+        user = Repo.get!(User, user.id)
         user.name.should eq "lkjfl3kj3lj"
       end
 
       it "should raise NoResults error if not in db" do
         expect_raises(Crecto::NoResults) do
-          user = Crecto::Repo.get!(User, 99999)
+          user = Repo.get!(User, 99999)
         end
       end
     end
@@ -305,16 +308,16 @@ describe Crecto do
       it "should return a row" do
         user = User.new
         user.name = "fridge"
-        changeset = Crecto::Repo.insert(user)
+        changeset = Repo.insert(user)
         id = changeset.instance.id
 
-        user = Crecto::Repo.get_by(User, name: "fridge", id: id).as(User)
+        user = Repo.get_by(User, name: "fridge", id: id).as(User)
         user.id.should eq(id)
         user.name.should eq("fridge")
       end
 
       it "should not return a row" do
-        user = Crecto::Repo.get_by(User, id: 99999)
+        user = Repo.get_by(User, id: 99999)
         user.nil?.should be_true
       end
     end
@@ -323,17 +326,17 @@ describe Crecto do
       it "should return a row" do
         user = User.new
         user.name = "fridge"
-        changeset = Crecto::Repo.insert(user)
+        changeset = Repo.insert(user)
         id = changeset.instance.id
 
-        user = Crecto::Repo.get_by!(User, name: "fridge", id: id)
+        user = Repo.get_by!(User, name: "fridge", id: id)
         user.id.should eq(id)
         user.name.should eq("fridge")
       end
 
       it "should not return a row" do
         expect_raises(Crecto::NoResults) do
-          user = Crecto::Repo.get_by!(User, id: 99999)
+          user = Repo.get_by!(User, id: 99999)
         end
       end
     end
@@ -347,10 +350,10 @@ describe Crecto do
         u.yep = false
         u.stuff = 9993
         u.pageviews = 123245667788
-        changeset = Crecto::Repo.insert(u)
+        changeset = Repo.insert(u)
         u = changeset.instance
         u.name = "new name"
-        changeset = Crecto::Repo.update(u)
+        changeset = Repo.update(u)
         changeset.instance.name.should eq("new name")
         changeset.valid?.should eq(true)
         changeset.instance.updated_at.as(Time).to_local.epoch_ms.should be_close(Time.now.epoch_ms, 2000)
@@ -360,11 +363,11 @@ describe Crecto do
         u = UserDifferentDefaults.new
         u.name = "test"
 
-        changeset = Crecto::Repo.insert(u)
+        changeset = Repo.insert(u)
         u = changeset.instance
         u.name = "changed"
 
-        changeset = Crecto::Repo.update(u)
+        changeset = Repo.update(u)
 
         changeset.is_a?(Crecto::Changeset::Changeset).should eq(true)
         changeset.action.should eq(:update)
@@ -380,19 +383,19 @@ describe Crecto do
         u.yep = false
         u.stuff = 9993
         u.pageviews = 1234512341234
-        changeset = Crecto::Repo.insert(u)
+        changeset = Repo.insert(u)
         u = changeset.instance
-        changeset = Crecto::Repo.delete(u)
+        changeset = Repo.delete(u)
       end
 
       it "should return a changeset and set the changeset action" do
         u = UserDifferentDefaults.new
         u.name = "test"
 
-        changeset = Crecto::Repo.insert(u)
+        changeset = Repo.insert(u)
         u = changeset.instance
 
-        changeset = Crecto::Repo.delete(u)
+        changeset = Repo.delete(u)
 
         changeset.is_a?(Crecto::Changeset::Changeset).should eq(true)
         changeset.action.should eq(:delete)
@@ -404,31 +407,31 @@ describe Crecto do
         user = User.new
         user.name = "updated_all"
         user.things = 872384732
-        Crecto::Repo.insert(user).instance.id
+        Repo.insert(user).instance.id
 
         user = User.new
         user.name = "updated_all"
         user.things = 98347598
-        Crecto::Repo.insert(user).instance.id
+        Repo.insert(user).instance.id
 
         user = User.new
         user.name = "not_updated_all"
         user.things = 2334234
-        id3 = Crecto::Repo.insert(user).instance.id
+        id3 = Repo.insert(user).instance.id
 
-        query = Crecto::Repo::Query
+        query = Query
           .where(name: "updated_all")
 
-        Crecto::Repo.update_all(User, query, {:things => 42})
+        Repo.update_all(User, query, {:things => 42})
 
         # should update first two
-        users = Crecto::Repo.all(User, query)
+        users = Repo.all(User, query)
         users.each do |user|
           user.things.should eq(42)
         end
 
         # should not update the last
-        user = Crecto::Repo.get!(User, id3)
+        user = Repo.get!(User, id3)
         user.things.should eq(2334234)
       end
     end
@@ -437,29 +440,29 @@ describe Crecto do
       it "should load the association" do
         user = User.new
         user.name = "fridge"
-        user = Crecto::Repo.insert(user).instance
+        user = Repo.insert(user).instance
 
         post = Post.new
-        post.user_id = user.id.as(Int32)
-        Crecto::Repo.insert(post)
-        post = Crecto::Repo.insert(post).instance
+        post.user_id = user.id # user.id is (Int32 | Int64)
+        Repo.insert(post)
+        post = Repo.insert(post).instance
 
-        post = Crecto::Repo.get(user, :post)
+        post = Repo.get(user, :post)
         post.class.should eq(Post)
       end
 
       it "should preload the association" do
         user = User.new
         user.name = "fridge"
-        user = Crecto::Repo.insert(user).instance
+        user = Repo.insert(user).instance
 
         post = Post.new
-        post.user_id = user.id.as(Int32)
-        Crecto::Repo.insert(post)
-        post = Crecto::Repo.insert(post).instance
+        post.user_id = user.id
+        Repo.insert(post)
+        post = Repo.insert(post).instance
 
-        query = Crecto::Repo::Query.where(id: user.id).preload(:post)
-        users = Crecto::Repo.all(User, query)
+        query = Query.where(id: user.id).preload(:post)
+        users = Repo.all(User, query)
         users[0].post.should_not be_nil
       end
     end
@@ -468,22 +471,22 @@ describe Crecto do
       it "should load associations" do
         user = User.new
         user.name = "fridge"
-        user = Crecto::Repo.insert(user).instance
+        user = Repo.insert(user).instance
 
         post = Post.new
-        post.user_id = user.id.as(Int32)
-        Crecto::Repo.insert(post)
-        post = Crecto::Repo.insert(post).instance
+        post.user_id = user.id
+        Repo.insert(post)
+        post = Repo.insert(post).instance
 
         address = Address.new
-        address.user_id = user.id.as(Int32)
-        Crecto::Repo.insert(address)
+        address.user_id = user.id
+        Repo.insert(address)
 
-        posts = Crecto::Repo.all(user, :posts).as(Array(Post))
+        posts = Repo.all(user, :posts).as(Array(Post))
         posts.size.should eq(2)
         posts[0].user_id.should eq(user.id)
 
-        addresses = Crecto::Repo.all(user, :addresses).as(Array(Address))
+        addresses = Repo.all(user, :addresses).as(Array(Address))
         addresses.size.should eq(1)
         addresses[0].user_id.should eq(user.id)
       end
@@ -493,11 +496,11 @@ describe Crecto do
       it "should set the belongs_to property" do
         user = User.new
         user.name = "fridge"
-        user = Crecto::Repo.insert(user).instance
+        user = Repo.insert(user).instance
 
         post = Post.new
-        post.user_id = user.id.as(Int32)
-        post = Crecto::Repo.insert(post).instance
+        post.user_id = user.id
+        post = Repo.insert(post).instance
         post.user = user
 
         post.user.should eq(user)
@@ -508,31 +511,31 @@ describe Crecto do
       it "should preload the has_many association" do
         user = User.new
         user.name = "tester"
-        user = Crecto::Repo.insert(user).instance
+        user = Repo.insert(user).instance
 
         post = Post.new
-        post.user_id = user.id.as(Int32)
-        Crecto::Repo.insert(post)
-        Crecto::Repo.insert(post)
+        post.user_id = user.id
+        Repo.insert(post)
+        Repo.insert(post)
 
-        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).preload(:posts))
+        users = Repo.all(User, Query.where(id: user.id).preload(:posts))
         users[0].posts.not_nil!.size.should eq(2)
       end
 
       it "should preload the has_many through association" do
         user = User.new
         user.name = "tester"
-        user = Crecto::Repo.insert(user).instance
+        user = Repo.insert(user).instance
 
         project = Project.new
-        project = Crecto::Repo.insert(project).instance
+        project = Repo.insert(project).instance
 
         user_project = UserProject.new
         user_project.project = project
         user_project.user = user
-        user_project = Crecto::Repo.insert(user_project).instance
+        user_project = Repo.insert(user_project).instance
 
-        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).preload(:projects))
+        users = Repo.all(User, Query.where(id: user.id).preload(:projects))
         user = users[0]
         user.user_projects.not_nil!.size.should eq 1
         user.projects.not_nil!.size.should eq 1
@@ -541,29 +544,29 @@ describe Crecto do
       it "shoud not preload if there are no 'through' associated records" do
         user = User.new
         user.name = "tester"
-        user = Crecto::Repo.insert(user).instance
+        user = Repo.insert(user).instance
 
-        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).preload(:projects))
+        users = Repo.all(User, Query.where(id: user.id).preload(:projects))
         users[0].projects.should eq(nil)
       end
 
       it "should preload the belongs_to association" do
         user = User.new
         user.name = "tester"
-        user = Crecto::Repo.insert(user).instance
+        user = Repo.insert(user).instance
 
         post = Post.new
-        post.user_id = user.id.as(Int32)
-        post = Crecto::Repo.insert(post).instance
+        post.user_id = user.id
+        post = Repo.insert(post).instance
 
-        posts = Crecto::Repo.all(Post, Crecto::Repo::Query.where(id: post.id).preload(:user))
+        posts = Repo.all(Post, Query.where(id: post.id).preload(:user))
         posts[0].user.as(User).id.should eq(user.id)
       end
 
       it "should set the foreign key when setting the object" do
         user = User.new
         user.name = "tester"
-        user = Crecto::Repo.insert(user).instance
+        user = Repo.insert(user).instance
 
         post = Post.new
         post.user = user
@@ -575,16 +578,16 @@ describe Crecto do
       it "should enforce a join in the associaton" do
         user = User.new
         user.name = "tester"
-        user = Crecto::Repo.insert(user).instance
+        user = Repo.insert(user).instance
 
-        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:posts))
+        users = Repo.all(User, Query.where(id: user.id).join(:posts))
         users.empty?.should eq true
 
         post = Post.new
         post.user = user
-        post = Crecto::Repo.insert(post).instance
+        post = Repo.insert(post).instance
 
-        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:posts))
+        users = Repo.all(User, Query.where(id: user.id).join(:posts))
         users.size.should eq 1
       end
     end
@@ -594,10 +597,10 @@ describe Crecto do
         user = quick_create_user("bill")
         2.times { quick_create_post(user) }
 
-        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:posts))
+        users = Repo.all(User, Query.where(id: user.id).join(:posts))
         users.size.should eq(2)
 
-        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:posts).distinct("users.id"))
+        users = Repo.all(User, Query.where(id: user.id).join(:posts).distinct("users.id"))
         users[0].name.should be nil
         users.size.should eq(1)
       end
@@ -608,10 +611,10 @@ describe Crecto do
         user = quick_create_user("fred")
         2.times { quick_create_post(user) }
 
-        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:posts))
+        users = Repo.all(User, Query.where(id: user.id).join(:posts))
         users.size.should eq(2)
 
-        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:posts).group_by("users.id"))
+        users = Repo.all(User, Query.where(id: user.id).join(:posts).group_by("users.id"))
         users[0].name.should eq("fred")
         users.size.should eq(1)
       end
@@ -621,20 +624,20 @@ describe Crecto do
       it "should load the association accross join table" do
         user = User.new
         user.name = "tester"
-        user = Crecto::Repo.insert(user).instance
+        user = Repo.insert(user).instance
 
-        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:projects))
+        users = Repo.all(User, Query.where(id: user.id).join(:projects))
         users.size.should eq 0
 
         project = Project.new
-        project = Crecto::Repo.insert(project).instance
+        project = Repo.insert(project).instance
 
         user_project = UserProject.new
         user_project.project = project
         user_project.user = user
-        user_project = Crecto::Repo.insert(user_project).instance
+        user_project = Repo.insert(user_project).instance
 
-        users = Crecto::Repo.all(User, Crecto::Repo::Query.where(id: user.id).join(:projects))
+        users = Repo.all(User, Query.where(id: user.id).join(:projects))
         users.size.should eq 1
       end
     end
@@ -645,11 +648,11 @@ describe Crecto do
         u = UserJson.new
         u.settings = {one: "stuff", two: 123, three: 130912039123090}
 
-        changeset = Crecto::Repo.insert(u)
+        changeset = Repo.insert(u)
         id = changeset.instance.id
 
-        query = Crecto::Repo::Query.where("settings @> '{\"one\":\"stuff\"}'")
-        users = Crecto::Repo.all(UserJson, query)
+        query = Query.where("settings @> '{\"one\":\"stuff\"}'")
+        users = Repo.all(UserJson, query)
 
         users.size.should be > 0
         user = users[0]
@@ -660,8 +663,8 @@ describe Crecto do
 
       describe "#delete_all" do
         it "should remove all records" do
-          Crecto::Repo.delete_all(UserJson)
-          users = Crecto::Repo.all(UserJson)
+          Repo.delete_all(UserJson)
+          users = Repo.all(UserJson)
           users.size.should eq 0
         end
       end
@@ -671,35 +674,36 @@ describe Crecto do
     # keep this at the end
     describe "#delete_all" do
       it "should remove all records" do
-        Crecto::Repo.delete_all(UserProject)
-        Crecto::Repo.delete_all(Project)
-        Crecto::Repo.delete_all(Post)
-        Crecto::Repo.delete_all(Address)
-        Crecto::Repo.delete_all(User)
-        Crecto::Repo.delete_all(UserDifferentDefaults)
-        Crecto::Repo.delete_all(UserLargeDefaults)
+        Repo.delete_all(UserProject)
+        Repo.delete_all(Project)
+        Repo.delete_all(Post)
+        Repo.delete_all(Address)
+        Repo.delete_all(User)
+        Repo.delete_all(UserDifferentDefaults)
+        Repo.delete_all(UserLargeDefaults)
 
-        user_projects = Crecto::Repo.all(UserProject)
+        user_projects = Repo.all(UserProject)
         user_projects.size.should eq 0
 
-        projects = Crecto::Repo.all(Project)
+        projects = Repo.all(Project)
         projects.size.should eq 0
 
-        posts = Crecto::Repo.all(Post)
+        posts = Repo.all(Post)
         posts.size.should eq 0
 
-        addresses = Crecto::Repo.all(Address)
+        addresses = Repo.all(Address)
         addresses.size.should eq 0
 
-        users = Crecto::Repo.all(User)
+        users = Repo.all(User)
         users.size.should eq 0
 
-        users = Crecto::Repo.all(UserDifferentDefaults)
+        users = Repo.all(UserDifferentDefaults)
         users.size.should eq 0
 
-        users = Crecto::Repo.all(UserLargeDefaults)
+        users = Repo.all(UserLargeDefaults)
         users.size.should eq 0
       end
     end
+
   end
 end

@@ -3,9 +3,6 @@ module Crecto
     #
     # Adapter module for PostgresSQL
     #
-    # Uses [crystal-pg](https://github.com/will/crystal-pg) for now.
-    #
-    # Other adapters should follow this same pattern
     module Postgres
       @@ENV_KEY = "PG_URL"
       extend BaseAdapter

@@ -38,7 +38,7 @@ describe Crecto do
 
           now = Time.now
           u.xyz = now
-          u.to_query_hash.should eq({:xyz => now})
+          u.to_query_hash.should eq({:name => nil, :xyz => now})
           UserDifferentDefaults.primary_key_field.should eq("user_id")
         end
 
@@ -57,7 +57,7 @@ describe Crecto do
         u.nope = 34.9900
         u.pageviews = 1234567890
 
-        u.to_query_hash.should eq({:name => "tester", :things => 6644, :nope => 34.9900, :created_at => nil, :updated_at => nil, :pageviews => 1234567890})
+        u.to_query_hash.should eq({:name => "tester", :things => 6644, :nope => 34.99, :yep => nil, :some_date => nil, :pageviews => 1234567890, :created_at => nil, :updated_at => nil})
       end
     end
 
@@ -139,11 +139,11 @@ describe Crecto do
       it "should return the correct foreign key value for associations" do
         user = User.new
         user.name = "tester"
-        user = Crecto::Repo.insert(user).instance
+        user = Repo.insert(user).instance
 
         post = Post.new
-        post.user_id = user.id.as(Int32)
-        post = Crecto::Repo.insert(post).instance
+        post.user_id = user.id
+        post = Repo.insert(post).instance
 
         User.foreign_key_value_for_association(:posts, post).should eq(post.user_id)
         Post.foreign_key_value_for_association(:user, post).should eq(user.id)

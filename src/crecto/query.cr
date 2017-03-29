@@ -115,7 +115,7 @@ module Crecto
         self.new.join(join_association)
       end
 
-      # Preload assoications
+      # Preload associations
       #
       # ```
       # Query.preload([:posts, :projects])
@@ -124,7 +124,7 @@ module Crecto
         self.new.preload(preload_associations)
       end
 
-      # Preload assoication
+      # Preload associations
       #
       # ```
       # Query.preload(:posts)
