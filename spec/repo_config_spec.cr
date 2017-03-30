@@ -38,7 +38,7 @@ module SqliteRepoTest
 
   config do |conf|
     conf.adapter = Crecto::Adapters::SQLite3
-    conf.path = "./some/path/to/db.db"
+    conf.database = "./some/path/to/db.db"
   end
 end
 
@@ -82,7 +82,7 @@ describe "repo config" do
   it "should set the config values for sqlite" do
     SqliteRepoTest.config do |conf|
       conf.adapter.should eq Crecto::Adapters::SQLite3
-      conf.path.should eq "./some/path/to/db.db"
+      conf.database.should eq "./some/path/to/db.db"
       conf.database_url.should eq "sqlite3://./some/path/to/db.db"
     end
   end

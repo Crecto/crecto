@@ -507,7 +507,7 @@ module Crecto
     end
 
     class Config
-      property database, username, password, hostname, port, path,
+      property database, username, password, hostname, port,
         initial_pool_size, max_pool_size, max_idle_pool_size, checkout_timeout, retry_attempts, retry_delay,
         adapter : Crecto::Adapters::Postgres.class | Crecto::Adapters::Mysql.class | Crecto::Adapters::SQLite3.class,
         crecto_db : DB::Database?
@@ -525,7 +525,6 @@ module Crecto
         @retry_attempts = 1
         @retry_delay = 1.0
 
-        @path = ""
         @port = 5432
       end
 
@@ -548,7 +547,7 @@ module Crecto
 
       private def set_url_db(io)
         if adapter == Crecto::Adapters::SQLite3
-          io << "#{path}"
+          io << "#{database}"
         else
           io << "/#{database}"
         end
