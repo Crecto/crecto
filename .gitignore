@@ -4,6 +4,7 @@
 /.crystal/
 /.shards/
 db/
+/spec/repo.cr
 
 # SQLite3 testing database
 crecto_test.db

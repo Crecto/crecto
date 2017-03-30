@@ -5,6 +5,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 * fixed but preventing updating of nil or false values - [@Zhomart](https://github.com/Zhomart)
+* **(breaking change)** changed usage of Repo. Repo is now user defined and is where database configuration is set.
 
 ## [0.4.4] 2017-03-24
 * force all Int type fields to `PkeyValue`
