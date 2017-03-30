@@ -58,10 +58,10 @@ module Crecto
       def execute(conn, query_string, params)
         start = Time.now
         results = if conn.is_a?(DB::Database)
-          conn.query(query_string, params)
-        else
-          conn.connection.query(query_string, params)
-        end
+                    conn.query(query_string, params)
+                  else
+                    conn.connection.query(query_string, params)
+                  end
         DbLogger.log(query_string, Time.new - start, params)
         results
       end
@@ -69,10 +69,10 @@ module Crecto
       def execute(conn, query_string)
         start = Time.now
         results = if conn.is_a?(DB::Database)
-          conn.query(query_string)
-        else
-          conn.connection.query(query_string)
-        end
+                    conn.query(query_string)
+                  else
+                    conn.connection.query(query_string)
+                  end
         DbLogger.log(query_string, Time.new - start)
         results
       end
@@ -224,12 +224,12 @@ module Crecto
 
           results = " #{queryable.table_name}.#{key.to_s}"
           results += if where[key].is_a?(Array)
-                    " IN (" + where[key].as(Array).map { |p| "?" }.join(", ") + ")"
-                  elsif where[key].is_a?(Nil)
-                    " IS NULL"
-                  else
-                    "=?"
-                  end
+                       " IN (" + where[key].as(Array).map { |p| "?" }.join(", ") + ")"
+                     elsif where[key].is_a?(Nil)
+                       " IS NULL"
+                     else
+                       "=?"
+                     end
         end
       end
 

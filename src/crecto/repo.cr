@@ -255,20 +255,14 @@ module Crecto
     # ```
     # Repo.delete(user)
     # ```
-    def delete(queryable_instance, tx : DB::Transaction?)
+    def delete(queryable_instance, tx : DB::Transaction)
       changeset = queryable_instance.class.changeset(queryable_instance)
       return changeset unless changeset.valid?
 
-      query = config.adapter.run_on_instance(tx || config.get_connection, :delete, changeset)
-      # puts "after query"
+      query = config.adapter.run_on_instance(tx, :delete, changeset)
 
       if query.nil?
         changeset.add_error("delete_error", "Delete Failed")
-      else
-        if tx.nil?
-          new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first
-          changeset = new_instance.class.changeset(new_instance) if new_instance
-        end
       end
 
       changeset.action = :delete
@@ -276,7 +270,17 @@ module Crecto
     end
 
     def delete(queryable_instance)
-      delete(queryable_instance, nil)
+      changeset = queryable_instance.class.changeset(queryable_instance)
+      return changeset unless changeset.valid?
+
+      query = config.adapter.run_on_instance(config.get_connection, :delete, changeset)
+
+      if query.nil?
+        changeset.add_error("delete_error", "Delete Failed")
+      end
+
+      changeset.action = :delete
+      changeset
     end
 
     # Delete a changeset instance from the data store.

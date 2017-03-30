@@ -9,10 +9,10 @@ module Crecto
       def self.exec_execute(conn, query_string, params : Array)
         start = Time.now
         results = if conn.is_a?(DB::Database)
-          conn.exec(query_string, params)
-        else
-          conn.connection.exec(query_string, params)
-        end
+                    conn.exec(query_string, params)
+                  else
+                    conn.connection.exec(query_string, params)
+                  end
         DbLogger.log(query_string, Time.new - start, params)
         results
       end
@@ -20,10 +20,10 @@ module Crecto
       def self.exec_execute(conn, query_string)
         start = Time.now
         results = if conn.is_a?(DB::Database)
-          conn.exec(query_string)
-        else
-          conn.connection.exec(query_string)
-        end
+                    conn.exec(query_string)
+                  else
+                    conn.connection.exec(query_string)
+                  end
         DbLogger.log(query_string, Time.new - start)
         results
       end

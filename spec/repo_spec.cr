@@ -704,6 +704,5 @@ describe Crecto do
         users.size.should eq 0
       end
     end
-
   end
 end
