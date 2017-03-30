@@ -29,8 +29,8 @@ class User < Crecto::Model
     has_many :posts, Post, foreign_key: :user_id
     has_one :post, Post
     has_many :addresses, Address, dependent: :destroy
-    has_many :user_projects, UserProject, on_replace: :destroy
-    has_many :projects, Project, through: :user_projects, on_replace: :nilify
+    has_many :user_projects, UserProject, on_replace: :nilify
+    has_many :projects, Project, through: :user_projects
   end
 
   validate_required :name

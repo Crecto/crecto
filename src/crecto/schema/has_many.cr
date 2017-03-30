@@ -14,17 +14,16 @@ module Crecto
           end
         %}
 
-        {%
-          on_replace = opts[:dependent] || opts[:on_replace]
+        {% on_replace = opts[:dependent] || opts[:on_replace] %}
 
-          if on_replace
-            if on_replace == :destroy
-              DESTROY_ASSOCIATIONS << association_name.id.symbolize
-            elsif on_replace == :nilify
-              NILIFY_ASSOCIATIONS << association_name.id.symbolize
-            end
-          end
-        %}
+        {% if on_replace && on_replace == :destroy %}
+          {{klass}}.add_destroy_association({{association_name.id.symbolize}})
+        {% end %}
+
+
+        {% if on_replace && on_replace == :nilify %}
+          {{klass}}.add_nilify_association({{association_name.id.symbolize}})
+        {% end %}
 
         ASSOCIATIONS.push({
           association_type: :has_many,

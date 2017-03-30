@@ -18,12 +18,23 @@ module Crecto
       include Crecto::Schema::BelongsTo
       extend Crecto::Changeset({{@type}})
 
+      DESTROY_ASSOCIATIONS = Array(Symbol).new
+      NILIFY_ASSOCIATIONS = Array(Symbol).new
+
       def self.destroy_associations
         DESTROY_ASSOCIATIONS
       end
 
       def self.nilify_associations
         NILIFY_ASSOCIATIONS
+      end
+
+      def self.add_destroy_association(a)
+        DESTROY_ASSOCIATIONS << a
+      end
+
+      def self.add_nilify_association(a)
+        NILIFY_ASSOCIATIONS << a
       end
 
       # Class variables
