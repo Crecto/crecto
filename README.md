@@ -89,7 +89,8 @@ module Repo
     conf.username = "user"
     conf.password = "password"
     conf.port = 5342
-    # you can also set initial_pool_size, max_pool_size, max_idle_pool_size, checkout_timeout, retry_attempts, and retry_delay
+    # you can also set initial_pool_size, max_pool_size, max_idle_pool_size,
+    #  checkout_timeout, retry_attempts, and retry_delay
   end
 end
 
