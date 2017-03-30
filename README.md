@@ -24,8 +24,6 @@ Include a database adapter:
 
 Include [crystal-pg](https://github.com/will/crystal-pg) in your project
 
-Make sure you have `ENV["PG_URL"]` set
-
 in your application:
 
 ```
@@ -37,8 +35,6 @@ require "crecto"
 
 Include [crystal-mysql](https://github.com/crystal-lang/crystal-mysql) in your project
 
-Make sure you have `ENV["MYSQL_URL"]` set
-
 in your application:
 
 ```
@@ -49,8 +45,6 @@ require "crecto"
 #### Sqlite
 
 Include [crystal-sqlite3](https://github.com/crystal-lang/crystal-sqlite3) in your project
-
-Make sure you have `ENV["SQLITE3_PATH"]` set
 
 in your appplication:
 
@@ -81,11 +75,34 @@ require "crecto"
 ## Usage
 
 ```crystal
-require "#{adapter}" # see above
-require "crecto"
+
+# First create a Repo.  The Repo maps to the datastore and the database adapter and is used to run queries.
+# You can even create multiple repos if you need to access multiple databases
+
+module Repo
+  extend Crecto::Repo
+
+  config do |conf|
+    conf.adapter = Crecto::Adapters::Postgres # or Crecto::Adapters::Mysql or Crecto::Adapters::SQLite3
+    conf.database = "database_name"
+    conf.hostname = "localhost"
+    conf.username = "user"
+    conf.password = "password"
+    conf.port = 5342
+    # you can also set initial_pool_size, max_pool_size, max_idle_pool_size, checkout_timeout, retry_attempts, and retry_delay
+  end
+end
+
+module SqliteRepo
+  extend Crecto::Repo
+
+  config do |conf|
+    conf.adapter = Crecto::Adapters::SQLite3
+    conf.database = "./path/to/database.db"
+  end
+end
 
 # shortcut variables, optional
-Repo  = Crecto::Repo
 Query = Crecto::Repo::Query
 Multi = Crecto::Multi
 
@@ -259,16 +276,19 @@ Crecto::DbLogger.set_handler(f)
 
 ### Development Notes
 
-When developing against crecto, the database must exist in Postgres prior to
-testing. The environment variable `PG_URL` must be set to the database that will
-be used for testing. A couple commands have been set up to ease development:
+When developing against crecto, the database must exist prior to
+testing. There are migrations for each database type in `spec/migrations`,
+and references on how to migrate then in the `.travis.yml` file.
 
-*  `make migrate` - This will remigrate the testing schema to the database.
-*  `make spec` - Runs the crystal specs for crecto
-*  `make all` - Runs the migration and subsequently runs specs
+Create a new file `spec/repo.cr` and create a module name `Repo` to use for testing.
+There are example repos for each database type in the spec folder: `travis_pg_repo.cr`,
+`travis_mysql_repo.cr`, and `travis_sqlite_repo.cr`
+
+When submitting a pull request, please test against all 3 databases.
 
 ## Thanks / Inspiration
 
 * [Ecto](https://github.com/elixir-ecto/ecto)
+* [AciveRecord](https://github.com/rails/rails/tree/master/activerecord)
 * [active_record.cr](https://github.com/waterlink/active_record.cr)
 * [crystal-api-backend](https://github.com/dantebronto/crystal-api-backend)

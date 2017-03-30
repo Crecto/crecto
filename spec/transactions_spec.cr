@@ -21,7 +21,6 @@ describe Crecto do
 
         multi = Multi.new
         multi.insert(user)
-
         multi = Repo.transaction(multi)
 
         users = Repo.all(User, Query.where(name: "this should insert in the transaction"))
@@ -47,7 +46,6 @@ describe Crecto do
         Repo.delete_all(Post)
 
         multi = Multi.new
-        # `delete_all` needs to use `exec` on tranasaction, not `query`
         multi.delete_all(User)
         Repo.transaction(multi)
 
