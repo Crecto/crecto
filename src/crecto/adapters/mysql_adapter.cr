@@ -46,7 +46,8 @@ module Crecto
         q.push "VALUES"
         q.push "(#{(1..fields_values[:values].size).map { "?" }.join(", ")})"
 
-        exec_execute(conn, q.join(" "), fields_values[:values])
+        query = exec_execute(conn, q.join(" "), fields_values[:values])
+        return query if conn.is_a?(DB::TopLevelTransaction)
         execute(conn, "SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field} = LAST_INSERT_ID()")
       end
 
