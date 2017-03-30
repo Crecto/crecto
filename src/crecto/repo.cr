@@ -504,6 +504,7 @@ module Crecto
 
     class Config
       property database, username, password, hostname, port, path,
+        initial_pool_size, max_pool_size, max_idle_pool_size, checkout_timeout, retry_attempts, retry_delay,
         adapter : Crecto::Adapters::Postgres.class | Crecto::Adapters::Mysql.class | Crecto::Adapters::SQLite3.class,
         crecto_db : DB::Database?
 
@@ -513,6 +514,13 @@ module Crecto
         @username = ""
         @password = ""
         @hostname = ""
+        @initial_pool_size = 1
+        @max_pool_size = 0
+        @max_idle_pool_size = 1
+        @checkout_timeout = 5.0
+        @retry_attempts = 1
+        @retry_delay = 1.0
+
         @path = ""
         @port = 5432
       end

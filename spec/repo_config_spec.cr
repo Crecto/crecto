@@ -10,6 +10,12 @@ module PgRepoTest
     conf.username = "fred"
     conf.password = "123"
     conf.hostname = "localhost"
+    conf.initial_pool_size = 2
+    conf.max_pool_size = 100
+    conf.max_idle_pool_size = 2
+    conf.checkout_timeout = 4.5
+    conf.retry_attempts = 2
+    conf.retry_delay = 0.5
     conf.port = 9999
   end
 end
@@ -45,6 +51,12 @@ describe "repo config" do
       conf.password.should eq "123"
       conf.hostname.should eq "localhost"
       conf.port.should eq 9999
+      conf.initial_pool_size.should eq 2
+      conf.max_pool_size.should eq 100
+      conf.max_idle_pool_size.should eq 2
+      conf.checkout_timeout.should eq 4.5
+      conf.retry_attempts.should eq 2
+      conf.retry_delay.should eq 0.5
       conf.database_url.should eq "postgres://fred:123@localhost:9999/crecto"
     end
   end
@@ -57,6 +69,12 @@ describe "repo config" do
       conf.password.should eq "983425"
       conf.hostname.should eq "host.name.com"
       conf.port.should eq 12300
+      conf.initial_pool_size.should eq 1
+      conf.max_pool_size.should eq 0
+      conf.max_idle_pool_size.should eq 1
+      conf.checkout_timeout.should eq 5.0
+      conf.retry_attempts.should eq 1
+      conf.retry_delay.should eq 1.0
       conf.database_url.should eq "mysql://mysql_user:983425@host.name.com:12300/mysql_database"
     end
   end
