@@ -412,7 +412,7 @@ describe Crecto do
         Repo.all(Address, Query.where(user_id: u.id)).size.should eq 0
       end
 
-      it "should make nil nillify dependents" do
+      it "should make nil nilify dependents" do
         u = quick_create_user("nil dependents")
         up1 = UserProject.new;up1.user = u;up1 = Repo.insert(up1).instance
         up2 = UserProject.new;up2.user = u;up2 = Repo.insert(up2).instance
@@ -696,6 +696,41 @@ describe Crecto do
 
     # keep this at the end
     describe "#delete_all" do
+      it "should delete destroy dependents" do
+        u1 = quick_create_user("user 1")
+        2.times do
+          a = Address.new;a.user=u1;Repo.insert(a)
+        end
+        u2 = quick_create_user("user 2")
+        2.times do
+          a = Address.new;a.user=u2;Repo.insert(a)
+        end
+
+        Repo.delete_all(User,  Query.where(id: [u1.id, u2.id]))
+
+        Repo.all(Address, Query.where(user_id: u1.id)).size.should eq 0
+        Repo.all(Address, Query.where(user_id: u2.id)).size.should eq 0
+      end
+
+      it "should make nil nilify dependents" do
+        u1 = quick_create_user("user 1")
+        a1 = UserProject.new;a1.user=u1;a1 = Repo.insert(a1).instance
+        a2 = UserProject.new;a2.user=u1;a2 = Repo.insert(a2).instance
+
+        u2 = quick_create_user("user 2")
+        a3 = UserProject.new;a3.user=u2;a3 = Repo.insert(a3).instance
+        a4 = UserProject.new;a4.user=u2;a4 = Repo.insert(a4).instance
+
+        Repo.delete_all(User,  Query.where(id: [u1.id, u2.id]))
+
+        Repo.all(UserProject, Query.where(user_id: u1.id)).size.should eq 0
+        Repo.all(UserProject, Query.where(user_id: u2.id)).size.should eq 0
+        Repo.get!(UserProject, a1.id).user_id.should eq nil
+        Repo.get!(UserProject, a2.id).user_id.should eq nil
+        Repo.get!(UserProject, a3.id).user_id.should eq nil
+        Repo.get!(UserProject, a4.id).user_id.should eq nil
+      end
+
       it "should remove all records" do
         Repo.delete_all(UserProject)
         Repo.delete_all(Project)

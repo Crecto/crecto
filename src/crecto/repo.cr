@@ -293,13 +293,14 @@ module Crecto
     # query = Crecto::Repo::Query.where(name: "Fred")
     # Repo.delete_all(User, query)
     # ```
-    def delete_all(queryable, query = Query.new)
-      config.adapter.run(config.get_connection, :delete_all, queryable, query)
-    end
-
     def delete_all(queryable, query : Query?, tx : DB::Transaction?)
       query = Query.new if query.nil?
+      check_dependents(queryable, query, tx)
       config.adapter.run(tx || config.get_connection, :delete_all, queryable, query)
+    end
+
+    def delete_all(queryable, query = Query.new)
+      delete_all(queryable, query, nil)
     end
 
     # Run aribtrary sql queries. `query` will cast the output as that
@@ -393,6 +394,7 @@ module Crecto
     end
 
     private def check_dependents(changeset, tx : DB::Transaction?) : Nil
+      return if changeset.instance.class.destroy_associations.empty? && changeset.instance.class.nilify_associations.empty?
       # delete
       changeset.instance.class.destroy_associations.each do |destroy_assoc|
         q = Crecto::Repo::Query.where(changeset.instance.class.foreign_key_for_association(destroy_assoc), changeset.instance.pkey_value)
@@ -404,6 +406,25 @@ module Crecto
         foreign_key = changeset.instance.class.foreign_key_for_association(nilify_assoc)
         q = Crecto::Repo::Query.where(foreign_key, changeset.instance.pkey_value)
         update_all(changeset.instance.class.klass_for_association(nilify_assoc), q, { foreign_key => nil}, tx)
+      end
+    end
+
+    private def check_dependents(queryable, query : Query, tx : DB::Transaction?)
+      return if queryable.destroy_associations.empty? && queryable.nilify_associations.empty?
+      q = query
+      q.select([queryable.primary_key_field])
+      ids = all(queryable, q).map{|o| o.pkey_value }
+      return if ids.empty?
+
+      queryable.destroy_associations.each do |destroy_assoc|
+        q = Crecto::Repo::Query.where(queryable.foreign_key_for_association(destroy_assoc), ids)
+        delete_all(queryable.klass_for_association(destroy_assoc), q, tx)
+      end
+
+      queryable.nilify_associations.each do |nilify_assoc|
+        foreign_key = queryable.foreign_key_for_association(nilify_assoc)
+        q = Crecto::Repo::Query.where(foreign_key, ids)
+        update_all(queryable.klass_for_association(nilify_assoc), q, { foreign_key => nil }, tx)
       end
     end
 
