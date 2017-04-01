@@ -17,12 +17,12 @@ module Crecto
         {% on_replace = opts[:dependent] || opts[:on_replace] %}
 
         {% if on_replace && on_replace == :destroy %}
-          {{klass}}.add_destroy_association({{association_name.id.symbolize}})
+          self.add_destroy_association({{association_name.id.symbolize}})
         {% end %}
 
 
         {% if on_replace && on_replace == :nilify %}
-          {{klass}}.add_nilify_association({{association_name.id.symbolize}})
+          self.add_nilify_association({{association_name.id.symbolize}})
         {% end %}
 
         ASSOCIATIONS.push({

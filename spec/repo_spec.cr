@@ -400,6 +400,29 @@ describe Crecto do
         changeset.is_a?(Crecto::Changeset::Changeset).should eq(true)
         changeset.action.should eq(:delete)
       end
+
+      it "should delete destroy dependents" do 
+        u = quick_create_user("delete dependents")
+        2.times do
+          a = Address.new;a.user = u;Repo.insert(a)
+        end
+
+        Repo.all(Address, Query.where(user_id: u.id)).size.should eq 2
+        Repo.delete(u)
+        Repo.all(Address, Query.where(user_id: u.id)).size.should eq 0
+      end
+
+      it "should make nil nillify dependents" do
+        u = quick_create_user("nil dependents")
+        up1 = UserProject.new;up1.user = u;up1 = Repo.insert(up1).instance
+        up2 = UserProject.new;up2.user = u;up2 = Repo.insert(up2).instance
+
+        Repo.all(UserProject, Query.where(user_id: u.id)).size.should eq 2
+        Repo.delete(u)
+        Repo.all(UserProject, Query.where(user_id: u.id)).size.should eq 0
+        Repo.get(UserProject, up1.id).not_nil!.user_id.should eq nil
+        Repo.get(UserProject, up2.id).not_nil!.user_id.should eq nil
+      end
     end
 
     describe "#update_all" do
