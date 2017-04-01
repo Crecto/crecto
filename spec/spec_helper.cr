@@ -27,7 +27,7 @@ class User < Crecto::Model
     field :some_date, Time
     field :pageviews, Int32 | Int64
     has_many :posts, Post, foreign_key: :user_id
-    has_one :post, Post
+    has_one :post, Post, dependent: :destroy
     has_many :addresses, Address, dependent: :destroy
     has_many :user_projects, UserProject, on_replace: :nilify
     has_many :projects, Project, through: :user_projects
