@@ -15,6 +15,17 @@ module Crecto
           end
         %}
 
+        {% on_replace = opts[:dependent] || opts[:on_replace] %}
+
+        {% if on_replace && on_replace == :destroy %}
+          self.add_destroy_association({{association_name.id.symbolize}})
+        {% end %}
+
+
+        {% if on_replace && on_replace == :nullify %}
+          self.add_nullify_association({{association_name.id.symbolize}})
+        {% end %}
+
         ASSOCIATIONS.push({
           association_type: :has_one,
           key: {{association_name}},

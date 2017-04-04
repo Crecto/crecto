@@ -243,11 +243,15 @@ module Crecto
     end
 
     def update_all(queryable, query, update_hash : Hash)
-      config.adapter.run(config.get_connection, :update_all, queryable, query, update_hash)
+      update_all(queryable, query, update_hash, nil)
+    end
+
+    def update_all(queryable, query, update_hash : NamedTuple, tx : DB::Transaction?)
+      update_all(queryable, query, update_hash.to_h, tx)
     end
 
     def update_all(queryable, query, update_hash : NamedTuple)
-      update_all(queryable, query, update_hash.to_h)
+      update_all(queryable, query, update_hash, nil)
     end
 
     # Delete a shema instance from the data store.
@@ -255,11 +259,12 @@ module Crecto
     # ```
     # Repo.delete(user)
     # ```
-    def delete(queryable_instance, tx : DB::Transaction)
+    def delete(queryable_instance, tx : DB::Transaction?)
       changeset = queryable_instance.class.changeset(queryable_instance)
       return changeset unless changeset.valid?
 
-      query = config.adapter.run_on_instance(tx, :delete, changeset)
+      check_dependents(changeset, tx)
+      query = config.adapter.run_on_instance(tx || config.get_connection, :delete, changeset)
 
       if query.nil?
         changeset.add_error("delete_error", "Delete Failed")
@@ -270,17 +275,7 @@ module Crecto
     end
 
     def delete(queryable_instance)
-      changeset = queryable_instance.class.changeset(queryable_instance)
-      return changeset unless changeset.valid?
-
-      query = config.adapter.run_on_instance(config.get_connection, :delete, changeset)
-
-      if query.nil?
-        changeset.add_error("delete_error", "Delete Failed")
-      end
-
-      changeset.action = :delete
-      changeset
+      delete(queryable_instance, nil)
     end
 
     # Delete a changeset instance from the data store.
@@ -298,13 +293,14 @@ module Crecto
     # query = Crecto::Repo::Query.where(name: "Fred")
     # Repo.delete_all(User, query)
     # ```
-    def delete_all(queryable, query = Query.new)
-      config.adapter.run(config.get_connection, :delete_all, queryable, query)
-    end
-
     def delete_all(queryable, query : Query?, tx : DB::Transaction?)
       query = Query.new if query.nil?
+      check_dependents(queryable, query, tx)
       config.adapter.run(tx || config.get_connection, :delete_all, queryable, query)
+    end
+
+    def delete_all(queryable, query = Query.new)
+      delete_all(queryable, query, nil)
     end
 
     # Run aribtrary sql queries. `query` will cast the output as that
@@ -395,6 +391,62 @@ module Crecto
       raise InvalidOption.new("Aggregate must be one of :avg, :count, :max, :min:, :sum") unless [:avg, :count, :max, :min, :sum].includes?(aggregate_function)
 
       config.adapter.aggregate(config.get_connection, queryable, aggregate_function, field, query)
+    end
+
+    private def check_dependents(changeset, tx : DB::Transaction?) : Nil
+      return if changeset.instance.class.destroy_associations.empty? && changeset.instance.class.nullify_associations.empty?
+      # delete
+      changeset.instance.class.destroy_associations.each do |destroy_assoc|
+        delete_dependents(changeset.instance.class, destroy_assoc, changeset.instance.pkey_value, tx)
+      end
+
+      # nullify
+      changeset.instance.class.nullify_associations.each do |nullify_assoc|
+        nullify_dependents(changeset.instance.class, nullify_assoc, changeset.instance.pkey_value, tx)
+      end
+    end
+
+    private def check_dependents(queryable, query : Query, tx : DB::Transaction?)
+      return if queryable.destroy_associations.empty? && queryable.nullify_associations.empty?
+      q = query
+      q.select([queryable.primary_key_field])
+      ids = all(queryable, q).map{|o| o.pkey_value }
+      return if ids.empty?
+
+      queryable.destroy_associations.each do |destroy_assoc|
+        delete_dependents(queryable, destroy_assoc, ids, tx)
+      end
+
+      queryable.nullify_associations.each do |nullify_assoc|
+        nullify_dependents(queryable, nullify_assoc, ids, tx)
+      end
+    end
+
+    private def delete_dependents(queryable, destroy_assoc, ids, tx)
+      through_key = queryable.through_key_for_association(destroy_assoc)
+      if through_key.nil?
+        q = Crecto::Repo::Query.where(queryable.foreign_key_for_association(destroy_assoc), ids)
+        delete_all(queryable.klass_for_association(destroy_assoc), q, tx)
+      else
+        outer_klass = queryable.klass_for_association(destroy_assoc) # Project
+        join_klass = queryable.klass_for_association(through_key) # UserProject
+        query = Query.select([join_klass.primary_key_field, join_klass.foreign_key_for_association(outer_klass).to_s])
+        query = query.where(queryable.foreign_key_for_association(destroy_assoc), ids)
+        join_associations = all(join_klass, query)
+        outer_klass_ids = join_associations.map{|ja| outer_klass.foreign_key_value_for_association(through_key, ja) }
+        join_klass_ids = join_associations.map{|ja| ja.pkey_value }
+        delete_all(join_klass,  Query.where(:id, join_klass_ids), tx) unless join_klass_ids.empty?
+        delete_all(outer_klass, Query.where(:id, outer_klass_ids), tx) unless outer_klass_ids.empty?
+      end
+    end
+
+    private def nullify_dependents(queryable, nullify_assoc, ids, tx)
+      through_key = queryable.through_key_for_association(nullify_assoc)
+      if through_key.nil?
+        foreign_key = queryable.foreign_key_for_association(nullify_assoc)
+        q = Crecto::Repo::Query.where(foreign_key, ids)
+        update_all(queryable.klass_for_association(nullify_assoc), q, { foreign_key => nil }, tx)
+      end
     end
 
     private def add_preloads(results, queryable, preloads)
