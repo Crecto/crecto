@@ -26,7 +26,7 @@ Include [crystal-pg](https://github.com/will/crystal-pg) in your project
 
 in your application:
 
-```
+```crystal
 require "pg"
 require "crecto"
 ```
@@ -37,7 +37,7 @@ Include [crystal-mysql](https://github.com/crystal-lang/crystal-mysql) in your p
 
 in your application:
 
-```
+```crystal
 require "mysql"
 require "crecto"
 ```
@@ -48,7 +48,7 @@ Include [crystal-sqlite3](https://github.com/crystal-lang/crystal-sqlite3) in yo
 
 in your appplication:
 
-```
+```crystal
 require "sqlite3"
 require "crecto"
 ```
