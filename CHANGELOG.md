@@ -4,9 +4,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+
+## [0.5.0] 2017-04-04
 * fixed but preventing updating of nil or false values - [@Zhomart](https://github.com/Zhomart)
 * **(breaking change)** changed usage of Repo. Repo is now user defined and is where database configuration is set.
 * dependent options: `dependent: :delete`, `dependent: :nullify`
+* added repo.confi uri option for faster configuration or configuring through a single ENV variable
 
 ## [0.4.4] 2017-03-24
 * force all Int type fields to `PkeyValue`
@@ -77,6 +80,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Query
 * Postgres Adapter
 
+[0.5.0]: https://github.com/fridgerator/crecto/compare/v0.4.4...v0.5.0
 [0.4.4]: https://github.com/fridgerator/crecto/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/fridgerator/crecto/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/fridgerator/crecto/compare/v0.4.1...v0.4.2
