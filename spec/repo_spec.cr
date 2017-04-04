@@ -413,15 +413,37 @@ describe Crecto do
       end
 
       it "should make nil nilify dependents" do
-        u = quick_create_user("nil dependents")
-        up1 = UserProject.new;up1.user = u;up1 = Repo.insert(up1).instance
-        up2 = UserProject.new;up2.user = u;up2 = Repo.insert(up2).instance
+        u = UserDifferentDefaults.new
+        u.name = "nil dependents"
+        u = Repo.insert(u).instance
+        up1 = Thing.new;up1.user = u;up1 = Repo.insert(up1).instance
+        up2 = Thing.new;up2.user = u;up2 = Repo.insert(up2).instance
 
-        Repo.all(UserProject, Query.where(user_id: u.id)).size.should eq 2
+        Repo.all(Thing, Query.where(user_different_defaults_id: u.user_id)).size.should eq 2
         Repo.delete(u)
-        Repo.all(UserProject, Query.where(user_id: u.id)).size.should eq 0
-        Repo.get(UserProject, up1.id).not_nil!.user_id.should eq nil
-        Repo.get(UserProject, up2.id).not_nil!.user_id.should eq nil
+        Repo.all(Thing, Query.where(user_different_defaults_id: u.user_id)).size.should eq 0
+        Repo.get(Thing, up1.id).not_nil!.user_different_defaults_id.should eq nil
+        Repo.get(Thing, up2.id).not_nil!.user_different_defaults_id.should eq nil
+      end
+
+      it "should delete join_through destroy dependents" do
+        other_p = Project.new;other_p = Repo.insert(other_p).instance
+        other_up = UserProject.new;other_up.user_id = 1;other_up.project_id = other_p.id;other_up = Repo.insert(other_up).instance
+
+        user = quick_create_user("test")
+
+        p1 = Project.new;p1 = Repo.insert(p1).instance
+        p2 = Project.new;p2 = Repo.insert(p2).instance
+        up1 = UserProject.new;up1.user_id = user.id;up1.project_id = p1.id;up1 = Repo.insert(up1).instance
+        up2 = UserProject.new;up2.user_id = user.id;up2.project = p2;up2 = Repo.insert(up2).instance
+
+        Repo.all(UserProject, Query.where(user_id: user.id)).size.should eq 2
+        Repo.delete(user)
+        Repo.get(Project, other_p.id).should_not be_nil # should not delete un-related
+        Repo.get(UserProject, other_up.id).should_not be_nil # should not delete un-related
+        Repo.all(UserProject, Query.where(user_id: user.id)).size.should eq 0
+        Repo.get(UserProject, p1.id).should be_nil
+        Repo.get(UserProject, p2.id).should be_nil
       end
     end
 
@@ -712,23 +734,53 @@ describe Crecto do
         Repo.all(Address, Query.where(user_id: u2.id)).size.should eq 0
       end
 
+      it "should delete THROUGH destroy dependents" do
+        other_p = Project.new;other_p = Repo.insert(other_p).instance
+        other_up = UserProject.new;other_up.user_id = 999999;other_up.project_id = other_p.id;other_up = Repo.insert(other_up).instance
+
+        u1 = quick_create_user("test1")
+        p1 = Project.new;p1 = Repo.insert(p1).instance
+        up1 = UserProject.new;up1.user_id = u1.id;up1.project_id = p1.id;up1 = Repo.insert(up1).instance
+        p2 = Project.new;p2 = Repo.insert(p2).instance
+        up2 = UserProject.new;up2.user_id = u1.id;up2.project_id = p2.id;up2 = Repo.insert(up2).instance
+
+        u2 = quick_create_user("test2")
+        p3 = Project.new;p3 = Repo.insert(p3).instance
+        up3 = UserProject.new;up3.user_id = u1.id;up3.project_id = p3.id;up3 = Repo.insert(up3).instance
+        p4 = Project.new;p4 = Repo.insert(p4).instance
+        up4 = UserProject.new;up4.user_id = u1.id;up4.project_id = p4.id;up4 = Repo.insert(up4).instance
+
+        Repo.all(UserProject, Query.where(user_id: [u1.id, u2.id])).size.should eq 4
+
+        Repo.delete_all(User)
+
+        Repo.get(Project, other_p.id).should_not be_nil # should not delete un-related
+        Repo.get(UserProject, other_up.id).should_not be_nil # should not delete un-related
+
+        Repo.all(UserProject, Query.where(user_id: [u1.id, u2.id])).size.should eq 0
+        Repo.all(Project, Query.where(id: [p1.id, p2.id, p3.id, p4.id])).size.should eq 0
+      end
+
       it "should make nil nilify dependents" do
-        u1 = quick_create_user("user 1")
-        a1 = UserProject.new;a1.user=u1;a1 = Repo.insert(a1).instance
-        a2 = UserProject.new;a2.user=u1;a2 = Repo.insert(a2).instance
+        u = UserDifferentDefaults.new
+        u.name = "nil dependents"
+        u = Repo.insert(u).instance
+        up1 = Thing.new;up1.user = u;up1 = Repo.insert(up1).instance
+        up2 = Thing.new;up2.user = u;up2 = Repo.insert(up2).instance
 
-        u2 = quick_create_user("user 2")
-        a3 = UserProject.new;a3.user=u2;a3 = Repo.insert(a3).instance
-        a4 = UserProject.new;a4.user=u2;a4 = Repo.insert(a4).instance
+        u2 = UserDifferentDefaults.new
+        u2.name = "nil dependents"
+        u2 = Repo.insert(u2).instance
+        up3 = Thing.new;up3.user = u2;up3 = Repo.insert(up3).instance
+        up4 = Thing.new;up4.user = u2;up4 = Repo.insert(up4).instance
 
-        Repo.delete_all(User,  Query.where(id: [u1.id, u2.id]))
-
-        Repo.all(UserProject, Query.where(user_id: u1.id)).size.should eq 0
-        Repo.all(UserProject, Query.where(user_id: u2.id)).size.should eq 0
-        Repo.get!(UserProject, a1.id).user_id.should eq nil
-        Repo.get!(UserProject, a2.id).user_id.should eq nil
-        Repo.get!(UserProject, a3.id).user_id.should eq nil
-        Repo.get!(UserProject, a4.id).user_id.should eq nil
+        Repo.all(Thing, Query.where(user_different_defaults_id: [u.user_id, u2.user_id])).size.should eq 4
+        Repo.delete_all(UserDifferentDefaults)
+        Repo.all(Thing, Query.where(user_different_defaults_id: [u.user_id, u2.user_id])).size.should eq 0
+        Repo.get!(Thing, up1.id).user_different_defaults_id.should eq nil
+        Repo.get!(Thing, up2.id).user_different_defaults_id.should eq nil
+        Repo.get!(Thing, up3.id).user_different_defaults_id.should eq nil
+        Repo.get!(Thing, up4.id).user_different_defaults_id.should eq nil
       end
 
       it "should remove all records" do

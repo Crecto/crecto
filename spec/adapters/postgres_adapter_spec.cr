@@ -81,10 +81,9 @@ if Repo.config.adapter == Crecto::Adapters::Postgres
       Repo.delete(changeset.instance)
       check_sql do |sql|
         sql.should eq(
-        ["DELETE FROM posts WHERE  posts.user_id=$1", 
-          "DELETE FROM addresses WHERE  addresses.user_id=$1",
-          "UPDATE user_projects SET (user_id) = ($1) WHERE  user_projects.user_id=$2",
-          "DELETE FROM users WHERE id=#{changeset.instance.id} RETURNING *"])
+          ["DELETE FROM addresses WHERE  addresses.user_id=$1",
+            "SELECT user_projects.id, user_projects.project_id FROM user_projects WHERE  user_projects.user_id=$1",
+            "DELETE FROM users WHERE id=#{changeset.instance.id} RETURNING *"])
       end
     end
 

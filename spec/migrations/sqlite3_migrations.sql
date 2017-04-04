@@ -5,6 +5,7 @@ DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS addresses;
 DROP TABLE IF EXISTS user_projects;
 DROP TABLE IF EXISTS projects;
+DROP TABLE IF EXISTS things;
 
 CREATE TABLE users(
   id INTEGER NOT NULL PRIMARY KEY,
@@ -74,3 +75,12 @@ CREATE TABLE user_projects(
 );
 
 CREATE UNIQUE INDEX user_projects_dd8dfss ON user_projects (id);
+
+CREATE TABLE things(
+  id INTEGER NOT NULL PRIMARY KEY,
+  user_different_defaults_id INTEGER references users_different_defaults(id),
+  created_at DATETIME,
+  updated_at DATETIME
+);
+
+CREATE UNIQUE INDEX things_9sd09df ON things (id);

@@ -68,7 +68,7 @@ require "crecto"
 - [x] Repo#aggregate ([ecto link](https://hexdocs.pm/ecto/Ecto.Repo.html#c:aggregate/4))
 - [ ] [Embeds](https://robots.thoughtbot.com/embedding-elixir-structs-in-ecto-models)
 - [x] Transactions / Multi
-- [ ] Association / dependent options (`dependent: :delete_all`, `dependent: :nilify_all`, etc)
+- [x] Association / dependent options (`dependent: :delete_all`, `dependent: :nilify_all`, etc)
 - [ ] Unique constraint
 - [x] Combine database adapters (base class). Currently there is unecessary duplication
 
@@ -116,7 +116,7 @@ class User < Crecto::Model
     field :name, String
     field :is_admin, Bool
     field :temporary_info, Float64, virtual: true
-    has_many :posts, Post
+    has_many :posts, Post, dependent: :destroy
   end
 
   validate_required [:name, :age]
@@ -158,6 +158,14 @@ puts changeset.errors # []
 user.name = "new name"
 changeset = Repo.update(user)
 puts changeset.instance.name # "new name"
+
+#
+# Set Associations
+#
+
+post = Post.new
+post.user = user
+Repo.insert(post)
 
 #
 # Query syntax

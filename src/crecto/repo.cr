@@ -397,15 +397,12 @@ module Crecto
       return if changeset.instance.class.destroy_associations.empty? && changeset.instance.class.nilify_associations.empty?
       # delete
       changeset.instance.class.destroy_associations.each do |destroy_assoc|
-        q = Crecto::Repo::Query.where(changeset.instance.class.foreign_key_for_association(destroy_assoc), changeset.instance.pkey_value)
-        delete_all(changeset.instance.class.klass_for_association(destroy_assoc), q, tx)
+        delete_dependents(changeset.instance.class, destroy_assoc, changeset.instance.pkey_value, tx)
       end
 
       # nilify
       changeset.instance.class.nilify_associations.each do |nilify_assoc|
-        foreign_key = changeset.instance.class.foreign_key_for_association(nilify_assoc)
-        q = Crecto::Repo::Query.where(foreign_key, changeset.instance.pkey_value)
-        update_all(changeset.instance.class.klass_for_association(nilify_assoc), q, { foreign_key => nil}, tx)
+        nilify_dependents(changeset.instance.class, nilify_assoc, changeset.instance.pkey_value, tx)
       end
     end
 
@@ -417,11 +414,35 @@ module Crecto
       return if ids.empty?
 
       queryable.destroy_associations.each do |destroy_assoc|
-        q = Crecto::Repo::Query.where(queryable.foreign_key_for_association(destroy_assoc), ids)
-        delete_all(queryable.klass_for_association(destroy_assoc), q, tx)
+        delete_dependents(queryable, destroy_assoc, ids, tx)
       end
 
       queryable.nilify_associations.each do |nilify_assoc|
+        nilify_dependents(queryable, nilify_assoc, ids, tx)
+      end
+    end
+
+    private def delete_dependents(queryable, destroy_assoc, ids, tx)
+      through_key = queryable.through_key_for_association(destroy_assoc)
+      if through_key.nil?
+        q = Crecto::Repo::Query.where(queryable.foreign_key_for_association(destroy_assoc), ids)
+        delete_all(queryable.klass_for_association(destroy_assoc), q, tx)
+      else
+        outer_klass = queryable.klass_for_association(destroy_assoc) # Project
+        join_klass = queryable.klass_for_association(through_key) # UserProject
+        query = Query.select([join_klass.primary_key_field, join_klass.foreign_key_for_association(outer_klass).to_s])
+        query = query.where(queryable.foreign_key_for_association(destroy_assoc), ids)
+        join_associations = all(join_klass, query)
+        outer_klass_ids = join_associations.map{|ja| outer_klass.foreign_key_value_for_association(through_key, ja) }
+        join_klass_ids = join_associations.map{|ja| ja.pkey_value }
+        delete_all(join_klass,  Query.where(:id, join_klass_ids), tx) unless join_klass_ids.empty?
+        delete_all(outer_klass, Query.where(:id, outer_klass_ids), tx) unless outer_klass_ids.empty?
+      end
+    end
+
+    private def nilify_dependents(queryable, nilify_assoc, ids, tx)
+      through_key = queryable.through_key_for_association(nilify_assoc)
+      if through_key.nil?
         foreign_key = queryable.foreign_key_for_association(nilify_assoc)
         q = Crecto::Repo::Query.where(foreign_key, ids)
         update_all(queryable.klass_for_association(nilify_assoc), q, { foreign_key => nil }, tx)

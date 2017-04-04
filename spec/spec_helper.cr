@@ -27,10 +27,10 @@ class User < Crecto::Model
     field :some_date, Time
     field :pageviews, Int32 | Int64
     has_many :posts, Post, foreign_key: :user_id
-    has_one :post, Post, dependent: :destroy
+    has_one :post, Post
     has_many :addresses, Address, dependent: :destroy
-    has_many :user_projects, UserProject, on_replace: :nilify
-    has_many :projects, Project, through: :user_projects
+    has_many :user_projects, UserProject
+    has_many :projects, Project, through: :user_projects, dependent: :destroy
   end
 
   validate_required :name
@@ -57,7 +57,7 @@ class UserDifferentDefaults < Crecto::Model
   schema "users_different_defaults" do
     field :user_id, PkeyValue, primary_key: true
     field :name, String
-    has_many :things, Thing
+    has_many :things, Thing, dependent: :nilify
   end
 
   validate_required :name
