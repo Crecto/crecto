@@ -21,8 +21,8 @@ module Crecto
         {% end %}
 
 
-        {% if on_replace && on_replace == :nilify %}
-          self.add_nilify_association({{association_name.id.symbolize}})
+        {% if on_replace && on_replace == :nullify %}
+          self.add_nullify_association({{association_name.id.symbolize}})
         {% end %}
 
         ASSOCIATIONS.push({

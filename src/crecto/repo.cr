@@ -394,20 +394,20 @@ module Crecto
     end
 
     private def check_dependents(changeset, tx : DB::Transaction?) : Nil
-      return if changeset.instance.class.destroy_associations.empty? && changeset.instance.class.nilify_associations.empty?
+      return if changeset.instance.class.destroy_associations.empty? && changeset.instance.class.nullify_associations.empty?
       # delete
       changeset.instance.class.destroy_associations.each do |destroy_assoc|
         delete_dependents(changeset.instance.class, destroy_assoc, changeset.instance.pkey_value, tx)
       end
 
-      # nilify
-      changeset.instance.class.nilify_associations.each do |nilify_assoc|
-        nilify_dependents(changeset.instance.class, nilify_assoc, changeset.instance.pkey_value, tx)
+      # nullify
+      changeset.instance.class.nullify_associations.each do |nullify_assoc|
+        nullify_dependents(changeset.instance.class, nullify_assoc, changeset.instance.pkey_value, tx)
       end
     end
 
     private def check_dependents(queryable, query : Query, tx : DB::Transaction?)
-      return if queryable.destroy_associations.empty? && queryable.nilify_associations.empty?
+      return if queryable.destroy_associations.empty? && queryable.nullify_associations.empty?
       q = query
       q.select([queryable.primary_key_field])
       ids = all(queryable, q).map{|o| o.pkey_value }
@@ -417,8 +417,8 @@ module Crecto
         delete_dependents(queryable, destroy_assoc, ids, tx)
       end
 
-      queryable.nilify_associations.each do |nilify_assoc|
-        nilify_dependents(queryable, nilify_assoc, ids, tx)
+      queryable.nullify_associations.each do |nullify_assoc|
+        nullify_dependents(queryable, nullify_assoc, ids, tx)
       end
     end
 
@@ -440,12 +440,12 @@ module Crecto
       end
     end
 
-    private def nilify_dependents(queryable, nilify_assoc, ids, tx)
-      through_key = queryable.through_key_for_association(nilify_assoc)
+    private def nullify_dependents(queryable, nullify_assoc, ids, tx)
+      through_key = queryable.through_key_for_association(nullify_assoc)
       if through_key.nil?
-        foreign_key = queryable.foreign_key_for_association(nilify_assoc)
+        foreign_key = queryable.foreign_key_for_association(nullify_assoc)
         q = Crecto::Repo::Query.where(foreign_key, ids)
-        update_all(queryable.klass_for_association(nilify_assoc), q, { foreign_key => nil }, tx)
+        update_all(queryable.klass_for_association(nullify_assoc), q, { foreign_key => nil }, tx)
       end
     end
 

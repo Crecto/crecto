@@ -68,7 +68,7 @@ require "crecto"
 - [x] Repo#aggregate ([ecto link](https://hexdocs.pm/ecto/Ecto.Repo.html#c:aggregate/4))
 - [ ] [Embeds](https://robots.thoughtbot.com/embedding-elixir-structs-in-ecto-models)
 - [x] Transactions / Multi
-- [x] Association / dependent options (`dependent: :delete_all`, `dependent: :nilify_all`, etc)
+- [x] Association / dependent options (`dependent: :delete`, `dependent: :nullify`, etc)
 - [ ] Unique constraint
 - [x] Combine database adapters (base class). Currently there is unecessary duplication
 

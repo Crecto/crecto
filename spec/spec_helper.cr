@@ -57,7 +57,7 @@ class UserDifferentDefaults < Crecto::Model
   schema "users_different_defaults" do
     field :user_id, PkeyValue, primary_key: true
     field :name, String
-    has_many :things, Thing, dependent: :nilify
+    has_many :things, Thing, dependent: :nullify
   end
 
   validate_required :name

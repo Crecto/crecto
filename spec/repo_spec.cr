@@ -412,7 +412,7 @@ describe Crecto do
         Repo.all(Address, Query.where(user_id: u.id)).size.should eq 0
       end
 
-      it "should make nil nilify dependents" do
+      it "should make nil nullify dependents" do
         u = UserDifferentDefaults.new
         u.name = "nil dependents"
         u = Repo.insert(u).instance
@@ -761,7 +761,7 @@ describe Crecto do
         Repo.all(Project, Query.where(id: [p1.id, p2.id, p3.id, p4.id])).size.should eq 0
       end
 
-      it "should make nil nilify dependents" do
+      it "should make nil nullify dependents" do
         u = UserDifferentDefaults.new
         u.name = "nil dependents"
         u = Repo.insert(u).instance
