@@ -42,7 +42,20 @@ module SqliteRepoTest
   end
 end
 
+module UriRepoTest
+  extend Crecto::Repo
+
+  config do |conf|
+    conf.adapter = Crecto::Adapters::Postgres
+    conf.uri = "postgres://username:password@localhost:5432/uri_repo_test"
+  end  
+end
+
 describe "repo config" do
+  it "should with with a uri, use the uri for the connection string" do
+    UriRepoTest.config.database_url.should eq "postgres://username:password@localhost:5432/uri_repo_test"
+  end
+
   it "should set the config values for posgres" do
     PgRepoTest.config do |conf|
       conf.adapter.should eq Crecto::Adapters::Postgres
