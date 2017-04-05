@@ -122,7 +122,7 @@ class User < Crecto::Model
   end
 
   validate_required [:name, :age]
-  validate_format :name, /[*a-zA-Z]/
+  validate_format :name, /^[a-zA-Z]*$/
 end
 
 class Post < Crecto::Model
