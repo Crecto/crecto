@@ -1,1 +1,7 @@
 _book
+node_modules/
+lib/
+.shards/
+*.db
+shard.lock
+spec/

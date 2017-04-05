@@ -16,8 +16,8 @@ validate_require [:name, :age]  # multiple fields
 Validates that a field matches a regex pattern
 
 ```crystal
-validate_format :name, /[*a-zA-z/    # single field
-validate_format [:first_name, :last_name], /[*a-zA-z/    # multiple fields
+validate_format :name, /^[a-zA-Z]*$/    # single field
+validate_format [:first_name, :last_name], /^[a-zA-Z]*$/    # multiple fields
 ```
 
 ## Inclusion validation

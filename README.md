@@ -23,19 +23,37 @@ require "pg" # or "mysql" or "sqlite3"
 require "crecto"
 ```
 
-Set the approprate environment variable:
-
-```crystal
-ENV["PG_URL"] = "postgres://localhost:5432/crecto-database" # -or-
-ENV["PG_URL"] = "msyql://localhost:3306/crecto-database" # -or-
-ENV["SQlITE3_PATH"] = "sqlite3://path/to/db.db"
-```
-
 ## Quick Start
 
 ```crystal
+# First create a Repo.  The Repo maps to the datastore and the database adapter and is used to run queries.
+# You can even create multiple repos if you need to access multiple databases
+
+module Repo
+  extend Crecto::Repo
+
+  config do |conf|
+    conf.adapter = Crecto::Adapters::Postgres # or Crecto::Adapters::Mysql or Crecto::Adapters::SQLite3
+    conf.database = "database_name"
+    conf.hostname = "localhost"
+    conf.username = "user"
+    conf.password = "password"
+    conf.port = 5342
+    # you can also set initial_pool_size, max_pool_size, max_idle_pool_size,
+    #  checkout_timeout, retry_attempts, and retry_delay
+  end
+end
+
+module SqliteRepo
+  extend Crecto::Repo
+
+  config do |conf|
+    conf.adapter = Crecto::Adapters::SQLite3
+    conf.database = "./path/to/database.db"
+  end
+end
+
 # shortcut variables, optional
-Repo  = Crecto::Repo
 Query = Crecto::Repo::Query
 Multi = Crecto::Multi
 
