@@ -4,7 +4,7 @@
     <head>
         <meta charset="UTF-8">
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-        <title>Validations · crecto</title>
+        <title>Repo · crecto</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="description" content="">
         <meta name="generator" content="GitBook 3.2.2">
@@ -57,10 +57,8 @@
     <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
 
     
-    <link rel="next" href="repo.html" />
     
-    
-    <link rel="prev" href="associations.html" />
+    <link rel="prev" href="validations.html" />
     
 
     </head>
@@ -129,7 +127,7 @@
             
         </li>
     
-        <li class="chapter active" data-level="1.2.2" data-path="validations.html">
+        <li class="chapter " data-level="1.2.2" data-path="validations.html">
             
                 <a href="validations.html">
             
@@ -147,7 +145,7 @@
             
         </li>
     
-        <li class="chapter " data-level="1.3" data-path="repo.html">
+        <li class="chapter active" data-level="1.3" data-path="repo.html">
             
                 <a href="repo.html">
             
@@ -190,7 +188,7 @@
     <!-- Title -->
     <h1>
         <i class="fa fa-circle-o-notch fa-spin"></i>
-        <a href="." >Validations</a>
+        <a href="." >Repo</a>
     </h1>
 </div>
 
@@ -205,42 +203,68 @@
     
                                 <section class="normal markdown-section">
                                 
-                                <h1 id="validations">Validations</h1>
-<p>Crecto has several validations that are defined in the schema</p>
-<h2 id="required-validation">Required validation</h2>
-<p>Validates fields that are required before saving to the database</p>
-<pre><code class="lang-crystal">validate_required :name  <span class="hljs-comment"># single field</span>
-validate_require [:name, :age]  <span class="hljs-comment"># multiple fields</span>
-</code></pre>
-<h2 id="format-validation">Format validation</h2>
-<p>Validates that a field matches a regex pattern</p>
-<pre><code class="lang-crystal">validate_format :name, <span class="hljs-regexp">/^[a-zA-Z]*$/</span>    <span class="hljs-comment"># single field</span>
-validate_format [:first_name, :last_name], <span class="hljs-regexp">/^[a-zA-Z]*$/</span>    <span class="hljs-comment"># multiple fields</span>
-</code></pre>
-<h2 id="inclusion-validation">Inclusion validation</h2>
-<p>Validates that a field is included in an array or range</p>
-<pre><code class="lang-crystal">validate_inclusion :age, (<span class="hljs-number">21</span>..<span class="hljs-number">150</span>)            <span class="hljs-comment"># single field</span>
-validate_incluson [:one_field, :other_field], [<span class="hljs-string">&quot;a&quot;</span>, <span class="hljs-string">&quot;b&quot;</span>, <span class="hljs-string">&quot;c&quot;</span>]        <span class="hljs-comment"># multiple fields</span>
-</code></pre>
-<h2 id="exclusion-validation">Exclusion validation</h2>
-<p>Validates that a field is excluded fram an array or range</p>
-<pre><code class="lang-crystal">validate_exclusion :age, (<span class="hljs-number">0</span>..<span class="hljs-number">20</span>)             <span class="hljs-comment"># single field</span>
-validate_exclusion [:one_field, :other_field], [<span class="hljs-string">&quot;x&quot;</span>, <span class="hljs-string">&quot;y&quot;</span>, <span class="hljs-string">&quot;z&quot;</span>]        <span class="hljs-comment"># multiple fields</span>
-</code></pre>
-<h2 id="validate-length">Validate length</h2>
-<p>Validates lengths with <code>:min</code>, <code>:max</code>, <code>:is</code></p>
-<pre><code class="lang-crystal">validate_length :password, <span class="hljs-symbol">min:</span> <span class="hljs-number">8</span>, <span class="hljs-symbol">max:</span> <span class="hljs-number">26</span>
-validate_length :zip, <span class="hljs-symbol">is:</span> <span class="hljs-number">5</span>
-</code></pre>
-<h2 id="multiple-validation">Multiple validation</h2>
-<p>Assign multiple validations for one or many field(s)</p>
-<pre><code class="lang-crystal">validates [:first_name, :last_name],
-    <span class="hljs-symbol">precense:</span> <span class="hljs-literal">true</span>,
-    <span class="hljs-symbol">format:</span> {<span class="hljs-symbol">pattern:</span> /^[a-zA-Z]+$/},
-    <span class="hljs-symbol">exclusion:</span> {<span class="hljs-symbol">in:</span> [<span class="hljs-string">&quot;foo&quot;</span>, <span class="hljs-string">&quot;bar&quot;</span>]},
-    <span class="hljs-symbol">length:</span> {<span class="hljs-symbol">min:</span> <span class="hljs-number">3</span>, <span class="hljs-symbol">max:</span> <span class="hljs-number">30</span>}
+                                <h1 id="repo">Repo</h1>
+<p>The Repo maps to the datastore through the database adapter, and is used to perform queries.  Multiple Repos can be created and used simultaneously if mapping to multiple data sources is required.</p>
+<p>Create a module, named whatever you want, extending <code>Crecto::Repo</code>.  Then set the <code>config</code> options.</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">MyRepo</span></span>
+  <span class="hljs-keyword">extend</span> <span class="hljs-symbol">Crecto:</span>:Repo
 
-validates :rank, <span class="hljs-symbol">inclusion:</span> {<span class="hljs-symbol">in:</span> <span class="hljs-number">1</span>..<span class="hljs-number">100</span>}
+  config <span class="hljs-keyword">do</span> |c|
+    c.adapter = <span class="hljs-symbol">Crecto:</span>:<span class="hljs-symbol">Adapters:</span>:Postgres
+    c.uri = ENV[<span class="hljs-string">&quot;PG_URL&quot;</span>]
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>Then use the Repo to run queries:</p>
+<pre><code class="lang-crystal">user = User.new
+user.name = <span class="hljs-string">&quot;James Howlett&quot;</span>
+changeset = MyRepo.insert(user)
+</code></pre>
+<p>config accepts the following options:</p>
+<pre><code class="lang-crystal">config <span class="hljs-keyword">do</span> |c|
+  <span class="hljs-comment"># Choose an adapter for the repo to use: Crecto::Adapters::Postgres, Crecto::Adapters::Mysql, Crecto::Adapters::SQLite3</span>
+  c.adapter = <span class="hljs-symbol">Crecto:</span>:<span class="hljs-symbol">Adapters:</span>:Postgres
+
+  <span class="hljs-comment"># If `uri` is specified, the remaining config options will be ignored.  uri is usefull if you have an ENV variable with connection settings</span>
+  c.uri = ENV[<span class="hljs-string">&quot;PG_URL&quot;</span>]
+
+  <span class="hljs-comment"># Datbase path, only used for SQLite3 adpater</span>
+  c.database = <span class="hljs-string">&quot;/path/to/database.db&quot;</span>
+
+  <span class="hljs-comment"># Database host</span>
+  c.hostname = <span class="hljs-string">&quot;localhost&quot;</span>
+
+  <span class="hljs-comment"># Database port</span>
+  c.port = <span class="hljs-number">5432</span>
+
+  <span class="hljs-comment"># Database name</span>
+  c.database = <span class="hljs-string">&quot;database_name&quot;</span>
+
+  <span class="hljs-comment"># Database username</span>
+  c.username = <span class="hljs-string">&quot;db_username&quot;</span>
+
+  <span class="hljs-comment"># Database password</span>
+  c.password = <span class="hljs-string">&quot;password1234&quot;</span>
+
+  <span class="hljs-comment"># Initial pool size, default 1</span>
+  c.initial_pool_size = <span class="hljs-number">1</span>
+
+  <span class="hljs-comment"># Max pool size, default 0</span>
+  c.max_pool_size = <span class="hljs-number">25</span>
+
+  <span class="hljs-comment"># Max idle pool size, default 1</span>
+  c.max_idle_pool_size = <span class="hljs-number">5</span>
+
+  <span class="hljs-comment"># Checkout timeout, default 5.0</span>
+  c.checkout_timeout = <span class="hljs-number">2.5</span>
+
+  <span class="hljs-comment"># Retry attempts, default 1</span>
+  c.retry_attempts = <span class="hljs-number">2</span>
+
+  <span class="hljs-comment"># Retry delay, default 1.0</span>
+  c.retry_delay = <span class="hljs-number">0.5</span>
+
+<span class="hljs-keyword">end</span>
 </code></pre>
 
                                 
@@ -269,14 +293,10 @@ validates :rank, <span class="hljs-symbol">inclusion:</span> {<span class="hljs-
 
             
                 
-                <a href="associations.html" class="navigation navigation-prev " aria-label="Previous page: Associations">
+                <a href="validations.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page: Validations">
                     <i class="fa fa-angle-left"></i>
                 </a>
                 
-                
-                <a href="repo.html" class="navigation navigation-next " aria-label="Next page: Repo">
-                    <i class="fa fa-angle-right"></i>
-                </a>
                 
             
         
@@ -285,7 +305,7 @@ validates :rank, <span class="hljs-symbol">inclusion:</span> {<span class="hljs-
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Validations","level":"1.2.2","depth":2,"next":{"title":"Repo","level":"1.3","depth":1,"path":"repo.md","ref":"repo.md","articles":[]},"previous":{"title":"Associations","level":"1.2.1","depth":2,"path":"associations.md","ref":"associations.md","articles":[]},"dir":"ltr"},"config":{"plugins":["github","edit-link"],"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"fontsettings":{"theme":"night","family":"sans","size":2},"github":{"url":"https://github.com/fridgerator/crecto"},"edit-link":{"label":"Edit This Page","base":"https://github.com/fridgerator/crecto/edit/gh-pages/"},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"crecto","gitbook":"*"},"file":{"path":"validations.md","mtime":"2017-04-05T13:29:18.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-04-06T00:07:19.030Z"},"basePath":".","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Repo","level":"1.3","depth":1,"previous":{"title":"Validations","level":"1.2.2","depth":2,"path":"validations.md","ref":"validations.md","articles":[]},"dir":"ltr"},"config":{"plugins":["github","edit-link"],"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"fontsettings":{"theme":"night","family":"sans","size":2},"github":{"url":"https://github.com/fridgerator/crecto"},"edit-link":{"label":"Edit This Page","base":"https://github.com/fridgerator/crecto/edit/gh-pages/"},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"crecto","gitbook":"*"},"file":{"path":"repo.md","mtime":"2017-04-05T13:47:09.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-04-06T00:07:19.030Z"},"basePath":".","book":{"language":""}});
         });
     </script>
 </div>
