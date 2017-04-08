@@ -343,6 +343,7 @@ describe Crecto do
 
     describe "#update" do
       it "should update the model" do
+        now = Time.now.at_beginning_of_hour
         u = User.new
         u.name = "fridge"
         u.things = 123
@@ -350,10 +351,16 @@ describe Crecto do
         u.yep = false
         u.stuff = 9993
         u.pageviews = 123245667788
+        u.some_date = now
         changeset = Repo.insert(u)
         u = changeset.instance
+        u.some_date.as(Time).to_local.should eq(now)
+        created_at = u.created_at
         u.name = "new name"
         changeset = Repo.update(u)
+        u = changeset.instance
+        u.some_date.as(Time).to_local.should eq(now)
+        u.created_at.should eq(created_at)
         changeset.instance.name.should eq("new name")
         changeset.valid?.should eq(true)
         changeset.instance.updated_at.as(Time).to_local.epoch_ms.should be_close(Time.now.epoch_ms, 2000)
@@ -401,7 +408,7 @@ describe Crecto do
         changeset.action.should eq(:delete)
       end
 
-      it "should delete destroy dependents" do 
+      it "should delete destroy dependents" do
         u = quick_create_user("delete dependents")
         2.times do
           a = Address.new;a.user = u;Repo.insert(a)
