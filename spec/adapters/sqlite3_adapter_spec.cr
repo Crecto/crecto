@@ -43,7 +43,7 @@ if Repo.config.adapter == Crecto::Adapters::SQLite3
       u = Repo.insert(User.from_json(%({ "name": "chuck", "yep": false })))
       check_sql do |sql|
         sql.should eq([
-          "INSERT INTO users (name, things, nope, yep, some_date, pageviews, created_at, updated_at, id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO users (name, things, smallnum, nope, yep, some_date, pageviews, created_at, updated_at, id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           "SELECT * FROM users WHERE id = '#{u.instance.id}'"
         ])
       end
@@ -79,7 +79,7 @@ if Repo.config.adapter == Crecto::Adapters::SQLite3
       Repo.update(changeset.instance)
       check_sql do |sql|
         sql.should eq([
-          "UPDATE users SET name=?, things=?, nope=?, yep=?, some_date=?, pageviews=?, created_at=?, updated_at=?, id=? WHERE id=#{changeset.instance.id}",
+          "UPDATE users SET name=?, things=?, smallnum=?, nope=?, yep=?, some_date=?, pageviews=?, created_at=?, updated_at=?, id=? WHERE id=#{changeset.instance.id}",
           "SELECT * FROM users WHERE id = #{changeset.instance.id}"
         ])
       end

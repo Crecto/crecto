@@ -695,7 +695,18 @@ describe Crecto do
       end
     end
 
+    unless Repo.config.adapter == Crecto::Adapters::SQLite3
+      describe "small int" do
+        it "shoud save and return small int type" do
+          user = quick_create_user_with_smallnum("test", 4_i16)
+          user.smallnum.should eq 4
+          user.smallnum.class.should eq Int16
+        end
+      end
+    end
+
     if Repo.config.adapter == Crecto::Adapters::Postgres
+
       describe "json type" do
         it "store and retrieve records" do
           u = UserJson.new

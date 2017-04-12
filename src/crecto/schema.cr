@@ -54,7 +54,7 @@ module Crecto
     macro schema(table_name, &block)
 
       # macro constants
-      VALID_FIELD_TYPES = [String, Int64, Int32, Float32, Float64, Bool, Time, Int32 | Int64, Float32 | Float64, Json, PkeyValue]
+      VALID_FIELD_TYPES = [String, Int64, Int32, Int16, Float32, Float64, Bool, Time, Int32 | Int64, Float32 | Float64, Json, PkeyValue]
       VALID_FIELD_OPTIONS = [:primary_key, :virtual]
       FIELDS = [] of NamedTuple(name: Symbol, type: String)
 
