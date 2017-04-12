@@ -11,6 +11,7 @@ CREATE TABLE users(
   id INTEGER NOT NULL PRIMARY KEY,
   name varchar(255) NOT NULL,
   things integer,
+  smallnum integer,
   stuff integer,
   nope float,
   yep bool,
