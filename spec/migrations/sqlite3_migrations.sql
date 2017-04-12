@@ -84,3 +84,12 @@ CREATE TABLE things(
 );
 
 CREATE UNIQUE INDEX things_9sd09df ON things (id);
+
+CREATE TABLE users_uuid(
+  uuid VARCHAR(255) PRIMARY KEY NOT NULL,
+  name VARCHAR(255),
+  created_at DATETIME,
+  updated_at DATETIME
+);
+
+CREATE UNIQUE INDEX users_uuid_93vabznv8 ON users_uuid (uuid);

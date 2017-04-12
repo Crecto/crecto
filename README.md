@@ -44,8 +44,7 @@ require "crecto"
 
 #### Sqlite
 
-~~Include [crystal-sqlite3](https://github.com/crystal-lang/crystal-sqlite3) in your project~~
-Include [zhomarts fork of of crystal-sqlite3](https://github.com/Zhomart/crystal-sqlite3) in your project
+Include [crystal-sqlite3](https://github.com/crystal-lang/crystal-sqlite3) in your project
 
 in your appplication:
 

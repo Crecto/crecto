@@ -21,6 +21,9 @@ DROP TABLE IF EXISTS users_json;
 DROP INDEX IF EXISTS things_f4f74pppa;
 DROP TABLE IF EXISTS things;
 
+DROP INDEX IF EXISTS users_uuid_93vabznv8;
+DROP TABLE IF EXISTS users_uuid;
+
 CREATE TABLE users(
   id INTEGER NOT NULL,
   name character varying NOT NULL,
@@ -196,5 +199,24 @@ ALTER SEQUENCE things_id_seq OWNED BY things.id;
 ALTER TABLE ONLY things ADD CONSTRAINT things_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY things ALTER COLUMN id SET DEFAULT nextval('things_id_seq'::regclass);
 CREATE UNIQUE INDEX things_f4f74pppa on things (id);
+
+CREATE TABLE users_uuid(
+  uuid character varying NOT NULL,
+  name character varying,
+  created_at timestamp without time zone,
+  updated_at timestamp without time zone
+);
+
+CREATE SEQUENCE users_uuid_id_seq
+  START WITH 1121
+  INCREMENT BY 1
+  NO MINVALUE
+  NO MAXVALUE
+  CACHE 1;
+
+ALTER SEQUENCE users_uuid_id_seq OWNED BY users_uuid.uuid;
+ALTER TABLE ONLY users_uuid ADD CONSTRAINT users_uuid_pkey PRIMARY KEY (uuid);
+ALTER TABLE ONLY users_uuid ALTER COLUMN uuid SET DEFAULT nextval('users_uuid_id_seq'::regclass);
+CREATE UNIQUE INDEX users_uuid_93vabznv8 on users_uuid (uuid);
 
 COMMIT;

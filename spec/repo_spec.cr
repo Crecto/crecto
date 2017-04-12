@@ -1,3 +1,4 @@
+require "secure_random"
 require "./spec_helper"
 require "./helper_methods"
 
@@ -819,6 +820,20 @@ describe Crecto do
 
         users = Repo.all(UserLargeDefaults)
         users.size.should eq 0
+      end
+    end
+
+    describe "user with uuid string as primary key" do
+      it "should insert with the generated id" do
+        id = SecureRandom.uuid
+        user = UserUUID.new
+        user.name = "test"
+        user.uuid = id
+
+        changeset = Repo.insert(user)
+
+        changeset.errors.any?.should eq false
+        changeset.instance.uuid.should eq id
       end
     end
   end

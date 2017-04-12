@@ -93,4 +93,14 @@ CREATE TABLE things(
 
 CREATE UNIQUE INDEX things_00j2djj ON things (id);
 
+CREATE TABLE users_uuid(
+  uuid varchar(255) NOT NULL,
+  PRIMARY KEY (uuid),
+  name varchar(255),
+  created_at DATETIME,
+  updated_at DATETIME
+);
+
+CREATE UNIQUE INDEX users_uuid_93vabznv8 ON users_uuid (uuid);
+
 COMMIT;

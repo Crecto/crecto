@@ -47,7 +47,8 @@ module Crecto
         q.push "(#{(1..fields_values[:values].size).map { "?" }.join(", ")})"
 
         res = exec_execute(conn, q.join(" "), fields_values[:values])
-        execute(conn, "SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field} = #{res.last_insert_id}")
+        last_insert_id = changeset.instance.pkey_value.nil? ? res.last_insert_id : changeset.instance.pkey_value.not_nil!
+        execute(conn, "SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field} = '#{last_insert_id}'")
       end
 
       private def self.update_begin(table_name, fields_values)
