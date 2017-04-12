@@ -4,7 +4,7 @@ def quick_create_user(name)
   Repo.insert(user).instance
 end
 
-{% for x in ["things", "nope", "yep", "some_date", "pageviews"] %}
+{% for x in ["things", "nope", "yep", "some_date", "pageviews", "smallnum"] %}
 def quick_create_user_with_{{x.id}}(name, {{x.id}})
   user = User.new
   user.name = name

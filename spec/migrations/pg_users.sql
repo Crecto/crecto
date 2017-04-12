@@ -24,6 +24,7 @@ DROP TABLE IF EXISTS things;
 CREATE TABLE users(
   id INTEGER NOT NULL,
   name character varying NOT NULL,
+  smallnum smallint,
   things integer,
   stuff integer,
   nope float,
