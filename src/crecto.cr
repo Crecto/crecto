@@ -7,7 +7,7 @@ require "./crecto/repo/*"
 require "./crecto/*"
 
 # :nodoc:
-alias DbValue = Bool | Float32 | Float64 | Int64 | Int32 | String | Time | JSON::Any | Nil
+alias DbValue = Bool | Float32 | Float64 | Int64 | Int32 | Int16 | String | Time | JSON::Any | Nil
 # alias for Int32 | Int64 | Nil
 alias PkeyValue = Int32 | Int64 | Nil
 # :nodoc:

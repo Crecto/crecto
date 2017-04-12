@@ -22,6 +22,7 @@ class User < Crecto::Model
     field :name, String
     field :things, Int32 | Int64
     field :stuff, Int32, virtual: true
+    field :smallnum, Int16
     field :nope, Float32 | Float64
     field :yep, Bool
     field :some_date, Time
