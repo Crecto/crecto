@@ -78,7 +78,9 @@ require "crecto"
 ```crystal
 
 # First create a Repo.  The Repo maps to the datastore and the database adapter and is used to run queries.
-# You can even create multiple repos if you need to access multiple databases
+# You can even create multiple repos if you need to access multiple databases.
+#
+# For those coming from Active Record, Repo provides a level of abstraction between database logic (Repo) and business logic (Model).
 
 module Repo
   extend Crecto::Repo
