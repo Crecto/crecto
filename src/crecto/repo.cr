@@ -422,7 +422,7 @@ module Crecto
       return if queryable.destroy_associations.empty? && queryable.nullify_associations.empty?
       q = query
       q.select([queryable.primary_key_field])
-      ids = all(queryable, q).map{|o| o.pkey_value }
+      ids = all(queryable, q).map{|o| o.pkey_value.as(PkeyValue) }
       return if ids.empty?
 
       queryable.destroy_associations.each do |destroy_assoc|
@@ -446,7 +446,7 @@ module Crecto
         query = query.where(queryable.foreign_key_for_association(destroy_assoc), ids)
         join_associations = all(join_klass, query)
         outer_klass_ids = join_associations.map{|ja| outer_klass.foreign_key_value_for_association(through_key, ja) }
-        join_klass_ids = join_associations.map{|ja| ja.pkey_value }
+        join_klass_ids = join_associations.map{|ja| ja.pkey_value.as(PkeyValue) }
         delete_all(join_klass,  Query.where(:id, join_klass_ids), tx) unless join_klass_ids.empty?
         delete_all(outer_klass, Query.where(:id, outer_klass_ids), tx) unless outer_klass_ids.empty?
       end
@@ -491,7 +491,7 @@ module Crecto
     end
 
     private def join_single(results, queryable, preload)
-      ids = results.map(&.pkey_value)
+      ids = results.map(&.pkey_value.as(PkeyValue))
       query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(preload), ids)
       relation_items = all(queryable.klass_for_association(preload), query)
       unless relation_items.nil?
@@ -507,7 +507,7 @@ module Crecto
     end
 
     private def join_through(results, queryable, preload)
-      ids = results.map(&.pkey_value)
+      ids = results.map(&.pkey_value.as(PkeyValue))
       join_query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(preload), ids)
       # UserProjects
       join_table_items = all(queryable.klass_for_association(queryable.through_key_for_association(preload).as(Symbol)), join_query)
@@ -546,7 +546,7 @@ module Crecto
       relation_items = all(queryable.klass_for_association(preload), query)
 
       unless relation_items.nil?
-        relation_items = relation_items.group_by { |t| t.pkey_value }
+        relation_items = relation_items.group_by { |t| t.pkey_value.as(PkeyValue) }
 
         results.each do |result|
           fkey = queryable.foreign_key_value_for_association(preload, result)

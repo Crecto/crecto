@@ -56,7 +56,7 @@ describe Crecto do
         u.stuff = 2343 # virtual, shouldn't be in query hash
         u.nope = 34.9900
         u.pageviews = 1234567890
-
+        
         u.to_query_hash.should eq({:name => "tester", :things => 6644, :smallnum => nil, :nope => 34.99, :yep => nil, :some_date => nil, :pageviews => 1234567890, :created_at => nil, :updated_at => nil})
       end
     end
