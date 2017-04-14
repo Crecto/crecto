@@ -38,7 +38,7 @@ describe Crecto do
 
           now = Time.now
           u.xyz = now
-          u.to_query_hash.should eq({:name => nil, :xyz => now, :user_id => nil})
+          u.to_query_hash.should eq({:name => nil, :xyz => now})
           UserDifferentDefaults.primary_key_field.should eq("user_id")
         end
 
@@ -57,7 +57,7 @@ describe Crecto do
         u.nope = 34.9900
         u.pageviews = 1234567890
         
-        u.to_query_hash.should eq({:name => "tester", :things => 6644, :smallnum => nil, :nope => 34.99, :yep => nil, :some_date => nil, :pageviews => 1234567890, :created_at => nil, :updated_at => nil, :id => nil})
+        u.to_query_hash.should eq({:name => "tester", :things => 6644, :smallnum => nil, :nope => 34.99, :yep => nil, :some_date => nil, :pageviews => 1234567890, :created_at => nil, :updated_at => nil})
       end
     end
 

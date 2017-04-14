@@ -166,7 +166,7 @@ module Crecto
           query_hash[{{UPDATED_AT_FIELD.id.symbolize}}] = self.{{UPDATED_AT_FIELD.id}}.nil? ? nil : (self.{{UPDATED_AT_FIELD.id}}.as(Time).local? ? self.{{UPDATED_AT_FIELD.id}}.as(Time).to_utc : self.{{UPDATED_AT_FIELD.id}})
         {% end %}
 
-        query_hash[{{PRIMARY_KEY_FIELD.id.symbolize}}] = self.{{PRIMARY_KEY_FIELD.id}}
+        query_hash[{{PRIMARY_KEY_FIELD.id.symbolize}}] = self.{{PRIMARY_KEY_FIELD.id}} unless self.{{PRIMARY_KEY_FIELD.id}}.nil?
 
         query_hash
       end
