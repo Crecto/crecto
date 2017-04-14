@@ -10,6 +10,7 @@ addons:
     packages:
       - sqlite3
 before_script:
+  - echo sqlite3 version ==-== $(sqlite3 --version)
   - mysql -e 'create database crecto_test'
   - mysql -Dcrecto_test < spec/migrations/mysql_migrations.sql
   - psql -c 'create database crecto_test;' -U postgres
