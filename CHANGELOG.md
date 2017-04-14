@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## Unreleased
 * fixed Repo - timezone issue [@metacortex](https://github.com/metacortex)
 * SMALLINT support (postgres and mysql)
+* can use `String` type as primary key
 
 ## [0.5.0] 2017-04-04
 * fixed but preventing updating of nil or false values - [@Zhomart](https://github.com/Zhomart)
