@@ -73,6 +73,10 @@ require "crecto"
 - [ ] Unique constraint
 - [x] Combine database adapters (base class). Currently there is unecessary duplication
 
+## Migrations
+
+[Micrate](https://github.com/juanedi/micrate) is recommended.  It is used and supported by core crystal members.
+
 ## Usage
 
 ```crystal
