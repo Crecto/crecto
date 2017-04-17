@@ -116,7 +116,7 @@ Query = Crecto::Repo::Query
 Multi = Crecto::Multi
 
 #
-# Define table name, fields and validations in your class
+# Define table name, fields and validations in your model
 #
 class User < Crecto::Model
 
@@ -156,7 +156,7 @@ changeset = User.changeset(user)
 changeset.valid? # true
 
 #
-# Use Repo to insert into database
+# Use Repo to insert into database.  Repo returns a new changeset.
 #
 changeset = Repo.insert(user)
 puts changeset.errors # []
