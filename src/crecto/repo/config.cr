@@ -35,10 +35,10 @@ module Crecto
       end
 
       def get_connection
-        if crecto_db.nil?
-          crecto_db = DB.open(database_url)
+        if @crecto_db.nil?
+          @crecto_db = DB.open(database_url)
         end
-        crecto_db.as(DB::Database)
+        @crecto_db.as(DB::Database)
       end
 
       private def set_url_db(io)
