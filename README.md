@@ -258,11 +258,11 @@ multi.errors.any?
 # JSON type (Postgres only)
 #
 
-class User < Crecto::Model
+class UserJson < Crecto::Model
   field :settings, Json
 end
 
-user = User.new
+user = UserJson.new
 user.settings = {"one" => "test", "two" => 123, "three" => 12321319323298}
 
 Repo.insert(user)
