@@ -2,8 +2,20 @@ module Crecto
   module Schema
     module HasMany
       macro has_many(association_name, klass, **opts)
+        @{{association_name.id}} : Array({{klass}})?
 
-        property {{association_name.id}} : Array({{klass}})?
+        def {{association_name.id}}? : Array({{klass}})?
+          @{{association_name.id}}
+        end
+
+        def {{association_name.id}} : Array({{klass}})
+          @{{association_name.id}} || raise Crecto::AssociationNotLoaded.new("Association `{{association_name.id}}' not loaded")
+        end
+
+        def {{association_name.id}}=(val : Array({{klass}}))
+          @{{association_name.id}} = val
+        end
+
 
         {%
           through = opts[:through] || nil

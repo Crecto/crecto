@@ -5,7 +5,16 @@ module Crecto
       VALID_BELONGS_TO_OPTIONS = [:foreign_key]
 
       macro belongs_to(association_name, klass, **opts)
-        property {{association_name.id}} : {{klass}}?
+        @{{association_name.id}} : {{klass}}?
+
+        def {{association_name.id}}? : {{klass}}?
+          @{{association_name.id}}
+        end
+
+        def {{association_name.id}} : {{klass}}
+          {{association_name.id}}? || raise Crecto::AssociationNotLoaded.new("Association `{{association_name.id}}' not loaded")
+        end
+
 
         {%
           foreign_key = klass.id.stringify.underscore.downcase + "_id"

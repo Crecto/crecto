@@ -48,6 +48,51 @@ describe Crecto do
       end
     end
 
+    describe "#belongs_to" do
+      it "should define a nilable accessor for the association" do
+        post = Post.new
+        post.user?.should eq(nil)
+      end
+
+      it "should define a non-nilable accessor for the association" do
+        post = Post.new
+        user = User.new
+        post.user = user
+        post.user.should eq(user)
+        typeof(post.user).should eq(User)
+      end
+    end
+
+    describe "#has_one" do
+      it "should define a nilable accessor for the association" do
+        user = User.new
+        user.post?.should eq(nil)
+      end
+
+      it "should define a non-nilable accessor for the association" do
+        user = User.new
+        post = Post.new
+        user.post = post
+        user.post.should eq(post)
+        typeof(user.post).should eq(Post)
+      end
+    end
+
+    describe "#has_many" do
+      it "should define a nilable accessor for the association" do
+        user = User.new
+        user.posts?.should eq(nil)
+      end
+
+      it "should define a non-nilable accessor for the association" do
+        user = User.new
+        post = Post.new
+        user.posts = [post]
+        user.posts.should eq([post])
+        typeof(user.posts).should eq(Array(Post))
+      end
+    end
+
     describe "#to_query_hash" do
       it "should build the correct hash from the object" do
         u = User.new
@@ -56,7 +101,7 @@ describe Crecto do
         u.stuff = 2343 # virtual, shouldn't be in query hash
         u.nope = 34.9900
         u.pageviews = 1234567890
-        
+
         u.to_query_hash.should eq({:name => "tester", :things => 6644, :smallnum => nil, :nope => 34.99, :yep => nil, :some_date => nil, :pageviews => 1234567890, :created_at => nil, :updated_at => nil})
       end
     end

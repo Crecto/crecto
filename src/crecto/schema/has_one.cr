@@ -5,7 +5,16 @@ module Crecto
       VALID_HAS_ONE_OPTIONS = [:foreign_key]
 
       macro has_one(association_name, klass, **opts)
-        property {{association_name.id}} : {{klass}}?
+        @{{association_name.id}} : {{klass}}?
+
+        def {{association_name.id}}? : {{klass}}?
+          @{{association_name.id}}
+        end
+
+        def {{association_name.id}} : {{klass}}
+          {{association_name.id}}? || raise Crecto::AssociationNotLoaded.new("Association `{{association_name.id}}' not loaded")
+        end
+
 
         {%
           foreign_key = @type.id.stringify.underscore.downcase + "_id"
@@ -25,6 +34,13 @@ module Crecto
         {% if on_replace && on_replace == :nullify %}
           self.add_nullify_association({{association_name.id.symbolize}})
         {% end %}
+
+        def {{association_name.id}}=(val : {{klass}}?)
+          @{{association_name.id}} = val
+          return if val.nil?
+          @{{foreign_key.id}} = val.pkey_value.as(PkeyValue)
+        end
+
 
         ASSOCIATIONS.push({
           association_type: :has_one,

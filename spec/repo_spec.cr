@@ -575,7 +575,7 @@ describe Crecto do
         Repo.insert(post)
 
         users = Repo.all(User, Query.where(id: user.id).preload(:posts))
-        users[0].posts.not_nil!.size.should eq(2)
+        users[0].posts.size.should eq(2)
       end
 
       it "should preload the has_many through association" do
@@ -593,8 +593,8 @@ describe Crecto do
 
         users = Repo.all(User, Query.where(id: user.id).preload(:projects))
         user = users[0]
-        user.user_projects.not_nil!.size.should eq 1
-        user.projects.not_nil!.size.should eq 1
+        user.user_projects.size.should eq 1
+        user.projects.size.should eq 1
       end
 
       it "shoud not preload if there are no 'through' associated records" do
@@ -603,7 +603,11 @@ describe Crecto do
         user = Repo.insert(user).instance
 
         users = Repo.all(User, Query.where(id: user.id).preload(:projects))
-        users[0].projects.should eq(nil)
+
+        expect_raises(Crecto::AssociationNotLoaded) do
+          users[0].projects
+        end
+        users[0].projects?.should eq(nil)
       end
 
       it "should preload the belongs_to association" do
@@ -616,7 +620,7 @@ describe Crecto do
         post = Repo.insert(post).instance
 
         posts = Repo.all(Post, Query.where(id: post.id).preload(:user))
-        posts[0].user.as(User).id.should eq(user.id)
+        posts[0].user.id.should eq(user.id)
       end
 
       it "should set the foreign key when setting the object" do
