@@ -12,7 +12,7 @@ module Crecto
     def config
       @@config
     end
-    
+
     # Return a list of *queryable* instances using *query*
     #
     # ```
@@ -24,8 +24,9 @@ module Crecto
 
       results = queryable.from_rs(q.as(DB::ResultSet))
 
-      if query.preloads.any?
-        add_preloads(results, queryable, query.preloads)
+      preloads = query.preloads + opts.fetch(:preload, [] of Symbol)
+      if preloads.any?
+        add_preloads(results, queryable, preloads)
       end
 
       results
@@ -422,7 +423,7 @@ module Crecto
       return if queryable.destroy_associations.empty? && queryable.nullify_associations.empty?
       q = query
       q.select([queryable.primary_key_field])
-      ids = all(queryable, q).map{|o| o.pkey_value.as(PkeyValue) }
+      ids = all(queryable, q).map { |o| o.pkey_value.as(PkeyValue) }
       return if ids.empty?
 
       queryable.destroy_associations.each do |destroy_assoc|
@@ -441,13 +442,13 @@ module Crecto
         delete_all(queryable.klass_for_association(destroy_assoc), q, tx)
       else
         outer_klass = queryable.klass_for_association(destroy_assoc) # Project
-        join_klass = queryable.klass_for_association(through_key) # UserProject
+        join_klass = queryable.klass_for_association(through_key)    # UserProject
         query = Query.select([join_klass.primary_key_field, join_klass.foreign_key_for_association(outer_klass).to_s])
         query = query.where(queryable.foreign_key_for_association(destroy_assoc), ids)
         join_associations = all(join_klass, query)
-        outer_klass_ids = join_associations.map{|ja| outer_klass.foreign_key_value_for_association(through_key, ja) }
-        join_klass_ids = join_associations.map{|ja| ja.pkey_value.as(PkeyValue) }
-        delete_all(join_klass,  Query.where(:id, join_klass_ids), tx) unless join_klass_ids.empty?
+        outer_klass_ids = join_associations.map { |ja| outer_klass.foreign_key_value_for_association(through_key, ja) }
+        join_klass_ids = join_associations.map { |ja| ja.pkey_value.as(PkeyValue) }
+        delete_all(join_klass, Query.where(:id, join_klass_ids), tx) unless join_klass_ids.empty?
         delete_all(outer_klass, Query.where(:id, outer_klass_ids), tx) unless outer_klass_ids.empty?
       end
     end
@@ -457,7 +458,7 @@ module Crecto
       if through_key.nil?
         foreign_key = queryable.foreign_key_for_association(nullify_assoc)
         q = Crecto::Repo::Query.where(foreign_key, ids)
-        update_all(queryable.klass_for_association(nullify_assoc), q, { foreign_key => nil }, tx)
+        update_all(queryable.klass_for_association(nullify_assoc), q, {foreign_key => nil}, tx)
       end
     end
 
