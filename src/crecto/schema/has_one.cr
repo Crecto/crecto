@@ -12,7 +12,7 @@ module Crecto
         end
 
         def {{association_name.id}} : {{klass}}
-          {{association_name.id}}? || raise Crecto::AssociationNotLoaded.new("Association `{{association_name.id}}' not loaded")
+          {{association_name.id}}? || raise Crecto::AssociationNotLoaded.new("Association `{{association_name.id}}' is not loaded or is nil. Use `{{association_name.id}}?' if the association is nilable.")
         end
 
 
