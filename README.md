@@ -228,21 +228,22 @@ posts[0].user # belongs_to relation preloaded
 #
 # Nil-check associations
 #
+# If an association is not loaded, the normal accessor will raise an error.
 users = Repo.all(User)
 users[0].posts? # => nil
 users[0].posts  # raises Crecto::AssociationNotLoaded
 
-# For has_many associations, the result will always be an array.
+# For has_many preloads, the result will always be an array.
 users = Repo.all(User, preload: [:posts])
 users[0].posts? # => Array(Post)
 users[0].posts  # => Array(Post)
 
-# For belongs_to and has_one, the result may still be nil if no record exists.
-# If the association is nullable, always use `association?`.
+# For belongs_to and has_one preloads, the result may still be nil if no
+# record exists. If the association is nullable, always use `association?`.
 post = Repo.insert(Post.new).instance
-posts = Repo.get(Post, post.id, preload: [:user])
-posts[0].user? # nil
-posts[0].user  # raises Crecto::AssociationNotLoaded
+post = Repo.get(Post, post.id, preload: [:user])
+post.user? # nil
+post.user  # raises Crecto::AssociationNotLoaded
 
 #
 # Aggregate functions
