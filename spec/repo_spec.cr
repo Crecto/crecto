@@ -318,6 +318,12 @@ describe Crecto do
           user = Repo.get!(User, 99999)
         end
       end
+
+      it "should work with a query" do
+        user = quick_create_user("get_with_a_query")
+        user = Repo.get!(User, user.id, Query.where(name: "get_with_a_query"))
+        user.name.should eq "get_with_a_query"
+      end
     end
 
     describe "#get_by" do
