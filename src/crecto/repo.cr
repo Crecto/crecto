@@ -108,7 +108,7 @@ module Crecto
     # user = Repo.get(User, 1, query)
     # ```
     def get!(queryable, id, query : Query)
-      if result = get(queryable, id, query : Query)
+      if result = get(queryable, id, query)
         result
       else
         raise NoResults.new("No Results")
