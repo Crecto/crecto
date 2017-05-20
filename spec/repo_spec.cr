@@ -100,6 +100,18 @@ describe Crecto do
         users.size.should be > 0
       end
 
+      it "should accept a list of preloads" do
+        name = "repo_all_with_preloads"
+        user = quick_create_user(name)
+        post = Post.new
+        post.user = user
+        Repo.insert(post)
+        Repo.insert(post)
+
+        users = Repo.all(User, Query.where(name: name), preload: [:posts])
+        users[0].posts.not_nil!.size.should eq(2)
+      end
+
       describe "#or_where" do
         it "should return the correct set" do
           user = User.new
