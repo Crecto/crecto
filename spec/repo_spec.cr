@@ -615,17 +615,39 @@ describe Crecto do
         user.projects.size.should eq 1
       end
 
-      it "shoud not preload if there are no 'through' associated records" do
+      it "should default to an empty array if there are no has_many associated records" do
+        user = User.new
+        user.name = "tester"
+        user = Repo.insert(user).instance
+
+        users = Repo.all(User, Query.where(id: user.id).preload(:posts))
+        users[0].posts.should be_a(Array(Post))
+        users[0].posts.size.should eq(0)
+      end
+
+      it "should default to an empty array if there are no 'through' associated records" do
         user = User.new
         user.name = "tester"
         user = Repo.insert(user).instance
 
         users = Repo.all(User, Query.where(id: user.id).preload(:projects))
+        users[0].user_projects.should be_a(Array(UserProject))
+        users[0].user_projects.size.should eq(0)
+        users[0].projects.should be_a(Array(Project))
+        users[0].projects.size.should eq(0)
+      end
+
+      it "should raise an error if a has_many has not been loaded" do
+        user = User.new
+        user.name = "tester"
+        user = Repo.insert(user).instance
+
+        users = Repo.all(User, Query.where(id: user.id))
 
         expect_raises(Crecto::AssociationNotLoaded) do
-          users[0].projects
+          users[0].posts
         end
-        users[0].projects?.should eq(nil)
+        users[0].posts?.should eq(nil)
       end
 
       it "should preload the belongs_to association" do
@@ -649,6 +671,23 @@ describe Crecto do
         post = Post.new
         post.user = user
         post.user_id.should eq(user.id)
+      end
+
+      it "should raise an error if a belongs_to has not been loaded" do
+        user = User.new
+        user.name = "tester"
+        user = Repo.insert(user).instance
+
+        post = Post.new
+        post.user_id = user.id
+        post = Repo.insert(post).instance
+
+        posts = Repo.all(Post, Query.where(id: post.id))
+
+        expect_raises(Crecto::AssociationNotLoaded) do
+          posts[0].user
+        end
+        posts[0].user?.should eq(nil)
       end
     end
 

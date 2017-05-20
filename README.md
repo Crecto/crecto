@@ -133,7 +133,7 @@ class User < Crecto::Model
 end
 
 class Post < Crecto::Model
-  
+
   schema "posts" do
     belongs_to :user, User
   end
@@ -219,11 +219,30 @@ posts = Repo.all(user, :posts)
 #
 # Preload associations
 #
-users = Repo.all(User, Query.new, preload: [:posts])
+users = Repo.all(User, preload: [:posts])
 users[0].posts # has_many relation is preloaded
 
-posts = Repo.all(Post, Query.new, preload: [:user])
+posts = Repo.all(Post, preload: [:user])
 posts[0].user # belongs_to relation preloaded
+
+#
+# Nil-check associations
+#
+users = Repo.all(User)
+users[0].posts? # => nil
+users[0].posts  # raises Crecto::AssociationNotLoaded
+
+# For has_many associations, the result will always be an array.
+users = Repo.all(User, preload: [:posts])
+users[0].posts? # => Array(Post)
+users[0].posts  # => Array(Post)
+
+# For belongs_to and has_one, the result may still be nil if no record exists.
+# If the association is nullable, always use `association?`.
+post = Repo.insert(Post.new).instance
+posts = Repo.get(Post, post.id, preload: [:user])
+posts[0].user? # nil
+posts[0].user  # raises Crecto::AssociationNotLoaded
 
 #
 # Aggregate functions
