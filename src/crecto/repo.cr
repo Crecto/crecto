@@ -122,8 +122,7 @@ module Crecto
     # post = Repo.get(user, :post)
     # ```
     def get(queryable_instance, association_name : Symbol)
-      results = all(queryable_instance, association_name)
-      results.first if results.any?
+      get_association(queryable_instance, association_name)
     end
 
     # Return a single instance of *queryable*
@@ -134,7 +133,7 @@ module Crecto
     # post = Repo.get(user, :post)
     # ```
     def get!(queryable_instance, association_name : Symbol)
-      if result = get(queryable_instance, association_name : Symbol)
+      if result = get(queryable_instance, association_name)
         result
       else
         raise NoResults.new("No Results")
@@ -557,6 +556,34 @@ module Crecto
           end
         end
       end
+    end
+
+    private def get_association(instance, association : Symbol)
+      case instance.class.association_type_for_association(association)
+      when :has_many
+        get_has_many_association(instance, association)
+      when :has_one
+        get_has_one_association(instance, association)
+      when :belongs_to
+        get_belongs_to_association(instance, association)
+      end
+    end
+
+    private def get_has_many_association(instance, association : Symbol)
+      all(instance, association)
+    end
+
+    private def get_has_one_association(instance, association : Symbol)
+      queryable = instance.class
+      query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(association), instance.pkey_value)
+      all(queryable.klass_for_association(association), query).first?
+    end
+
+    private def get_belongs_to_association(instance, association : Symbol)
+      queryable = instance.class
+      klass_for_association = queryable.klass_for_association(association)
+      key_for_association = queryable.foreign_key_value_for_association(association, instance)
+      get(klass_for_association, key_for_association)
     end
   end
 end

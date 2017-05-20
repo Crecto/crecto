@@ -20,10 +20,7 @@ module Crecto
         {%
           through = opts[:through] || nil
           foreign_key = @type.id.stringify.underscore.downcase + "_id"
-
-          if opts[:foreign_key]
-            foreign_key = opts[:foreign_key]
-          end
+          foreign_key = opts[:foreign_key] if opts[:foreign_key]
         %}
 
         {% on_replace = opts[:dependent] || opts[:on_replace] %}

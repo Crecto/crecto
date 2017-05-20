@@ -286,23 +286,66 @@ describe Crecto do
     end
 
     describe "#get" do
-      it "should return a user" do
-        now = Time.now
+      describe "on model" do
+        it "should return a user" do
+          now = Time.now
 
-        user = User.new
-        user.name = "test"
-        user.some_date = now
-        changeset = Repo.insert(user)
-        id = changeset.instance.id
-        user = Repo.get(User, id)
-        user.is_a?(User).should eq(true)
-        user.not_nil!.id.should eq(id)
-        user.not_nil!.some_date.as(Time).to_local.epoch_ms.should be_close(now.epoch_ms, 2000)
+          user = User.new
+          user.name = "test"
+          user.some_date = now
+          changeset = Repo.insert(user)
+          id = changeset.instance.id
+          user = Repo.get(User, id)
+          user.is_a?(User).should eq(true)
+          user.not_nil!.id.should eq(id)
+          user.not_nil!.some_date.as(Time).to_local.epoch_ms.should be_close(now.epoch_ms, 2000)
+        end
+
+        it "should return nil if not in db" do
+          user = Repo.get(User, 99999)
+          user.nil?.should eq true
+        end
       end
 
-      it "should return nil if not in db" do
-        user = Repo.get(User, 99999)
-        user.nil?.should eq true
+      describe "on instance" do
+        it "should return a belongs_to association result" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+          post = Post.new
+          post.user = user
+          post = Repo.insert(post).instance
+
+          user_from_post = Repo.get(post, :user)
+          user_from_post.should be_a(User)
+          user_from_post.as(User).name.should eq(user.name)
+        end
+
+        it "should return a has_many association result" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+          post = Post.new
+          post.user = user
+          Repo.insert(post)
+          Repo.insert(post)
+
+          posts_for_user = Repo.get(user, :posts)
+          posts_for_user.should be_a(Array(Post))
+          posts_for_user.as(Array(Post)).size.should eq(2)
+        end
+
+        it "should return a has_one association result" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+          post = Post.new
+          post.user = user
+          Repo.insert(post)
+
+          post_for_user = Repo.get(user, :post)
+          post_for_user.should be_a(Post)
+        end
       end
     end
 
