@@ -214,7 +214,10 @@ changeset = Repo.delete(user)
 #
 
 user = Repo.get(User, id).as(User)
-posts = Repo.all(user, :posts)
+posts = Repo.get_association(user, :posts)
+
+post = Repo.get(Post, id).as(Post)
+user = Repo.get_association(post, :user)
 
 #
 # Preload associations
