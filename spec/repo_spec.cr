@@ -286,66 +286,23 @@ describe Crecto do
     end
 
     describe "#get" do
-      describe "on model" do
-        it "should return a user" do
-          now = Time.now
+      it "should return a user" do
+        now = Time.now
 
-          user = User.new
-          user.name = "test"
-          user.some_date = now
-          changeset = Repo.insert(user)
-          id = changeset.instance.id
-          user = Repo.get(User, id)
-          user.is_a?(User).should eq(true)
-          user.not_nil!.id.should eq(id)
-          user.not_nil!.some_date.as(Time).to_local.epoch_ms.should be_close(now.epoch_ms, 2000)
-        end
-
-        it "should return nil if not in db" do
-          user = Repo.get(User, 99999)
-          user.nil?.should eq true
-        end
+        user = User.new
+        user.name = "test"
+        user.some_date = now
+        changeset = Repo.insert(user)
+        id = changeset.instance.id
+        user = Repo.get(User, id)
+        user.is_a?(User).should eq(true)
+        user.not_nil!.id.should eq(id)
+        user.not_nil!.some_date.as(Time).to_local.epoch_ms.should be_close(now.epoch_ms, 2000)
       end
 
-      describe "on instance" do
-        it "should return a belongs_to association result" do
-          user = User.new
-          user.name = "test"
-          user = Repo.insert(user).instance
-          post = Post.new
-          post.user = user
-          post = Repo.insert(post).instance
-
-          user_from_post = Repo.get(post, :user)
-          user_from_post.should be_a(User)
-          user_from_post.as(User).name.should eq(user.name)
-        end
-
-        it "should return a has_many association result" do
-          user = User.new
-          user.name = "test"
-          user = Repo.insert(user).instance
-          post = Post.new
-          post.user = user
-          Repo.insert(post)
-          Repo.insert(post)
-
-          posts_for_user = Repo.get(user, :posts)
-          posts_for_user.should be_a(Array(Post))
-          posts_for_user.as(Array(Post)).size.should eq(2)
-        end
-
-        it "should return a has_one association result" do
-          user = User.new
-          user.name = "test"
-          user = Repo.insert(user).instance
-          post = Post.new
-          post.user = user
-          Repo.insert(post)
-
-          post_for_user = Repo.get(user, :post)
-          post_for_user.should be_a(Post)
-        end
+      it "should return nil if not in db" do
+        user = Repo.get(User, 99999)
+        user.nil?.should eq true
       end
     end
 
@@ -402,6 +359,158 @@ describe Crecto do
       it "should not return a row" do
         expect_raises(Crecto::NoResults) do
           user = Repo.get_by!(User, id: 99999)
+        end
+      end
+    end
+
+    describe "#get_association" do
+      describe "with belongs_to" do
+        it "should return a single result" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+          post = Post.new
+          post.user = user
+          post = Repo.insert(post).instance
+
+          user_from_post = Repo.get_association(post, :user)
+          user_from_post.should be_a(User)
+          user_from_post.as(User).name.should eq(user.name)
+        end
+
+        it "should return nil if no record is found" do
+          post = Post.new
+          post.user_id = nil
+          post = Repo.insert(post).instance
+
+          user_from_post = Repo.get_association(post, :user)
+          user_from_post.should eq(nil)
+        end
+      end
+
+      describe "with has_many" do
+        it "should return an array" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+          post = Post.new
+          post.user = user
+          Repo.insert(post)
+          Repo.insert(post)
+
+          posts_for_user = Repo.get_association(user, :posts)
+          posts_for_user.should be_a(Array(Post))
+          posts_for_user.as(Array(Post)).size.should eq(2)
+        end
+
+        it "should return an empty array if no records are found" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+
+          posts_for_user = Repo.get_association(user, :posts)
+          posts_for_user.should be_a(Array(Post))
+          posts_for_user.as(Array(Post)).size.should eq(0)
+        end
+      end
+
+      describe "with has_one" do
+        it "should return a has_one association result" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+          post = Post.new
+          post.user = user
+          Repo.insert(post)
+
+          post_for_user = Repo.get_association(user, :post)
+          post_for_user.should be_a(Post)
+        end
+
+        it "should return nil if no record is found" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+
+          post_for_user = Repo.get_association(user, :post)
+          post_for_user.should eq(nil)
+        end
+      end
+    end
+
+    describe "#get_association!" do
+      describe "with belongs_to" do
+        it "should return a single result" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+          post = Post.new
+          post.user = user
+          post = Repo.insert(post).instance
+
+          user_from_post = Repo.get_association!(post, :user)
+          user_from_post.should be_a(User)
+          user_from_post.as(User).name.should eq(user.name)
+        end
+
+        it "should raise a NoResults error if no record is found" do
+          post = Post.new
+          post.user_id = nil
+          post = Repo.insert(post).instance
+
+          expect_raises(Crecto::NoResults) do
+            user_from_post = Repo.get_association!(post, :user)
+          end
+        end
+      end
+
+      describe "with has_many" do
+        it "should return an array" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+          post = Post.new
+          post.user = user
+          Repo.insert(post)
+          Repo.insert(post)
+
+          posts_for_user = Repo.get_association!(user, :posts)
+          posts_for_user.should be_a(Array(Post))
+          posts_for_user.as(Array(Post)).size.should eq(2)
+        end
+
+        it "should return an empty array if no records are found" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+
+          posts_for_user = Repo.get_association!(user, :posts)
+          posts_for_user.should be_a(Array(Post))
+          posts_for_user.as(Array(Post)).size.should eq(0)
+        end
+      end
+
+      describe "with has_one" do
+        it "should return a has_one association result" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+          post = Post.new
+          post.user = user
+          Repo.insert(post)
+
+          post_for_user = Repo.get_association!(user, :post)
+          post_for_user.should be_a(Post)
+        end
+
+        it "should raise a NoResults error if no record is found" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+
+          expect_raises(Crecto::NoResults) do
+            post_for_user = Repo.get_association!(user, :post)
+          end
         end
       end
     end
@@ -564,7 +673,7 @@ describe Crecto do
         Repo.insert(post)
         post = Repo.insert(post).instance
 
-        post = Repo.get(user, :post)
+        post = Repo.get_association(user, :post)
         post.class.should eq(Post)
       end
 
@@ -599,11 +708,11 @@ describe Crecto do
         address.user_id = user.id
         Repo.insert(address)
 
-        posts = Repo.all(user, :posts).as(Array(Post))
+        posts = Repo.get_association(user, :posts).as(Array(Post))
         posts.size.should eq(2)
         posts[0].user_id.should eq(user.id)
 
-        addresses = Repo.all(user, :addresses).as(Array(Address))
+        addresses = Repo.get_association(user, :addresses).as(Array(Address))
         addresses.size.should eq(1)
         addresses[0].user_id.should eq(user.id)
       end

@@ -32,17 +32,6 @@ module Crecto
       results
     end
 
-    # Return a list of *queryable* instances
-    #
-    # ```
-    # user = Crecto::Repo.get(User, 1)
-    # posts = Repo.all(user, :posts)
-    # ```
-    def all(queryable_instance, association_name : Symbol) : Array
-      query = Crecto::Repo::Query.where(queryable_instance.class.foreign_key_for_association(association_name), queryable_instance.pkey_value)
-      all(queryable_instance.class.klass_for_association(association_name), query)
-    end
-
     # Returns a list of *queryable* instances.  Accepts an optional `query`
     #
     # ```
@@ -115,31 +104,6 @@ module Crecto
       end
     end
 
-    # Return a single nilable instance of *queryable*
-    #
-    # ```
-    # user = Crecto::Repo.get(User, 1)
-    # post = Repo.get(user, :post)
-    # ```
-    def get(queryable_instance, association_name : Symbol)
-      get_association(queryable_instance, association_name)
-    end
-
-    # Return a single instance of *queryable*
-    # Raises `NoResults` error if the record does not exist
-    #
-    # ```
-    # user = Crecto::Repo.get(User, 1)
-    # post = Repo.get(user, :post)
-    # ```
-    def get!(queryable_instance, association_name : Symbol)
-      if result = get(queryable_instance, association_name)
-        result
-      else
-        raise NoResults.new("No Results")
-      end
-    end
-
     # Return a single nilable instance of *queryable* using the *query* param
     #
     # ```
@@ -159,6 +123,39 @@ module Crecto
     # ```
     def get_by!(queryable, **opts)
       if result = get_by(queryable, **opts)
+        result
+      else
+        raise NoResults.new("No Results")
+      end
+    end
+
+    # Return the value of the given association on *queryable_instance*
+    #
+    # ```
+    # user = Crecto::Repo.get(User, 1)
+    # post = Repo.get_association(user, :post)
+    # ```
+    def get_association(queryable_instance, association_name : Symbol)
+      case queryable_instance.class.association_type_for_association(association_name)
+      when :has_many
+        get_has_many_association(queryable_instance, association_name)
+      when :has_one
+        get_has_one_association(queryable_instance, association_name)
+      when :belongs_to
+        get_belongs_to_association(queryable_instance, association_name)
+      end
+    end
+
+    # Return the value of the given association on *queryable_instance*
+    # Raises `NoResults` error if association has no value. Will not raise
+    # for `has_many` associations.
+    #
+    # ```
+    # user = Crecto::Repo.get(User, 1)
+    # post = Repo.get_association!(user, :post)
+    # ```
+    def get_association!(queryable_instance, association_name : Symbol)
+      if result = get_association(queryable_instance, association_name)
         result
       else
         raise NoResults.new("No Results")
@@ -554,25 +551,14 @@ module Crecto
       end
     end
 
-    private def get_association(instance, association : Symbol)
-      case instance.class.association_type_for_association(association)
-      when :has_many
-        get_has_many_association(instance, association)
-      when :has_one
-        get_has_one_association(instance, association)
-      when :belongs_to
-        get_belongs_to_association(instance, association)
-      end
-    end
-
     private def get_has_many_association(instance, association : Symbol)
-      all(instance, association)
+      queryable = instance.class
+      query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(association), instance.pkey_value)
+      all(queryable.klass_for_association(association), query)
     end
 
     private def get_has_one_association(instance, association : Symbol)
-      queryable = instance.class
-      query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(association), instance.pkey_value)
-      all(queryable.klass_for_association(association), query).first?
+      get_has_many_association(instance, association).first?
     end
 
     private def get_belongs_to_association(instance, association : Symbol)
