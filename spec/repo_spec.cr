@@ -363,6 +363,158 @@ describe Crecto do
       end
     end
 
+    describe "#get_association" do
+      describe "with belongs_to" do
+        it "should return a single result" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+          post = Post.new
+          post.user = user
+          post = Repo.insert(post).instance
+
+          user_from_post = Repo.get_association(post, :user)
+          user_from_post.should be_a(User)
+          user_from_post.as(User).name.should eq(user.name)
+        end
+
+        it "should return nil if no record is found" do
+          post = Post.new
+          post.user_id = nil
+          post = Repo.insert(post).instance
+
+          user_from_post = Repo.get_association(post, :user)
+          user_from_post.should eq(nil)
+        end
+      end
+
+      describe "with has_many" do
+        it "should return an array" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+          post = Post.new
+          post.user = user
+          Repo.insert(post)
+          Repo.insert(post)
+
+          posts_for_user = Repo.get_association(user, :posts)
+          posts_for_user.should be_a(Array(Post))
+          posts_for_user.as(Array(Post)).size.should eq(2)
+        end
+
+        it "should return an empty array if no records are found" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+
+          posts_for_user = Repo.get_association(user, :posts)
+          posts_for_user.should be_a(Array(Post))
+          posts_for_user.as(Array(Post)).size.should eq(0)
+        end
+      end
+
+      describe "with has_one" do
+        it "should return a has_one association result" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+          post = Post.new
+          post.user = user
+          Repo.insert(post)
+
+          post_for_user = Repo.get_association(user, :post)
+          post_for_user.should be_a(Post)
+        end
+
+        it "should return nil if no record is found" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+
+          post_for_user = Repo.get_association(user, :post)
+          post_for_user.should eq(nil)
+        end
+      end
+    end
+
+    describe "#get_association!" do
+      describe "with belongs_to" do
+        it "should return a single result" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+          post = Post.new
+          post.user = user
+          post = Repo.insert(post).instance
+
+          user_from_post = Repo.get_association!(post, :user)
+          user_from_post.should be_a(User)
+          user_from_post.as(User).name.should eq(user.name)
+        end
+
+        it "should raise a NoResults error if no record is found" do
+          post = Post.new
+          post.user_id = nil
+          post = Repo.insert(post).instance
+
+          expect_raises(Crecto::NoResults) do
+            user_from_post = Repo.get_association!(post, :user)
+          end
+        end
+      end
+
+      describe "with has_many" do
+        it "should return an array" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+          post = Post.new
+          post.user = user
+          Repo.insert(post)
+          Repo.insert(post)
+
+          posts_for_user = Repo.get_association!(user, :posts)
+          posts_for_user.should be_a(Array(Post))
+          posts_for_user.as(Array(Post)).size.should eq(2)
+        end
+
+        it "should return an empty array if no records are found" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+
+          posts_for_user = Repo.get_association!(user, :posts)
+          posts_for_user.should be_a(Array(Post))
+          posts_for_user.as(Array(Post)).size.should eq(0)
+        end
+      end
+
+      describe "with has_one" do
+        it "should return a has_one association result" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+          post = Post.new
+          post.user = user
+          Repo.insert(post)
+
+          post_for_user = Repo.get_association!(user, :post)
+          post_for_user.should be_a(Post)
+        end
+
+        it "should raise a NoResults error if no record is found" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+
+          expect_raises(Crecto::NoResults) do
+            post_for_user = Repo.get_association!(user, :post)
+          end
+        end
+      end
+    end
+
     describe "#update" do
       it "should update the model" do
         now = Time.now.at_beginning_of_hour
@@ -521,7 +673,7 @@ describe Crecto do
         Repo.insert(post)
         post = Repo.insert(post).instance
 
-        post = Repo.get(user, :post)
+        post = Repo.get_association(user, :post)
         post.class.should eq(Post)
       end
 
@@ -556,11 +708,11 @@ describe Crecto do
         address.user_id = user.id
         Repo.insert(address)
 
-        posts = Repo.all(user, :posts).as(Array(Post))
+        posts = Repo.get_association(user, :posts).as(Array(Post))
         posts.size.should eq(2)
         posts[0].user_id.should eq(user.id)
 
-        addresses = Repo.all(user, :addresses).as(Array(Address))
+        addresses = Repo.get_association(user, :addresses).as(Array(Address))
         addresses.size.should eq(1)
         addresses[0].user_id.should eq(user.id)
       end
@@ -615,17 +767,39 @@ describe Crecto do
         user.projects.size.should eq 1
       end
 
-      it "shoud not preload if there are no 'through' associated records" do
+      it "should default to an empty array if there are no has_many associated records" do
+        user = User.new
+        user.name = "tester"
+        user = Repo.insert(user).instance
+
+        users = Repo.all(User, Query.where(id: user.id).preload(:posts))
+        users[0].posts.should be_a(Array(Post))
+        users[0].posts.size.should eq(0)
+      end
+
+      it "should default to an empty array if there are no 'through' associated records" do
         user = User.new
         user.name = "tester"
         user = Repo.insert(user).instance
 
         users = Repo.all(User, Query.where(id: user.id).preload(:projects))
+        users[0].user_projects.should be_a(Array(UserProject))
+        users[0].user_projects.size.should eq(0)
+        users[0].projects.should be_a(Array(Project))
+        users[0].projects.size.should eq(0)
+      end
+
+      it "should raise an error if a has_many has not been loaded" do
+        user = User.new
+        user.name = "tester"
+        user = Repo.insert(user).instance
+
+        users = Repo.all(User, Query.where(id: user.id))
 
         expect_raises(Crecto::AssociationNotLoaded) do
-          users[0].projects
+          users[0].posts
         end
-        users[0].projects?.should eq(nil)
+        users[0].posts?.should eq(nil)
       end
 
       it "should preload the belongs_to association" do
@@ -649,6 +823,23 @@ describe Crecto do
         post = Post.new
         post.user = user
         post.user_id.should eq(user.id)
+      end
+
+      it "should raise an error if a belongs_to has not been loaded" do
+        user = User.new
+        user.name = "tester"
+        user = Repo.insert(user).instance
+
+        post = Post.new
+        post.user_id = user.id
+        post = Repo.insert(post).instance
+
+        posts = Repo.all(Post, Query.where(id: post.id))
+
+        expect_raises(Crecto::AssociationNotLoaded) do
+          posts[0].user
+        end
+        posts[0].user?.should eq(nil)
       end
     end
 

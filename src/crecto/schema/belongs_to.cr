@@ -12,20 +12,17 @@ module Crecto
         end
 
         def {{association_name.id}} : {{klass}}
-          {{association_name.id}}? || raise Crecto::AssociationNotLoaded.new("Association `{{association_name.id}}' not loaded")
+          {{association_name.id}}? || raise Crecto::AssociationNotLoaded.new("Association `{{association_name.id}}' is not loaded or is nil. Use `{{association_name.id}}?' if the association is nilable.")
         end
 
 
         {%
           foreign_key = klass.id.stringify.underscore.downcase + "_id"
-
-          if opts[:foreign_key]
-            foreign_key = opts[:foreign_key]
-          end
+          foreign_key = opts[:foreign_key] if opts[:foreign_key]
         %}
 
         {% unless FIELDS.select{|f| f[:name] == foreign_key.id.symbolize}.size > 0 %}
-          field :{{foreign_key.id}}, PkeyValue
+          field {{foreign_key.id.symbolize}}, PkeyValue
         {% end %}
 
         def {{association_name.id}}=(val : {{klass}}?)

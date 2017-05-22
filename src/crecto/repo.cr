@@ -32,17 +32,6 @@ module Crecto
       results
     end
 
-    # Return a list of *queryable* instances
-    #
-    # ```
-    # user = Crecto::Repo.get(User, 1)
-    # posts = Repo.all(user, :posts)
-    # ```
-    def all(queryable_instance, association_name : Symbol) : Array
-      query = Crecto::Repo::Query.where(queryable_instance.class.foreign_key_for_association(association_name), queryable_instance.pkey_value)
-      all(queryable_instance.class.klass_for_association(association_name), query)
-    end
-
     # Returns a list of *queryable* instances.  Accepts an optional `query`
     #
     # ```
@@ -115,32 +104,6 @@ module Crecto
       end
     end
 
-    # Return a single nilable instance of *queryable*
-    #
-    # ```
-    # user = Crecto::Repo.get(User, 1)
-    # post = Repo.get(user, :post)
-    # ```
-    def get(queryable_instance, association_name : Symbol)
-      results = all(queryable_instance, association_name)
-      results.first if results.any?
-    end
-
-    # Return a single instance of *queryable*
-    # Raises `NoResults` error if the record does not exist
-    #
-    # ```
-    # user = Crecto::Repo.get(User, 1)
-    # post = Repo.get(user, :post)
-    # ```
-    def get!(queryable_instance, association_name : Symbol)
-      if result = get(queryable_instance, association_name : Symbol)
-        result
-      else
-        raise NoResults.new("No Results")
-      end
-    end
-
     # Return a single nilable instance of *queryable* using the *query* param
     #
     # ```
@@ -160,6 +123,39 @@ module Crecto
     # ```
     def get_by!(queryable, **opts)
       if result = get_by(queryable, **opts)
+        result
+      else
+        raise NoResults.new("No Results")
+      end
+    end
+
+    # Return the value of the given association on *queryable_instance*
+    #
+    # ```
+    # user = Crecto::Repo.get(User, 1)
+    # post = Repo.get_association(user, :post)
+    # ```
+    def get_association(queryable_instance, association_name : Symbol)
+      case queryable_instance.class.association_type_for_association(association_name)
+      when :has_many
+        get_has_many_association(queryable_instance, association_name)
+      when :has_one
+        get_has_one_association(queryable_instance, association_name)
+      when :belongs_to
+        get_belongs_to_association(queryable_instance, association_name)
+      end
+    end
+
+    # Return the value of the given association on *queryable_instance*
+    # Raises `NoResults` error if association has no value. Will not raise
+    # for `has_many` associations.
+    #
+    # ```
+    # user = Crecto::Repo.get(User, 1)
+    # post = Repo.get_association!(user, :post)
+    # ```
+    def get_association!(queryable_instance, association_name : Symbol)
+      if result = get_association(queryable_instance, association_name)
         result
       else
         raise NoResults.new("No Results")
@@ -478,8 +474,8 @@ module Crecto
     private def has_one_preload(results, queryable, preload)
       query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(preload), results[0].pkey_value)
       relation_item = all(queryable.klass_for_association(preload), query)
-      unless relation_item.nil? || relation_item.empty?
-        queryable.set_value_for_association(preload, results[0], relation_item[0])
+      if relation_item.first?
+        queryable.set_value_for_association(preload, results[0], relation_item.first)
       end
     end
 
@@ -495,15 +491,11 @@ module Crecto
       ids = results.map(&.pkey_value.as(PkeyValue))
       query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(preload), ids)
       relation_items = all(queryable.klass_for_association(preload), query)
-      unless relation_items.nil?
-        relation_items = relation_items.group_by { |t| queryable.foreign_key_value_for_association(preload, t) }
+      relation_items = relation_items.group_by { |t| queryable.foreign_key_value_for_association(preload, t) }
 
-        results.each do |result|
-          if relation_items.has_key?(result.pkey_value)
-            items = relation_items[result.pkey_value]
-            queryable.set_value_for_association(preload, result, items.map { |i| i.as(Crecto::Model) })
-          end
-        end
+      results.each do |result|
+        items = relation_items[result.pkey_value]? || [] of Crecto::Model
+        queryable.set_value_for_association(preload, result, items.map { |i| i.as(Crecto::Model) })
       end
     end
 
@@ -512,30 +504,30 @@ module Crecto
       join_query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(preload), ids)
       # UserProjects
       join_table_items = all(queryable.klass_for_association(queryable.through_key_for_association(preload).as(Symbol)), join_query)
-      unless join_table_items.nil? || join_table_items.empty?
-        # array of Project id's
+
+      # array of Project id's
+      if join_table_items.empty?
+        # Set default association values as empty arrays to avoid confusion
+        # between empty results and non-loaded associations.
+        results.each do |result|
+          queryable.set_value_for_association(queryable.through_key_for_association(preload).as(Symbol), result, [] of Crecto::Model)
+          queryable.set_value_for_association(preload, result, [] of Crecto::Model)
+        end
+      else
         join_ids = join_table_items.map { |i| queryable.klass_for_association(preload).foreign_key_value_for_association(queryable.through_key_for_association(preload).as(Symbol), i) }
         association_query = Crecto::Repo::Query.where(queryable.klass_for_association(preload).primary_key_field_symbol, join_ids)
         # Projects
         relation_items = all(queryable.klass_for_association(preload), association_query)
-
         # UserProject grouped by user_id
         join_table_items = join_table_items.group_by { |t| queryable.foreign_key_value_for_association(queryable.through_key_for_association(preload).as(Symbol), t) }
 
         results.each do |result|
-          if join_table_items.has_key?(result.pkey_value)
-            join_items = join_table_items[result.pkey_value]
-
-            # set join table has_many assocation i.e. user.user_projects
-            queryable.set_value_for_association(queryable.through_key_for_association(preload).as(Symbol), result, join_items.map { |i| i.as(Crecto::Model) })
-
-            unless relation_items.nil?
-              queryable_relation_items = relation_items.select { |i| join_ids.includes?(i.pkey_value) }
-
-              # set association i.e. user.projects
-              queryable.set_value_for_association(preload, result, queryable_relation_items.map { |i| i.as(Crecto::Model) })
-            end
-          end
+          join_items = join_table_items[result.pkey_value]? || [] of Crecto::Model
+          # set join table has_many assocation i.e. user.user_projects
+          queryable.set_value_for_association(queryable.through_key_for_association(preload).as(Symbol), result, join_items.map { |i| i.as(Crecto::Model) })
+          queryable_relation_items = relation_items.select { |i| join_ids.includes?(i.pkey_value) }
+          # set association i.e. user.projects
+          queryable.set_value_for_association(preload, result, queryable_relation_items.map { |i| i.as(Crecto::Model) })
         end
       end
     end
@@ -557,6 +549,23 @@ module Crecto
           end
         end
       end
+    end
+
+    private def get_has_many_association(instance, association : Symbol)
+      queryable = instance.class
+      query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(association), instance.pkey_value)
+      all(queryable.klass_for_association(association), query)
+    end
+
+    private def get_has_one_association(instance, association : Symbol)
+      get_has_many_association(instance, association).first?
+    end
+
+    private def get_belongs_to_association(instance, association : Symbol)
+      queryable = instance.class
+      klass_for_association = queryable.klass_for_association(association)
+      key_for_association = queryable.foreign_key_value_for_association(association, instance)
+      get(klass_for_association, key_for_association)
     end
   end
 end

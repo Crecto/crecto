@@ -4,6 +4,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+* Fix `Repo.get` for associations [@faultyserver](https://github.com/faultyserver)
+* Always set `has_many` association values [@faultyserver](https://github.com/faultyserver)
 
 ## [0.5.4] 2017-05-20
 * Moved Crecto to an organization
