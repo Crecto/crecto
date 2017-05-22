@@ -20,6 +20,11 @@ module Crecto
 
       DESTROY_ASSOCIATIONS = Array(Symbol).new
       NULLIFY_ASSOCIATIONS = Array(Symbol).new
+      MODEL_FIELDS = [] of NamedTuple(name: Symbol, type: String)
+
+      def self.fields
+        MODEL_FIELDS
+      end
 
       def self.destroy_associations
         DESTROY_ASSOCIATIONS
