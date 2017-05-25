@@ -4,6 +4,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+* `update_from_hash` method added, for updating records from `HTTP::Params#to_s` (to support crecto-admin)
+* added `Repo#get_association`, depreciating `Repo#get(post, :user)` and `Repo#all(user, :posts)` for getting associations
 * Fix `Repo.get` for associations [@faultyserver](https://github.com/faultyserver)
 * Always set `has_many` association values [@faultyserver](https://github.com/faultyserver)
 
