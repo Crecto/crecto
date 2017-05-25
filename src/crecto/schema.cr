@@ -94,7 +94,12 @@ module Crecto
         @@changeset_fields << {{field_name}}
       {% end %}
 
-      {% FIELDS.push({name: field_name, type: field_type}) unless primary_key %}
+      {% unless primary_key %}
+        {% FIELDS.push({name: field_name, type: field_type}) %}
+        {% unless virtual %}
+          MODEL_FIELDS.push({name: {{field_name}}, type: {{field_type.id.stringify}}})
+        {% end %}
+      {% end %}
     end
 
     # Macro to change created_at field name
@@ -128,13 +133,16 @@ module Crecto
          end %}
 
       {% mapping.push(PRIMARY_KEY_FIELD.id.stringify + ": {type: #{PRIMARY_KEY_FIELD_TYPE.id}, nilable: true}") %}
+      MODEL_FIELDS.push({name: {{PRIMARY_KEY_FIELD.id.symbolize}}, type: {{PRIMARY_KEY_FIELD_TYPE}}})
 
       {% unless CREATED_AT_FIELD == nil %}
         {% mapping.push(CREATED_AT_FIELD.id.stringify + ": {type: Time, nilable: true}") %}
+        MODEL_FIELDS.push({name: {{CREATED_AT_FIELD.id.symbolize}}, type: "Time"})
       {% end %}
 
       {% unless UPDATED_AT_FIELD == nil %}
         {% mapping.push(UPDATED_AT_FIELD.id.stringify + ": {type: Time, nilable: true}") %}
+        MODEL_FIELDS.push({name: {{UPDATED_AT_FIELD.id.symbolize}}, type: "Time"})
       {% end %}
 
       DB.mapping({ {{mapping.uniq.join(", ").id}} }, false)
@@ -169,6 +177,35 @@ module Crecto
         query_hash[{{PRIMARY_KEY_FIELD.id.symbolize}}] = self.{{PRIMARY_KEY_FIELD.id}} unless self.{{PRIMARY_KEY_FIELD.id}}.nil?
 
         query_hash
+      end
+
+      def update_from_hash(hash : Hash(String, DbValue))
+        hash.each do |key, value|
+          case key.to_s
+          {% for field in FIELDS %}
+          when "{{field[:name].id}}"
+            if value.to_s.empty?
+              @{{field[:name].id}} = nil
+            else
+              {% if field[:type].id.stringify == "String" %}
+                @{{field[:name].id}} = value.to_s
+              {% elsif field[:type].id.stringify == "Int16" %}
+                @{{field[:name].id}} = value.to_i16 if value.to_i16?
+              {% elsif field[:type].id.stringify.includes?("Int") %}
+                @{{field[:name].id}} = value.to_i if value.to_i?
+              {% elsif field[:type].id.stringify.includes?("Float") %}
+                @{{field[:name].id}} = value.to_f if value.to_f?
+              {% elsif field[:type].id.stringify == "Bool" %}
+                @{{field[:name].id}} = (value == "true")
+              {% elsif field[:type].id.stringify == "Time" %}
+                begin
+                  @{{field[:name].id}} = Time.parse(value, "%F %T %z")
+                end
+              {% end %}
+            end
+          {% end %}
+          end
+        end
       end
 
       # Returns the value of the primary key field
