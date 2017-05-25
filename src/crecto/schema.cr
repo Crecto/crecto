@@ -56,7 +56,8 @@ module Crecto
       # macro constants
       VALID_FIELD_TYPES = [String, Int64, Int32, Int16, Float32, Float64, Bool, Time, Int32 | Int64, Float32 | Float64, Json, PkeyValue]
       VALID_FIELD_OPTIONS = [:primary_key, :virtual]
-      FIELDS = [] of NamedTuple(name: Symbol, type: String)
+      FIELDS      = [] of NamedTuple(name: Symbol, type: String)
+      ENUM_FIELDS = [] of NamedTuple(name: Symbol, type: String, column_name: String, column_type: String)
 
       # Class variables
       @@table_name = {{table_name.id.stringify}}
@@ -100,6 +101,23 @@ module Crecto
           MODEL_FIELDS.push({name: {{field_name}}, type: {{field_type.id.stringify}}})
         {% end %}
       {% end %}
+    end
+
+    # Enum field definition macro.
+    # `opts` can include `column_name` to set the name of the backing column
+    # in the database and `column_type` to set the type of that column (String
+    # and Int are currently supported)
+    macro enum_field(field_name, field_type, **opts)
+      {%
+        column_type = String
+        column_type = opts[:column_type] if opts[:column_type]
+        column_name = "#{field_name.id}_#{column_type.id.stringify.downcase.id}"
+        column_name = opts[:column_name] if opts[:column_name]
+      %}
+
+      field({{column_name.id.symbolize}}, {{column_type}})
+
+      {% ENUM_FIELDS.push({name: field_name, type: field_type, column_name: column_name, column_type: column_type}) %}
     end
 
     # Macro to change created_at field name
@@ -154,6 +172,26 @@ module Crecto
           @{{field.id}} = JSON::Any.new(json)
         end
       {% end %}
+
+      {% for enum_field in ENUM_FIELDS %}
+        def {{enum_field[:name].id}} : {{enum_field[:type].id}}
+          {% if enum_field[:column_type].id.stringify == "String" %}
+            @{{enum_field[:name].id}} ||= {{enum_field[:type].id}}.parse(@{{enum_field[:column_name].id}} || "")
+          {% elsif enum_field[:column_type].id.stringify.includes?("Int") %}
+            @{{enum_field[:name].id}} ||= {{enum_field[:type].id}}.new(@{{enum_field[:column_name].id}} || 0)
+          {% end %}
+        end
+
+        def {{enum_field[:name].id}}=(val : {{enum_field[:type].id}})
+          @{{enum_field[:name].id}} = val
+          {% if enum_field[:column_type].id.stringify == "String" %}
+            @{{enum_field[:column_name].id}} = val.to_s
+          {% elsif enum_field[:column_type].id.stringify.includes?("Int") %}
+            @{{enum_field[:column_name].id}} = val.value
+          {% end %}
+        end
+      {% end %}
+
 
       # Builds a hash from all `FIELDS` defined
       def to_query_hash

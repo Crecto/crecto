@@ -48,6 +48,57 @@ describe Crecto do
       end
     end
 
+    describe "#enum_field" do
+      it "should define a field for the enum" do
+        u = Vehicle.new
+        u.state = Vehicle::State::RUNNING
+
+        u.state.should eq(Vehicle::State::RUNNING)
+      end
+
+      it "should define a column field for the enum" do
+        u = Vehicle.new
+        u.state = Vehicle::State::RUNNING
+        u.state_string.should be_a(String)
+      end
+
+      it "should accept a user-specified column field name" do
+        # enum_field :make, Make, column_name: "vehicle_type"
+        u = Vehicle.new
+        u.make = Vehicle::Make::SEDAN
+        u.vehicle_type.should eq("SEDAN")
+      end
+
+      it "should update the column field when the enum field is set" do
+        u = Vehicle.new
+        u.state = Vehicle::State::RUNNING
+        u.state_string.should eq("RUNNING")
+
+        u.state = Vehicle::State::OFF
+        u.state_string.should eq("OFF")
+      end
+
+      it "should save the column field to the database" do
+        u = Vehicle.new
+        u.state = Vehicle::State::RUNNING
+        u.make = Vehicle::Make::SEDAN
+        id = Repo.insert(u).instance.id
+
+        user = Repo.get!(Vehicle, id)
+        user.state_string.should eq("RUNNING")
+      end
+
+      it "should parse the enum field value from the column name" do
+        u = Vehicle.new
+        u.state = Vehicle::State::RUNNING
+        u.make = Vehicle::Make::SEDAN
+        id = Repo.insert(u).instance.id
+
+        user = Repo.get!(Vehicle, id)
+        user.state.should eq(Vehicle::State::RUNNING)
+      end
+    end
+
     describe "#belongs_to" do
       it "should define a nilable accessor for the association" do
         post = Post.new
