@@ -63,10 +63,15 @@ describe Crecto do
       end
 
       it "should accept a user-specified column field name" do
-        # enum_field :make, Make, column_name: "vehicle_type"
         u = Vehicle.new
         u.make = Vehicle::Make::SEDAN
-        u.vehicle_type.should eq("SEDAN")
+        u.vehicle_type.should eq(Vehicle::Make::SEDAN.value)
+      end
+
+      it "should accept a type-override for the column field" do
+        u = Vehicle.new
+        u.make = Vehicle::Make::SEDAN
+        u.vehicle_type.should be_a(Int32)
       end
 
       it "should update the column field when the enum field is set" do
@@ -86,6 +91,7 @@ describe Crecto do
 
         user = Repo.get!(Vehicle, id)
         user.state_string.should eq("RUNNING")
+        user.vehicle_type.should eq(Vehicle::Make::SEDAN.value)
       end
 
       it "should parse the enum field value from the column name" do
@@ -96,6 +102,7 @@ describe Crecto do
 
         user = Repo.get!(Vehicle, id)
         user.state.should eq(Vehicle::State::RUNNING)
+        user.make.should eq(Vehicle::Make::SEDAN)
       end
     end
 

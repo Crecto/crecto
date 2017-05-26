@@ -106,7 +106,7 @@ module Crecto
     # Enum field definition macro.
     # `opts` can include `column_name` to set the name of the backing column
     # in the database and `column_type` to set the type of that column (String
-    # and Int are currently supported)
+    # and all Int types are currently supported)
     macro enum_field(field_name, field_type, **opts)
       {%
         column_type = String
@@ -174,22 +174,32 @@ module Crecto
       {% end %}
 
       {% for enum_field in ENUM_FIELDS %}
-        def {{enum_field[:name].id}} : {{enum_field[:type].id}}
-          {% if enum_field[:column_type].id.stringify == "String" %}
-            @{{enum_field[:name].id}} ||= {{enum_field[:type].id}}.parse(@{{enum_field[:column_name].id}} || "")
-          {% elsif enum_field[:column_type].id.stringify.includes?("Int") %}
-            @{{enum_field[:name].id}} ||= {{enum_field[:type].id}}.new(@{{enum_field[:column_name].id}} || 0)
-          {% end %}
-        end
+        {%
+          field_name = enum_field[:name].id
+          field_type = enum_field[:type].id
+          column_name = enum_field[:column_name].id
+          column_type = enum_field[:column_type].id
+        %}
+        {% if column_type.stringify == "String" %}
+          def {{field_name}} : {{field_type}}
+            @{{field_name}} ||= {{field_type}}.parse(@{{column_name}}.as?({{column_type}}) || "")
+          end
 
-        def {{enum_field[:name].id}}=(val : {{enum_field[:type].id}})
-          @{{enum_field[:name].id}} = val
-          {% if enum_field[:column_type].id.stringify == "String" %}
-            @{{enum_field[:column_name].id}} = val.to_s
-          {% elsif enum_field[:column_type].id.stringify.includes?("Int") %}
-            @{{enum_field[:column_name].id}} = val.value
-          {% end %}
-        end
+          def {{field_name}}=(val : {{field_type}})
+            @{{field_name}} = val
+            @{{column_name}} = val.to_s
+          end
+
+        {% elsif column_type.stringify.includes?("Int") %}
+          def {{field_name}} : {{field_type}}
+            @{{field_name}} ||= {{field_type}}.new(@{{column_name}}.as?({{column_type}}) || 0)
+          end
+
+          def {{field_name}}=(val : {{field_type}})
+            @{{field_name}} = val
+            @{{column_name}} = val.value
+          end
+        {% end %}
       {% end %}
 
 

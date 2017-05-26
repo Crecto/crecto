@@ -109,7 +109,7 @@ CREATE TABLE vehicles(
   id INTEGER NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (id),
   state_string varchar(255) NOT NULL,
-  vehicle_type varchar(255) NOT NULL,
+  vehicle_type INTEGER NOT NULL,
   created_at DATETIME,
   updated_at DATETIME
 );

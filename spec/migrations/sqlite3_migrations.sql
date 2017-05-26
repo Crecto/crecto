@@ -99,7 +99,7 @@ CREATE UNIQUE INDEX users_uuid_93vabznv8 ON users_uuid (uuid);
 CREATE TABLE vehicles(
   id INTEGER NOT NULL PRIMARY KEY,
   state_string VARCHAR(255) NOT NULL,
-  vehicle_type VARCHAR(255) NOT NULL,
+  vehicle_type INTEGER NOT NULL,
   created_at DATETIME,
   updated_at DATETIME
 );
