@@ -182,7 +182,7 @@ module Crecto
         %}
         {% if column_type.stringify == "String" %}
           def {{field_name}} : {{field_type}}
-            @{{field_name}} ||= {{field_type}}.parse(@{{column_name}}.as?({{column_type}}) || "")
+            @{{field_name}} ||= {{field_type}}.parse(@{{column_name}}.to_s)
           end
 
           def {{field_name}}=(val : {{field_type}})
@@ -192,7 +192,7 @@ module Crecto
 
         {% elsif column_type.stringify.includes?("Int") %}
           def {{field_name}} : {{field_type}}
-            @{{field_name}} ||= {{field_type}}.new(@{{column_name}}.as?({{column_type}}) || 0)
+            @{{field_name}} ||= {{field_type}}.new(@{{column_name}}.not_nil!.to_i32)
           end
 
           def {{field_name}}=(val : {{field_type}})
