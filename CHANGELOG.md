@@ -4,6 +4,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+* `enum_field` support for [Enum](https://crystal-lang.org/api/0.22.0/Enum.html)s as model fields [@faultyserver](https://github.com/faultyserver)
 * `update_from_hash` method added, for updating records from `HTTP::Params#to_s` (to support crecto-admin)
 * added `Repo#get_association`, depreciating `Repo#get(post, :user)` and `Repo#all(user, :posts)` for getting associations
 * Fix `Repo.get` for associations [@faultyserver](https://github.com/faultyserver)
