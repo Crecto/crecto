@@ -50,59 +50,59 @@ describe Crecto do
 
     describe "#enum_field" do
       it "should define a field for the enum" do
-        u = Vehicle.new
-        u.state = Vehicle::State::RUNNING
+        v = Vehicle.new
+        v.state = Vehicle::State::RUNNING
 
-        u.state.should eq(Vehicle::State::RUNNING)
+        v.state.should eq(Vehicle::State::RUNNING)
       end
 
       it "should define a column field for the enum" do
-        u = Vehicle.new
-        u.state = Vehicle::State::RUNNING
-        u.state_string.should be_a(String)
+        v = Vehicle.new
+        v.state = Vehicle::State::RUNNING
+        v.state_string.should be_a(String)
       end
 
       it "should accept a user-specified column field name" do
-        u = Vehicle.new
-        u.make = Vehicle::Make::SEDAN
-        u.vehicle_type.should eq(Vehicle::Make::SEDAN.value)
+        v = Vehicle.new
+        v.make = Vehicle::Make::SEDAN
+        v.vehicle_type.should eq(Vehicle::Make::SEDAN.value)
       end
 
       it "should accept a type-override for the column field" do
-        u = Vehicle.new
-        u.make = Vehicle::Make::SEDAN
-        u.vehicle_type.should be_a(Int32)
+        v = Vehicle.new
+        v.make = Vehicle::Make::SEDAN
+        v.vehicle_type.should be_a(Int32)
       end
 
       it "should update the column field when the enum field is set" do
-        u = Vehicle.new
-        u.state = Vehicle::State::RUNNING
-        u.state_string.should eq("RUNNING")
+        v = Vehicle.new
+        v.state = Vehicle::State::RUNNING
+        v.state_string.should eq("RUNNING")
 
-        u.state = Vehicle::State::OFF
-        u.state_string.should eq("OFF")
+        v.state = Vehicle::State::OFF
+        v.state_string.should eq("OFF")
       end
 
       it "should save the column field to the database" do
-        u = Vehicle.new
-        u.state = Vehicle::State::RUNNING
-        u.make = Vehicle::Make::SEDAN
-        id = Repo.insert(u).instance.id
+        v = Vehicle.new
+        v.state = Vehicle::State::RUNNING
+        v.make = Vehicle::Make::SEDAN
+        id = Repo.insert(v).instance.id
 
-        user = Repo.get!(Vehicle, id)
-        user.state_string.should eq("RUNNING")
-        user.vehicle_type.should eq(Vehicle::Make::SEDAN.value)
+        vehicle = Repo.get!(Vehicle, id)
+        vehicle.state_string.should eq("RUNNING")
+        vehicle.vehicle_type.should eq(Vehicle::Make::SEDAN.value)
       end
 
       it "should parse the enum field value from the column name" do
-        u = Vehicle.new
-        u.state = Vehicle::State::RUNNING
-        u.make = Vehicle::Make::SEDAN
-        id = Repo.insert(u).instance.id
+        v = Vehicle.new
+        v.state = Vehicle::State::RUNNING
+        v.make = Vehicle::Make::SEDAN
+        id = Repo.insert(v).instance.id
 
-        user = Repo.get!(Vehicle, id)
-        user.state.should eq(Vehicle::State::RUNNING)
-        user.make.should eq(Vehicle::Make::SEDAN)
+        vehicle = Repo.get!(Vehicle, id)
+        vehicle.state.should eq(Vehicle::State::RUNNING)
+        vehicle.make.should eq(Vehicle::Make::SEDAN)
       end
     end
 
