@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS addresses;
 DROP TABLE IF EXISTS user_projects;
 DROP TABLE IF EXISTS projects;
 DROP TABLE IF EXISTS things;
+DROP TABLE IF EXISTS vehicles;
 
 CREATE TABLE users(
   id INTEGER NOT NULL AUTO_INCREMENT,
@@ -103,5 +104,16 @@ CREATE TABLE users_uuid(
 );
 
 CREATE UNIQUE INDEX users_uuid_93vabznv8 ON users_uuid (uuid);
+
+CREATE TABLE vehicles(
+  id INTEGER NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (id),
+  state_string varchar(255) NOT NULL,
+  vehicle_type INTEGER NOT NULL,
+  created_at DATETIME,
+  updated_at DATETIME
+);
+
+CREATE UNIQUE INDEX vehicles_f4f74ccccc on vehicles (id);
 
 COMMIT;

@@ -48,6 +48,64 @@ describe Crecto do
       end
     end
 
+    describe "#enum_field" do
+      it "should define a field for the enum" do
+        v = Vehicle.new
+        v.state = Vehicle::State::RUNNING
+
+        v.state.should eq(Vehicle::State::RUNNING)
+      end
+
+      it "should define a column field for the enum" do
+        v = Vehicle.new
+        v.state = Vehicle::State::RUNNING
+        v.state_string.should be_a(String)
+      end
+
+      it "should accept a user-specified column field name" do
+        v = Vehicle.new
+        v.make = Vehicle::Make::SEDAN
+        v.vehicle_type.should eq(Vehicle::Make::SEDAN.value)
+      end
+
+      it "should accept a type-override for the column field" do
+        v = Vehicle.new
+        v.make = Vehicle::Make::SEDAN
+        v.vehicle_type.should be_a(Int32)
+      end
+
+      it "should update the column field when the enum field is set" do
+        v = Vehicle.new
+        v.state = Vehicle::State::RUNNING
+        v.state_string.should eq("RUNNING")
+
+        v.state = Vehicle::State::OFF
+        v.state_string.should eq("OFF")
+      end
+
+      it "should save the column field to the database" do
+        v = Vehicle.new
+        v.state = Vehicle::State::RUNNING
+        v.make = Vehicle::Make::SEDAN
+        id = Repo.insert(v).instance.id
+
+        vehicle = Repo.get!(Vehicle, id)
+        vehicle.state_string.should eq("RUNNING")
+        vehicle.vehicle_type.should eq(Vehicle::Make::SEDAN.value)
+      end
+
+      it "should parse the enum field value from the column name" do
+        v = Vehicle.new
+        v.state = Vehicle::State::RUNNING
+        v.make = Vehicle::Make::SEDAN
+        id = Repo.insert(v).instance.id
+
+        vehicle = Repo.get!(Vehicle, id)
+        vehicle.state.should eq(Vehicle::State::RUNNING)
+        vehicle.make.should eq(Vehicle::Make::SEDAN)
+      end
+    end
+
     describe "#belongs_to" do
       it "should define a nilable accessor for the association" do
         post = Post.new
