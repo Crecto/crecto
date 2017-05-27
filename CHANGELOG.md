@@ -4,9 +4,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+
+## [0.6.0] 2017-05-26
 * `enum_field` support for [Enum](https://crystal-lang.org/api/0.22.0/Enum.html)s as model fields [@faultyserver](https://github.com/faultyserver)
 * `update_from_hash` method added, for updating records from `HTTP::Params#to_s` (to support crecto-admin)
-* added `Repo#get_association`, depreciating `Repo#get(post, :user)` and `Repo#all(user, :posts)` for getting associations
+* **(breaking change)** added `Repo#get_association`, depreciating `Repo#get(post, :user)` and `Repo#all(user, :posts)` for getting associations
 * Fix `Repo.get` for associations [@faultyserver](https://github.com/faultyserver)
 * Always set `has_many` association values [@faultyserver](https://github.com/faultyserver)
 
@@ -104,6 +106,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Query
 * Postgres Adapter
 
+[0.6.0]: https://github.com/fridgerator/crecto/compare/v0.5.4...v0.6.0
 [0.5.4]: https://github.com/fridgerator/crecto/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/fridgerator/crecto/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/fridgerator/crecto/compare/v0.5.1...v0.5.2
