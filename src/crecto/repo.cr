@@ -181,7 +181,7 @@ module Crecto
         changeset.add_error("insert_error", "Insert Failed")
       elsif config.adapter == Crecto::Adapters::Postgres || (config.adapter == Crecto::Adapters::Mysql && tx.nil?) ||
             (config.adapter == Crecto::Adapters::SQLite3 && tx.nil?)
-        new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first
+        new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first?
         changeset = new_instance.class.changeset(new_instance) if new_instance
       end
 
@@ -220,7 +220,7 @@ module Crecto
       if query.nil?
         changeset.add_error("update_error", "Update Failed")
       else
-        new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first
+        new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first?
         changeset = new_instance.class.changeset(new_instance) if new_instance
       end
 
