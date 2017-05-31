@@ -24,6 +24,9 @@ DROP TABLE IF EXISTS things;
 DROP INDEX IF EXISTS users_uuid_93vabznv8;
 DROP TABLE IF EXISTS users_uuid;
 
+DROP INDEX IF EXISTS vehicles_f4f74ccccc;
+DROP TABLE IF EXISTS vehicles;
+
 CREATE TABLE users(
   id INTEGER NOT NULL,
   name character varying NOT NULL,
@@ -219,5 +222,26 @@ ALTER SEQUENCE users_uuid_id_seq OWNED BY users_uuid.uuid;
 ALTER TABLE ONLY users_uuid ADD CONSTRAINT users_uuid_pkey PRIMARY KEY (uuid);
 ALTER TABLE ONLY users_uuid ALTER COLUMN uuid SET DEFAULT nextval('users_uuid_id_seq'::regclass);
 CREATE UNIQUE INDEX users_uuid_93vabznv8 on users_uuid (uuid);
+
+
+CREATE TABLE vehicles(
+  id INTEGER NOT NULL,
+  state_string character varying NOT NULL,
+  vehicle_type INTEGER NOT NULL,
+  created_at timestamp without time zone,
+  updated_at timestamp without time zone
+);
+
+CREATE SEQUENCE vehicles_id_seq
+  START WITH 1121
+  INCREMENT BY 1
+  NO MINVALUE
+  NO MAXVALUE
+  CACHE 1;
+
+ALTER SEQUENCE vehicles_id_seq OWNED BY vehicles.id;
+ALTER TABLE ONLY vehicles ADD CONSTRAINT vehicles_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY vehicles ALTER COLUMN id SET DEFAULT nextval('vehicles_id_seq'::regclass);
+CREATE UNIQUE INDEX vehicles_f4f74ccccc on vehicles (id);
 
 COMMIT;
