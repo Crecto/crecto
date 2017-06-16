@@ -96,7 +96,7 @@ module Repo
     conf.hostname = "localhost"
     conf.username = "user"
     conf.password = "password"
-    conf.port = 5342
+    conf.port = 5432
     # you can also set initial_pool_size, max_pool_size, max_idle_pool_size,
     #  checkout_timeout, retry_attempts, and retry_delay
   end
