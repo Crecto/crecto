@@ -33,7 +33,6 @@ module Crecto
 end
 
 if Repo.config.adapter == Crecto::Adapters::SQLite3
-
   describe "Crecto::Adapters::SQLite3" do
     Spec.before_each do
       Crecto::Adapters.clear_sql
@@ -44,7 +43,7 @@ if Repo.config.adapter == Crecto::Adapters::SQLite3
       check_sql do |sql|
         sql.should eq([
           "INSERT INTO users (name, things, smallnum, nope, yep, some_date, pageviews, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-          "SELECT * FROM users WHERE id = '#{u.instance.id}'"
+          "SELECT * FROM users WHERE id = '#{u.instance.id}'",
         ])
       end
     end
@@ -80,7 +79,7 @@ if Repo.config.adapter == Crecto::Adapters::SQLite3
       check_sql do |sql|
         sql.should eq([
           "UPDATE users SET name=?, things=?, smallnum=?, nope=?, yep=?, some_date=?, pageviews=?, created_at=?, updated_at=?, id=? WHERE id=#{changeset.instance.id}",
-          "SELECT * FROM users WHERE id = #{changeset.instance.id}"
+          "SELECT * FROM users WHERE id = #{changeset.instance.id}",
         ])
       end
     end
@@ -92,8 +91,8 @@ if Repo.config.adapter == Crecto::Adapters::SQLite3
       check_sql do |sql|
         sql.should eq(
           ["DELETE FROM addresses WHERE  addresses.user_id=?",
-            "SELECT user_projects.id, user_projects.project_id FROM user_projects WHERE  user_projects.user_id=?",
-            "SELECT * FROM users WHERE id=#{changeset.instance.id}"])
+           "SELECT user_projects.id, user_projects.project_id FROM user_projects WHERE  user_projects.user_id=?",
+           "SELECT * FROM users WHERE id=#{changeset.instance.id}"])
       end
     end
 
@@ -106,7 +105,5 @@ if Repo.config.adapter == Crecto::Adapters::SQLite3
         sql.should eq(["SELECT users.* FROM users WHERE  users.things IS NULL"])
       end
     end
-
   end
-
 end

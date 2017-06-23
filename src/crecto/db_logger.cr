@@ -8,7 +8,7 @@ module Crecto
     def self.log(string, elapsed) : Nil
       if handler = @@log_handler
         handler << if @@tty
-          "#{("%7.7s" % elapsed_text(elapsed)).colorize(:magenta) } #{string.colorize(:blue)}\n"
+          "#{("%7.7s" % elapsed_text(elapsed)).colorize(:magenta)} #{string.colorize(:blue)}\n"
         else
           "#{"%7.7s" % elapsed_text(elapsed)} #{string}\n"
         end
@@ -26,7 +26,7 @@ module Crecto
       @@log_handler = io
       @@tty = @@log_handler.not_nil!.tty?
     end
-  
+
     def self.unset_handler
       @@log_handler = nil
       @@tty = true

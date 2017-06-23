@@ -48,7 +48,7 @@ module UriRepoTest
   config do |conf|
     conf.adapter = Crecto::Adapters::Postgres
     conf.uri = "postgres://username:password@localhost:5432/uri_repo_test"
-  end  
+  end
 end
 
 describe "repo config" do

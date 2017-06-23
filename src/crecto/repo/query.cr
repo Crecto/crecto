@@ -221,7 +221,7 @@ module Crecto
       # Query.where(:name, "Conan")
       # ```
       def where(where_sym : Symbol, param : DbValue)
-        @wheres.push({ where_sym => param.as(DbValue) })
+        @wheres.push({where_sym => param.as(DbValue)})
         self
       end
 

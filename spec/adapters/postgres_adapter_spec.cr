@@ -28,7 +28,6 @@ module Crecto
 end
 
 if Repo.config.adapter == Crecto::Adapters::Postgres
-
   describe "Crecto::Adapters::Postgres" do
     Spec.before_each do
       Crecto::Adapters.clear_sql
@@ -82,8 +81,8 @@ if Repo.config.adapter == Crecto::Adapters::Postgres
       check_sql do |sql|
         sql.should eq(
           ["DELETE FROM addresses WHERE  addresses.user_id=$1",
-            "SELECT user_projects.id, user_projects.project_id FROM user_projects WHERE  user_projects.user_id=$1",
-            "DELETE FROM users WHERE id=#{changeset.instance.id} RETURNING *"])
+           "SELECT user_projects.id, user_projects.project_id FROM user_projects WHERE  user_projects.user_id=$1",
+           "DELETE FROM users WHERE id=#{changeset.instance.id} RETURNING *"])
       end
     end
 
@@ -97,5 +96,4 @@ if Repo.config.adapter == Crecto::Adapters::Postgres
       end
     end
   end
-
 end

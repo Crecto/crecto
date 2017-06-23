@@ -21,7 +21,7 @@ module Crecto
           foreign_key = opts[:foreign_key] if opts[:foreign_key]
         %}
 
-        {% unless FIELDS.select{|f| f[:name] == foreign_key.id.symbolize}.size > 0 %}
+        {% unless FIELDS.select { |f| f[:name] == foreign_key.id.symbolize }.size > 0 %}
           field {{foreign_key.id.symbolize}}, PkeyValue
         {% end %}
 
