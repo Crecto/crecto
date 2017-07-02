@@ -91,7 +91,7 @@ if Repo.config.adapter == Crecto::Adapters::SQLite3
       check_sql do |sql|
         sql.should eq(
           ["DELETE FROM addresses WHERE  addresses.user_id=?",
-           "SELECT user_projects.id, user_projects.project_id FROM user_projects WHERE  user_projects.user_id=?",
+           "SELECT user_projects.project_id FROM user_projects WHERE  user_projects.user_id=?",
            "SELECT * FROM users WHERE id=#{changeset.instance.id}"])
       end
     end

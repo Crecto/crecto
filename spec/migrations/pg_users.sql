@@ -147,24 +147,11 @@ CREATE UNIQUE INDEX projects_88fsssfsf ON projects (id);
 
 
 CREATE TABLE user_projects(
-  id INTEGER NOT NULL,
   user_id INTEGER,
   project_id INTEGER references projects(id),
   created_at timestamp without time zone,
   updated_at timestamp without time zone
 );
-
-CREATE SEQUENCE user_projects_id_seq
-  START WITH 1121
-  INCREMENT BY 1
-  NO MINVALUE
-  NO MAXVALUE
-  CACHE 1;
-
-ALTER SEQUENCE user_projects_id_seq OWNED BY user_projects.id;
-ALTER TABLE ONLY user_projects ADD CONSTRAINT user_projects_pkey PRIMARY KEY (id);
-ALTER TABLE ONLY user_projects ALTER COLUMN id SET DEFAULT nextval('user_projects_id_seq'::regclass);
-CREATE UNIQUE INDEX user_projects_dd8dfss ON user_projects (id);
 
 CREATE TABLE users_json(
   id INTEGER NOT NULL,

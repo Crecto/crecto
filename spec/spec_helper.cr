@@ -45,7 +45,7 @@ class Project < Crecto::Model
 end
 
 class UserProject < Crecto::Model
-  schema "user_projects" do
+  schema "user_projects", primary_key: false do
     belongs_to :user, User
     belongs_to :project, Project
   end

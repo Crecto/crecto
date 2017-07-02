@@ -22,6 +22,10 @@ module Crecto
       NULLIFY_ASSOCIATIONS = Array(Symbol).new
       MODEL_FIELDS = [] of NamedTuple(name: Symbol, type: String)
 
+      def self.use_primary_key?
+        USE_PRIMARY_KEY
+      end
+
       def self.fields
         MODEL_FIELDS
       end
