@@ -77,6 +77,18 @@ describe Crecto do
 
         users = Repo.all(User, query)
         users.size.should be > 0
+
+        query = Query
+          .where(:name, [] of String)
+
+        users = Repo.all(User, query)
+        users.size.should eq 0
+
+        query = Query
+          .where(name: [] of String)
+
+        users = Repo.all(User, query)
+        users.size.should eq 0
       end
 
       it "should allow IS NULL queries" do

@@ -224,7 +224,11 @@ module Crecto
 
           results = " #{queryable.table_name}.#{key.to_s}"
           results += if where[key].is_a?(Array)
-                       " IN (" + where[key].as(Array).uniq.map { |p| "?" }.join(", ") + ")"
+                       if where[key].as(Array).size === 0
+                         next " 1=0"
+                       else
+                         " IN (" + where[key].as(Array).uniq.map { |p| "?" }.join(", ") + ")"
+                       end
                      elsif where[key].is_a?(Nil)
                        " IS NULL"
                      else
