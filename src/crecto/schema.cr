@@ -129,12 +129,12 @@ module Crecto
     end
 
     # Macro to change created_at field name
-    macro created_at_field(val)
+    macro set_created_at_field(val)
       CREATED_AT_FIELD = {{val}}
     end
 
     # Macro to chnage updated_at field name
-    macro updated_at_field(val)
+    macro set_updated_at_field(val)
       UPDATED_AT_FIELD = {{val}}
     end
 
