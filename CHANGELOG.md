@@ -4,7 +4,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
-* use 'first?' to prevent 'IndexError' when insert/update [@metacortex](https://github.com/metacortex)w
+* **(breaking change)** `created_at_field` changed to `set_created_at_field`, `updated_at_field` changed to `set_updated_at_field`
+* option to use schema without a primary key
+* use 'first?' to prevent 'IndexError' when insert/update [@metacortex](https://github.com/metacortex)
 
 ## [0.6.0] 2017-05-26
 * `enum_field` support for [Enum](https://crystal-lang.org/api/0.22.0/Enum.html)s as model fields [@faultyserver](https://github.com/faultyserver)

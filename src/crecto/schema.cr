@@ -37,6 +37,8 @@ module Crecto
     # :nodoc:
     PRIMARY_KEY_FIELD = "id"
     # :nodoc:
+    USE_PRIMARY_KEY = true
+    # :nodoc:
     PRIMARY_KEY_FIELD_SYMBOL = :id
     # :nodoc:
     PRIMARY_KEY_FIELD_TYPE = "PkeyValue"
@@ -51,7 +53,12 @@ module Crecto
     through: Symbol?)).new
 
     # schema block macro
-    macro schema(table_name, &block)
+    macro schema(table_name, **opts, &block)
+      {% for opt in opts %}
+        {% if opt.id.stringify == "primary_key" %}
+          USE_PRIMARY_KEY = {{opts[:primary_key]}}
+        {% end %}
+      {% end %}
 
       # macro constants
       VALID_FIELD_TYPES = [String, Int64, Int32, Int16, Float32, Float64, Bool, Time, Int32 | Int64, Float32 | Float64, Json, PkeyValue]
@@ -79,6 +86,7 @@ module Crecto
       # check `primary_key` and `virtual` options
       {% virtual = false %}
       {% primary_key = false %}
+
       {% if opts[:primary_key] %}
         PRIMARY_KEY_FIELD = {{field_name.id.stringify}}
         PRIMARY_KEY_FIELD_SYMBOL = {{field_name.id.symbolize}}
@@ -121,12 +129,12 @@ module Crecto
     end
 
     # Macro to change created_at field name
-    macro created_at_field(val)
+    macro set_created_at_field(val)
       CREATED_AT_FIELD = {{val}}
     end
 
     # Macro to chnage updated_at field name
-    macro updated_at_field(val)
+    macro set_updated_at_field(val)
       UPDATED_AT_FIELD = {{val}}
     end
 
@@ -150,8 +158,10 @@ module Crecto
            "#{field[:name].id.stringify}: {type: #{field_type.id}, nilable: true}"
          end %}
 
-      {% mapping.push(PRIMARY_KEY_FIELD.id.stringify + ": {type: #{PRIMARY_KEY_FIELD_TYPE.id}, nilable: true}") %}
-      MODEL_FIELDS.push({name: {{PRIMARY_KEY_FIELD.id.symbolize}}, type: {{PRIMARY_KEY_FIELD_TYPE}}})
+      {% if USE_PRIMARY_KEY %}
+        {% mapping.push(PRIMARY_KEY_FIELD.id.stringify + ": {type: #{PRIMARY_KEY_FIELD_TYPE.id}, nilable: true}") %}
+        MODEL_FIELDS.push({name: {{PRIMARY_KEY_FIELD.id.symbolize}}, type: {{PRIMARY_KEY_FIELD_TYPE}}})
+      {% end %}
 
       {% unless CREATED_AT_FIELD == nil %}
         {% mapping.push(CREATED_AT_FIELD.id.stringify + ": {type: Time, nilable: true}") %}
@@ -222,7 +232,9 @@ module Crecto
           query_hash[{{UPDATED_AT_FIELD.id.symbolize}}] = self.{{UPDATED_AT_FIELD.id}}.nil? ? nil : (self.{{UPDATED_AT_FIELD.id}}.as(Time).local? ? self.{{UPDATED_AT_FIELD.id}}.as(Time).to_utc : self.{{UPDATED_AT_FIELD.id}})
         {% end %}
 
-        query_hash[{{PRIMARY_KEY_FIELD.id.symbolize}}] = self.{{PRIMARY_KEY_FIELD.id}} unless self.{{PRIMARY_KEY_FIELD.id}}.nil?
+        {% if USE_PRIMARY_KEY %}
+          query_hash[{{PRIMARY_KEY_FIELD.id.symbolize}}] = self.{{PRIMARY_KEY_FIELD.id}} unless self.{{PRIMARY_KEY_FIELD.id}}.nil?
+        {% end %}
 
         query_hash
       end
@@ -258,7 +270,9 @@ module Crecto
 
       # Returns the value of the primary key field
       def pkey_value
+        {% if USE_PRIMARY_KEY %}
         self.{{PRIMARY_KEY_FIELD.id}}
+        {% end %}
       end
 
       def update_primary_key(val)

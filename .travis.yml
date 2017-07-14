@@ -14,7 +14,6 @@ before_script:
   - mysql -Dcrecto_test < spec/migrations/mysql_migrations.sql
   - psql -c 'create database crecto_test;' -U postgres
   - psql $PG_URL < spec/migrations/pg_users.sql
-  - sqlite3 --version
   - sqlite3 ./crecto_test.db < spec/migrations/sqlite3_migrations.sql
   - if [ ! -z "$PG_URL" ]; then cp ./spec/travis_pg_repo.cr ./spec/repo.cr; fi
   - if [ ! -z "$MYSQL_URL" ]; then cp ./spec/travis_mysql_repo.cr ./spec/repo.cr; fi

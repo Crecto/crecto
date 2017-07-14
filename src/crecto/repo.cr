@@ -439,12 +439,12 @@ module Crecto
       else
         outer_klass = queryable.klass_for_association(destroy_assoc) # Project
         join_klass = queryable.klass_for_association(through_key)    # UserProject
-        query = Query.select([join_klass.primary_key_field, join_klass.foreign_key_for_association(outer_klass).to_s])
+        query = Query.select([join_klass.foreign_key_for_association(outer_klass).to_s])
         query = query.where(queryable.foreign_key_for_association(destroy_assoc), ids)
         join_associations = all(join_klass, query)
         outer_klass_ids = join_associations.map { |ja| outer_klass.foreign_key_value_for_association(through_key, ja) }
         join_klass_ids = join_associations.map { |ja| ja.pkey_value.as(PkeyValue) }
-        delete_all(join_klass, Query.where(:id, join_klass_ids), tx) unless join_klass_ids.empty?
+        delete_all(join_klass, Query.where(queryable.foreign_key_for_association(through_key), ids), tx) unless join_klass_ids.empty?
         delete_all(outer_klass, Query.where(:id, outer_klass_ids), tx) unless outer_klass_ids.empty?
       end
     end

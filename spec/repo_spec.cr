@@ -620,11 +620,8 @@ describe Crecto do
 
         Repo.all(UserProject, Query.where(user_id: user.id)).size.should eq 2
         Repo.delete(user)
-        Repo.get(Project, other_p.id).should_not be_nil      # should not delete un-related
-        Repo.get(UserProject, other_up.id).should_not be_nil # should not delete un-related
+        Repo.get(Project, other_p.id).should_not be_nil # should not delete un-related
         Repo.all(UserProject, Query.where(user_id: user.id)).size.should eq 0
-        Repo.get(UserProject, p1.id).should be_nil
-        Repo.get(UserProject, p2.id).should be_nil
       end
     end
 
@@ -765,6 +762,19 @@ describe Crecto do
         user = users[0]
         user.user_projects.size.should eq 1
         user.projects.size.should eq 1
+      end
+
+      it "should preload the has_many through association with get!" do
+        user = quick_create_user("through with get!")
+        project = Project.new
+        project = Repo.insert(project).instance
+        user_project = UserProject.new
+        user_project.user = user
+        user_project.project = project
+        user_project = Repo.insert(user_project).instance
+
+        user = Repo.get!(User, user.id, Query.preload(:projects))
+        user.projects[0].id.should eq project.id
       end
 
       it "should default to an empty array if there are no has_many associated records" do
@@ -988,8 +998,7 @@ describe Crecto do
 
         Repo.delete_all(User)
 
-        Repo.get(Project, other_p.id).should_not be_nil      # should not delete un-related
-        Repo.get(UserProject, other_up.id).should_not be_nil # should not delete un-related
+        Repo.get(Project, other_p.id).should_not be_nil # should not delete un-related
 
         Repo.all(UserProject, Query.where(user_id: [u1.id, u2.id])).size.should eq 0
         Repo.all(Project, Query.where(id: [p1.id, p2.id, p3.id, p4.id])).size.should eq 0

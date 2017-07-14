@@ -48,8 +48,10 @@ module Crecto
 
         query = exec_execute(conn, q.join(" "), fields_values[:values])
         return query if conn.is_a?(DB::TopLevelTransaction)
-        last_insert_id = changeset.instance.pkey_value.nil? ? "LAST_INSERT_ID()" : "'#{changeset.instance.pkey_value.not_nil!}'"
-        execute(conn, "SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field} = #{last_insert_id}")
+        if changeset.instance.class.use_primary_key?
+          last_insert_id = changeset.instance.pkey_value.nil? ? "LAST_INSERT_ID()" : "'#{changeset.instance.pkey_value.not_nil!}'"
+          execute(conn, "SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field} = #{last_insert_id}")
+        end
       end
 
       private def self.update_begin(table_name, fields_values)

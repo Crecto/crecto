@@ -45,15 +45,15 @@ class Project < Crecto::Model
 end
 
 class UserProject < Crecto::Model
-  schema "user_projects" do
+  schema "user_projects", primary_key: false do
     belongs_to :user, User
     belongs_to :project, Project
   end
 end
 
 class UserDifferentDefaults < Crecto::Model
-  created_at_field "xyz"
-  updated_at_field nil
+  set_created_at_field "xyz"
+  set_updated_at_field nil
 
   schema "users_different_defaults" do
     field :user_id, PkeyValue, primary_key: true
@@ -65,8 +65,8 @@ class UserDifferentDefaults < Crecto::Model
 end
 
 class UserLargeDefaults < Crecto::Model
-  created_at_field nil
-  updated_at_field nil
+  set_created_at_field nil
+  set_updated_at_field nil
 
   schema "users_large_defaults" do
     field :id, Int32 | Int64, primary_key: true
