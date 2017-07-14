@@ -4,6 +4,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+* Crystal 0.23.1 support
+* fix WHERE IN query with empty Array [@metacortex](https://github.com/metacortex)
 * **(breaking change)** `created_at_field` changed to `set_created_at_field`, `updated_at_field` changed to `set_updated_at_field`
 * option to use schema without a primary key
 * use 'first?' to prevent 'IndexError' when insert/update [@metacortex](https://github.com/metacortex)
