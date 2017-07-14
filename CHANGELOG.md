@@ -4,6 +4,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+
+## [0.6.1] 2017-07-14
 * Crystal 0.23.1 support
 * fix WHERE IN query with empty Array [@metacortex](https://github.com/metacortex)
 * **(breaking change)** `created_at_field` changed to `set_created_at_field`, `updated_at_field` changed to `set_updated_at_field`
@@ -111,6 +113,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Query
 * Postgres Adapter
 
+[0.6.1]: https://github.com/fridgerator/crecto/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/fridgerator/crecto/compare/v0.5.4...v0.6.0
 [0.5.4]: https://github.com/fridgerator/crecto/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/fridgerator/crecto/compare/v0.5.2...v0.5.3
