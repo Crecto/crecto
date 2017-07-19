@@ -17,7 +17,7 @@ module Crecto
 
 
         {%
-          foreign_key = @type.id.stringify.underscore.downcase + "_id"
+          foreign_key = @type.id.stringify.split(":")[-1].id.stringify.underscore.downcase + "_id"
           foreign_key = opts[:foreign_key] if opts[:foreign_key]
         %}
 
