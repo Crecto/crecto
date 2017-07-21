@@ -257,6 +257,8 @@ module Crecto
                 @{{field[:name].id}} = value.to_f if value.to_f?
               {% elsif field[:type].id.stringify == "Bool" %}
                 @{{field[:name].id}} = (value == "true")
+              {% elsif field[:type].id.stringify == "Json" %}
+                @{{field[:name].id}} = JSON.parse(value)
               {% elsif field[:type].id.stringify == "Time" %}
                 begin
                   @{{field[:name].id}} = Time.parse(value, "%F %T %z")
