@@ -54,25 +54,6 @@ require "sqlite3"
 require "crecto"
 ```
 
-## TODO
-
-#### Roadmap (in no particular order)
-
-- [ ] `default` option for fields
-- [x] has_one
-- [ ] insert_all
-- [x] MySQL adapter
-- [x] SQLite adapter
-- [x] Associations
-- [x] Preload
-- [x] Joins
-- [x] Repo#aggregate ([ecto link](https://hexdocs.pm/ecto/Ecto.Repo.html#c:aggregate/4))
-- [ ] [Embeds](https://robots.thoughtbot.com/embedding-elixir-structs-in-ecto-models)
-- [x] Transactions / Multi
-- [x] Association / dependent options (`dependent: :delete`, `dependent: :nullify`, etc)
-- [ ] Unique constraint
-- [x] Combine database adapters (base class). Currently there is unecessary duplication
-
 ## Migrations
 
 [Micrate](https://github.com/juanedi/micrate) is recommended.  It is used and supported by core crystal members.
