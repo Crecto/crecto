@@ -5,6 +5,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.6.2] 2017-7-30
+* fixed bug when using model classes like `Module::Class`
+* handle `Json` type in `update_from_hash`
+* added more types to inclusion / exclusion validators
+
 ## [0.6.1] 2017-07-14
 * Crystal 0.23.1 support
 * fix WHERE IN query with empty Array [@metacortex](https://github.com/metacortex)
@@ -113,6 +118,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Query
 * Postgres Adapter
 
+[0.6.2]: https://github.com/fridgerator/crecto/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/fridgerator/crecto/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/fridgerator/crecto/compare/v0.5.4...v0.6.0
 [0.5.4]: https://github.com/fridgerator/crecto/compare/v0.5.3...v0.5.4
