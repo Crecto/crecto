@@ -6,7 +6,7 @@ module Crecto
     # :nodoc:
     private alias RangeTypes = Range(Int32, Int32) | Range(Float64, Float64) | Range(Time, Time)
     # :nodoc:
-    private alias ArrayOfAny = Array(String) | Array(Int32 | Int64 | String | Bool | Float64 | Time)
+    private alias ArrayOfAny = Array(String) | Array(Int32) | Array(Int64) | Array(Time) | Array(Int32 | Int64 | String | Bool | Float64 | Time)
 
     # :nodoc:
     REQUIRED_FIELDS = {} of String => Array(Symbol)
