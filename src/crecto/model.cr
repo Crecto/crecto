@@ -18,32 +18,32 @@ module Crecto
       include Crecto::Schema::BelongsTo
       extend Crecto::Changeset({{@type}})
 
-      DESTROY_ASSOCIATIONS = Array(Symbol).new
-      NULLIFY_ASSOCIATIONS = Array(Symbol).new
-      MODEL_FIELDS = [] of NamedTuple(name: Symbol, type: String)
+      CRECTO_DESTROY_ASSOCIATIONS = Array(Symbol).new
+      CRECTO_NULLIFY_ASSOCIATIONS = Array(Symbol).new
+      CRECTO_MODEL_FIELDS = [] of NamedTuple(name: Symbol, type: String)
 
       def self.use_primary_key?
-        USE_PRIMARY_KEY
+        CRECTO_USE_PRIMARY_KEY
       end
 
       def self.fields
-        MODEL_FIELDS
+        CRECTO_MODEL_FIELDS
       end
 
       def self.destroy_associations
-        DESTROY_ASSOCIATIONS
+        CRECTO_DESTROY_ASSOCIATIONS
       end
 
       def self.nullify_associations
-        NULLIFY_ASSOCIATIONS
+        CRECTO_NULLIFY_ASSOCIATIONS
       end
 
       def self.add_destroy_association(a)
-        DESTROY_ASSOCIATIONS << a
+        CRECTO_DESTROY_ASSOCIATIONS << a
       end
 
       def self.add_nullify_association(a)
-        NULLIFY_ASSOCIATIONS << a
+        CRECTO_NULLIFY_ASSOCIATIONS << a
       end
 
       # Class variables
@@ -58,20 +58,20 @@ module Crecto
 
       # Return the primary key field as a String
       def self.primary_key_field
-        PRIMARY_KEY_FIELD
+        CRECTO_PRIMARY_KEY_FIELD
       end
 
       # Return the primary key field as a Symbol
       def self.primary_key_field_symbol
-        PRIMARY_KEY_FIELD_SYMBOL
+        CRECTO_PRIMARY_KEY_FIELD_SYMBOL
       end
 
       def self.created_at_field
-        CREATED_AT_FIELD
+        CRECTO_CREATED_AT_FIELD
       end
 
       def self.updated_at_field
-        UPDATED_AT_FIELD
+        CRECTO_UPDATED_AT_FIELD
       end
 
       # Class method to get the `changeset_fields`
@@ -91,41 +91,41 @@ module Crecto
       # Get the Class for the assocation name
       # i.e. :posts => Post
       def self.klass_for_association(association : Symbol)
-        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:klass]
+        CRECTO_ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:klass]
       end
 
       # Get the foreign key for the association
       # i.e. :posts => :user_id
       def self.foreign_key_for_association(association : Symbol) : Symbol
-        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:foreign_key]
+        CRECTO_ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:foreign_key]
       end
 
       def self.foreign_key_for_association(klass : Crecto::Model.class)
-        ASSOCIATIONS.select{|a| a[:klass] == klass && a[:this_klass] == self}.first[:foreign_key]
+        CRECTO_ASSOCIATIONS.select{|a| a[:klass] == klass && a[:this_klass] == self}.first[:foreign_key]
       end
 
       # Get the foreign key value from the relation object
       # i.e. :posts, post => post.user_id
       def self.foreign_key_value_for_association(association : Symbol, item)
-        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:foreign_key_value].call(item).as(PkeyValue)
+        CRECTO_ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:foreign_key_value].call(item).as(PkeyValue)
       end
 
       # Set the value for the association
       # i.e. :posts, user, [posts] => user.posts = [posts]
       def self.set_value_for_association(association : Symbol, item, items)
-        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:set_association].call(item, items)
+        CRECTO_ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:set_association].call(item, items)
       end
 
       # Get the association type for the association
       # i.e. :posts => :has_many
       def self.association_type_for_association(association : Symbol)
-        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:association_type]
+        CRECTO_ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:association_type]
       end
 
       # Get the through association symbol
       # i.e. :posts => :user_posts (if has_many through)
       def self.through_key_for_association(association : Symbol) : Symbol?
-        ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:through]
+        CRECTO_ASSOCIATIONS.select{|a| a[:key] == association && a[:this_klass] == self}.first[:through]
       end
     end
   end

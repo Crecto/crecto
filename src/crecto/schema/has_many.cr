@@ -34,7 +34,7 @@ module Crecto
           self.add_nullify_association({{association_name.id.symbolize}})
         {% end %}
 
-        ASSOCIATIONS.push({
+        CRECTO_ASSOCIATIONS.push({
           association_type: :has_many,
           key: {{association_name}},
           this_klass: {{@type}},
