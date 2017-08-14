@@ -2,7 +2,7 @@ module Crecto
   module Schema
     module BelongsTo
       # :nodoc:
-      VALID_BELONGS_TO_OPTIONS = [:foreign_key]
+      CRECTO_VALID_BELONGS_TO_OPTIONS = [:foreign_key]
 
       macro belongs_to(association_name, klass, **opts)
         @{{association_name.id}} : {{klass}}?
@@ -21,7 +21,7 @@ module Crecto
           foreign_key = opts[:foreign_key] if opts[:foreign_key]
         %}
 
-        {% unless FIELDS.select { |f| f[:name] == foreign_key.id.symbolize }.size > 0 %}
+        {% unless CRECTO_FIELDS.select { |f| f[:name] == foreign_key.id.symbolize }.size > 0 %}
           field {{foreign_key.id.symbolize}}, PkeyValue
         {% end %}
 
@@ -31,7 +31,7 @@ module Crecto
           @{{foreign_key.id}} = val.pkey_value.as(PkeyValue)
         end
 
-        ASSOCIATIONS.push({
+        CRECTO_ASSOCIATIONS.push({
           association_type: :belongs_to,
           key: {{association_name}},
           this_klass: {{@type}},

@@ -31,19 +31,19 @@ module Crecto
   #
   module Schema
     # :nodoc:
-    CREATED_AT_FIELD = "created_at"
+    CRECTO_CREATED_AT_FIELD = "created_at"
     # :nodoc:
-    UPDATED_AT_FIELD = "updated_at"
+    CRECTO_UPDATED_AT_FIELD = "updated_at"
     # :nodoc:
-    PRIMARY_KEY_FIELD = "id"
+    CRECTO_PRIMARY_KEY_FIELD = "id"
     # :nodoc:
-    USE_PRIMARY_KEY = true
+    CRECTO_USE_PRIMARY_KEY = true
     # :nodoc:
-    PRIMARY_KEY_FIELD_SYMBOL = :id
+    CRECTO_PRIMARY_KEY_FIELD_SYMBOL = :id
     # :nodoc:
-    PRIMARY_KEY_FIELD_TYPE = "PkeyValue"
+    CRECTO_PRIMARY_KEY_FIELD_TYPE = "PkeyValue"
     # :nodoc:
-    ASSOCIATIONS = Array(NamedTuple(association_type: Symbol,
+    CRECTO_ASSOCIATIONS = Array(NamedTuple(association_type: Symbol,
     key: Symbol,
     this_klass: Model.class,
     klass: Model.class,
@@ -56,15 +56,15 @@ module Crecto
     macro schema(table_name, **opts, &block)
       {% for opt in opts %}
         {% if opt.id.stringify == "primary_key" %}
-          USE_PRIMARY_KEY = {{opts[:primary_key]}}
+          CRECTO_USE_PRIMARY_KEY = {{opts[:primary_key]}}
         {% end %}
       {% end %}
 
       # macro constants
-      VALID_FIELD_TYPES = [String, Int64, Int32, Int16, Float32, Float64, Bool, Time, Int32 | Int64, Float32 | Float64, Json, PkeyValue]
-      VALID_FIELD_OPTIONS = [:primary_key, :virtual]
-      FIELDS      = [] of NamedTuple(name: Symbol, type: String)
-      ENUM_FIELDS = [] of NamedTuple(name: Symbol, type: String, column_name: String, column_type: String)
+      CRECTO_VALID_FIELD_TYPES = [String, Int64, Int32, Int16, Float32, Float64, Bool, Time, Int32 | Int64, Float32 | Float64, Json, PkeyValue]
+      CRECTO_VALID_FIELD_OPTIONS = [:primary_key, :virtual]
+      CRECTO_FIELDS      = [] of NamedTuple(name: Symbol, type: String)
+      CRECTO_ENUM_FIELDS = [] of NamedTuple(name: Symbol, type: String, column_name: String, column_type: String)
 
       # Class variables
       @@table_name = {{table_name.id.stringify}}
@@ -78,7 +78,7 @@ module Crecto
     macro field(field_name, field_type, **opts)
       # validate field options
       {% for opt in opts %}
-        {% unless VALID_FIELD_OPTIONS.includes?(opt.id.symbolize) %}
+        {% unless CRECTO_VALID_FIELD_OPTIONS.includes?(opt.id.symbolize) %}
           raise Crecto::InvalidOption.new("{{opt}} is not a valid option, must be one of #{VALID_FIELD_OPTIONS.join(", ")}")
         {% end %}
       {% end %}
@@ -88,9 +88,9 @@ module Crecto
       {% primary_key = false %}
 
       {% if opts[:primary_key] %}
-        PRIMARY_KEY_FIELD = {{field_name.id.stringify}}
-        PRIMARY_KEY_FIELD_SYMBOL = {{field_name.id.symbolize}}
-        PRIMARY_KEY_FIELD_TYPE = {{field_type.id.stringify}}
+        CRECTO_PRIMARY_KEY_FIELD = {{field_name.id.stringify}}
+        CRECTO_PRIMARY_KEY_FIELD_SYMBOL = {{field_name.id.symbolize}}
+        CRECTO_PRIMARY_KEY_FIELD_TYPE = {{field_type.id.stringify}}
         {% primary_key = true %}
       {% elsif opts[:virtual] %}
         {% virtual = true %}
@@ -104,9 +104,9 @@ module Crecto
       {% end %}
 
       {% unless primary_key %}
-        {% FIELDS.push({name: field_name, type: field_type}) %}
+        {% CRECTO_FIELDS.push({name: field_name, type: field_type}) %}
         {% unless virtual %}
-          MODEL_FIELDS.push({name: {{field_name}}, type: {{field_type.id.stringify}}})
+          CRECTO_MODEL_FIELDS.push({name: {{field_name}}, type: {{field_type.id.stringify}}})
         {% end %}
       {% end %}
     end
@@ -125,23 +125,23 @@ module Crecto
 
       field({{column_name.id.symbolize}}, {{column_type}})
 
-      {% ENUM_FIELDS.push({name: field_name, type: field_type, column_name: column_name, column_type: column_type}) %}
+      {% CRECTO_ENUM_FIELDS.push({name: field_name, type: field_type, column_name: column_name, column_type: column_type}) %}
     end
 
     # Macro to change created_at field name
     macro set_created_at_field(val)
-      CREATED_AT_FIELD = {{val}}
+      CRECTO_CREATED_AT_FIELD = {{val}}
     end
 
     # Macro to chnage updated_at field name
     macro set_updated_at_field(val)
-      UPDATED_AT_FIELD = {{val}}
+      CRECTO_UPDATED_AT_FIELD = {{val}}
     end
 
     # :nodoc:
     macro check_type!(field_name, field_type)
-      {% unless VALID_FIELD_TYPES.includes?(field_type) %}
-        raise Crecto::InvalidType.new("{{field_name}} type must be one of #{VALID_FIELD_TYPES.join(", ")}")
+      {% unless CRECTO_VALID_FIELD_TYPES.includes?(field_type) %}
+        raise Crecto::InvalidType.new("{{field_name}} type must be one of #{CRECTO_VALID_FIELD_TYPES.join(", ")}")
       {% end %}
     end
 
@@ -152,25 +152,25 @@ module Crecto
 
       {% json_fields = [] of String %}
 
-      {% mapping = FIELDS.map do |field|
+      {% mapping = CRECTO_FIELDS.map do |field|
            json_fields.push(field[:name]) if field[:type].id.stringify == "Json"
            field_type = field[:type].id == "Int64" || field[:type].id == "Int32" ? "PkeyValue" : field[:type].id.stringify
            "#{field[:name].id.stringify}: {type: #{field_type.id}, nilable: true}"
          end %}
 
-      {% if USE_PRIMARY_KEY %}
-        {% mapping.push(PRIMARY_KEY_FIELD.id.stringify + ": {type: #{PRIMARY_KEY_FIELD_TYPE.id}, nilable: true}") %}
-        MODEL_FIELDS.push({name: {{PRIMARY_KEY_FIELD.id.symbolize}}, type: {{PRIMARY_KEY_FIELD_TYPE}}})
+      {% if CRECTO_USE_PRIMARY_KEY %}
+        {% mapping.push(CRECTO_PRIMARY_KEY_FIELD.id.stringify + ": {type: #{CRECTO_PRIMARY_KEY_FIELD_TYPE.id}, nilable: true}") %}
+        CRECTO_MODEL_FIELDS.push({name: {{CRECTO_PRIMARY_KEY_FIELD.id.symbolize}}, type: {{CRECTO_PRIMARY_KEY_FIELD_TYPE}}})
       {% end %}
 
-      {% unless CREATED_AT_FIELD == nil %}
-        {% mapping.push(CREATED_AT_FIELD.id.stringify + ": {type: Time, nilable: true}") %}
-        MODEL_FIELDS.push({name: {{CREATED_AT_FIELD.id.symbolize}}, type: "Time"})
+      {% unless CRECTO_CREATED_AT_FIELD == nil %}
+        {% mapping.push(CRECTO_CREATED_AT_FIELD.id.stringify + ": {type: Time, nilable: true}") %}
+        CRECTO_MODEL_FIELDS.push({name: {{CRECTO_CREATED_AT_FIELD.id.symbolize}}, type: "Time"})
       {% end %}
 
-      {% unless UPDATED_AT_FIELD == nil %}
-        {% mapping.push(UPDATED_AT_FIELD.id.stringify + ": {type: Time, nilable: true}") %}
-        MODEL_FIELDS.push({name: {{UPDATED_AT_FIELD.id.symbolize}}, type: "Time"})
+      {% unless CRECTO_UPDATED_AT_FIELD == nil %}
+        {% mapping.push(CRECTO_UPDATED_AT_FIELD.id.stringify + ": {type: Time, nilable: true}") %}
+        CRECTO_MODEL_FIELDS.push({name: {{CRECTO_UPDATED_AT_FIELD.id.symbolize}}, type: "Time"})
       {% end %}
 
       DB.mapping({ {{mapping.uniq.join(", ").id}} }, false)
@@ -183,7 +183,7 @@ module Crecto
         end
       {% end %}
 
-      {% for enum_field in ENUM_FIELDS %}
+      {% for enum_field in CRECTO_ENUM_FIELDS %}
         {%
           field_name = enum_field[:name].id
           field_type = enum_field[:type].id
@@ -213,27 +213,27 @@ module Crecto
       {% end %}
 
 
-      # Builds a hash from all `FIELDS` defined
+      # Builds a hash from all `CRECTO_FIELDS` defined
       def to_query_hash
         query_hash = {} of Symbol => DbValue
 
-        {% for field in FIELDS %}
+        {% for field in CRECTO_FIELDS %}
           if @@changeset_fields.includes?({{field[:name]}})
             query_hash[{{field[:name]}}] = self.{{field[:name].id}}
             query_hash[{{field[:name]}}] = query_hash[{{field[:name]}}].as(Time).to_utc if query_hash[{{field[:name]}}].is_a?(Time) && query_hash[{{field[:name]}}].as(Time).local?
           end
         {% end %}
 
-        {% unless CREATED_AT_FIELD == nil %}
-          query_hash[{{CREATED_AT_FIELD.id.symbolize}}] = self.{{CREATED_AT_FIELD.id}}.nil? ? nil : (self.{{CREATED_AT_FIELD.id}}.as(Time).local? ? self.{{CREATED_AT_FIELD.id}}.as(Time).to_utc : self.{{CREATED_AT_FIELD.id}})
+        {% unless CRECTO_CREATED_AT_FIELD == nil %}
+          query_hash[{{CRECTO_CREATED_AT_FIELD.id.symbolize}}] = self.{{CRECTO_CREATED_AT_FIELD.id}}.nil? ? nil : (self.{{CRECTO_CREATED_AT_FIELD.id}}.as(Time).local? ? self.{{CRECTO_CREATED_AT_FIELD.id}}.as(Time).to_utc : self.{{CRECTO_CREATED_AT_FIELD.id}})
         {% end %}
 
-        {% unless UPDATED_AT_FIELD == nil %}
-          query_hash[{{UPDATED_AT_FIELD.id.symbolize}}] = self.{{UPDATED_AT_FIELD.id}}.nil? ? nil : (self.{{UPDATED_AT_FIELD.id}}.as(Time).local? ? self.{{UPDATED_AT_FIELD.id}}.as(Time).to_utc : self.{{UPDATED_AT_FIELD.id}})
+        {% unless CRECTO_UPDATED_AT_FIELD == nil %}
+          query_hash[{{CRECTO_UPDATED_AT_FIELD.id.symbolize}}] = self.{{CRECTO_UPDATED_AT_FIELD.id}}.nil? ? nil : (self.{{CRECTO_UPDATED_AT_FIELD.id}}.as(Time).local? ? self.{{CRECTO_UPDATED_AT_FIELD.id}}.as(Time).to_utc : self.{{CRECTO_UPDATED_AT_FIELD.id}})
         {% end %}
 
-        {% if USE_PRIMARY_KEY %}
-          query_hash[{{PRIMARY_KEY_FIELD.id.symbolize}}] = self.{{PRIMARY_KEY_FIELD.id}} unless self.{{PRIMARY_KEY_FIELD.id}}.nil?
+        {% if CRECTO_USE_PRIMARY_KEY %}
+          query_hash[{{CRECTO_PRIMARY_KEY_FIELD.id.symbolize}}] = self.{{CRECTO_PRIMARY_KEY_FIELD.id}} unless self.{{CRECTO_PRIMARY_KEY_FIELD.id}}.nil?
         {% end %}
 
         query_hash
@@ -242,7 +242,7 @@ module Crecto
       def update_from_hash(hash : Hash(String, DbValue))
         hash.each do |key, value|
           case key.to_s
-          {% for field in FIELDS %}
+          {% for field in CRECTO_FIELDS %}
           when "{{field[:name].id}}"
             if value.to_s.empty?
               @{{field[:name].id}} = nil
@@ -272,32 +272,32 @@ module Crecto
 
       # Returns the value of the primary key field
       def pkey_value
-        {% if USE_PRIMARY_KEY %}
-        self.{{PRIMARY_KEY_FIELD.id}}
+        {% if CRECTO_USE_PRIMARY_KEY %}
+        self.{{CRECTO_PRIMARY_KEY_FIELD.id}}
         {% end %}
       end
 
       def update_primary_key(val)
-        self.{{PRIMARY_KEY_FIELD.id}} = val
+        self.{{CRECTO_PRIMARY_KEY_FIELD.id}} = val
       end
 
       def updated_at_value
-        self.{{UPDATED_AT_FIELD.id}}
+        self.{{CRECTO_UPDATED_AT_FIELD.id}}
       end
 
       def created_at_value
-        self.{{CREATED_AT_FIELD.id}}
+        self.{{CRECTO_CREATED_AT_FIELD.id}}
       end
 
       def updated_at_to_now
-        {% unless UPDATED_AT_FIELD == nil %}
-          self.{{UPDATED_AT_FIELD.id}} = Time.utc_now
+        {% unless CRECTO_UPDATED_AT_FIELD == nil %}
+          self.{{CRECTO_UPDATED_AT_FIELD.id}} = Time.utc_now
         {% end %}
       end
 
       def created_at_to_now
-        {% unless CREATED_AT_FIELD == nil %}
-          self.{{CREATED_AT_FIELD.id}} = Time.utc_now
+        {% unless CRECTO_CREATED_AT_FIELD == nil %}
+          self.{{CRECTO_CREATED_AT_FIELD.id}} = Time.utc_now
         {% end %}
       end
 
