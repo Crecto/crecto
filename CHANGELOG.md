@@ -4,6 +4,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+* renamed constants with `CRECTO_` prefix to prevent collisions with other libraries
 
 ## [0.6.2] 2017-7-30
 * fixed bug when using model classes like `Module::Class`
