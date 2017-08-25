@@ -35,7 +35,7 @@ module Crecto
       end
 
       def get_connection
-        @@crecto_db ||= DB.open(database_url).as(DB::Database)
+        @crecto_db ||= DB.open(database_url).as(DB::Database)
       end
 
       private def set_url_db(io)
