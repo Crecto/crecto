@@ -26,8 +26,8 @@ module Crecto
   #
   # The timestamp fields can be changed or removed by changing:
   #
-  # * `created_at_field "created_at_field_name"` - use "created_at_field_name" instead of "created_at"
-  # * `updated_at_field nil` - dont use the updated_at timestamp
+  # * `set_created_at_field "created_at_field_name"` - use "created_at_field_name" instead of "created_at"
+  # * `set_updated_at_field nil` - dont use the updated_at timestamp
   #
   module Schema
     # :nodoc:
@@ -133,7 +133,7 @@ module Crecto
       CRECTO_CREATED_AT_FIELD = {{val}}
     end
 
-    # Macro to chnage updated_at field name
+    # Macro to change updated_at field name
     macro set_updated_at_field(val)
       CRECTO_UPDATED_AT_FIELD = {{val}}
     end
