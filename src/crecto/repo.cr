@@ -331,6 +331,8 @@ module Crecto
     # are defined as `?` and are interpolated to escape whats being
     # passed. `query` can run without parameters as well.
     #
+    # Please note that you have to close the result set yourself, otherwise there will be staled connections!
+    #
     # ```
     # query = Crecto::Repo.query("select * from users where id = ?", [30])
     # ```
