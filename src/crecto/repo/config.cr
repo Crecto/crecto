@@ -31,11 +31,21 @@ module Crecto
           set_url_host(io)
           set_url_port(io)
           set_url_db(io)
+          set_url_query_string(io)
         end
       end
 
       def get_connection
         @crecto_db ||= DB.open(database_url).as(DB::Database)
+      end
+
+      private def set_url_query_string(io)
+        io << "?initial_pool_size=#{@initial_pool_size}"
+        io << "&max_pool_size=#{@max_pool_size}"
+        io << "&max_idle_pool_size=#{@max_idle_pool_size}"
+        io << "&checkout_timeout=#{@checkout_timeout}"
+        io << "&retry_attempts=#{@retry_attempts}"
+        io << "&retry_delay=#{@retry_delay}"
       end
 
       private def set_url_db(io)

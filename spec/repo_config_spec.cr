@@ -70,7 +70,7 @@ describe "repo config" do
       conf.checkout_timeout.should eq 4.5
       conf.retry_attempts.should eq 2
       conf.retry_delay.should eq 0.5
-      conf.database_url.should eq "postgres://fred:123@localhost:9999/crecto"
+      conf.database_url.should eq "postgres://fred:123@localhost:9999/crecto?initial_pool_size=2&max_pool_size=100&max_idle_pool_size=2&checkout_timeout=4.5&retry_attempts=2&retry_delay=0.5"
     end
   end
 
@@ -88,7 +88,7 @@ describe "repo config" do
       conf.checkout_timeout.should eq 5.0
       conf.retry_attempts.should eq 1
       conf.retry_delay.should eq 1.0
-      conf.database_url.should eq "mysql://mysql_user:983425@host.name.com:12300/mysql_database"
+      conf.database_url.should eq "mysql://mysql_user:983425@host.name.com:12300/mysql_database?initial_pool_size=1&max_pool_size=0&max_idle_pool_size=1&checkout_timeout=5.0&retry_attempts=1&retry_delay=1.0"
     end
   end
 
@@ -96,7 +96,7 @@ describe "repo config" do
     SqliteRepoTest.config do |conf|
       conf.adapter.should eq Crecto::Adapters::SQLite3
       conf.database.should eq "./some/path/to/db.db"
-      conf.database_url.should eq "sqlite3://./some/path/to/db.db"
+      conf.database_url.should eq "sqlite3://./some/path/to/db.db?initial_pool_size=1&max_pool_size=0&max_idle_pool_size=1&checkout_timeout=5.0&retry_attempts=1&retry_delay=1.0"
     end
   end
 end
