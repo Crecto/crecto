@@ -67,22 +67,22 @@ module Crecto
 
         q = update_begin(changeset.instance.class.table_name, fields_values)
         q.push "WHERE"
-        q.push "#{changeset.instance.class.primary_key_field}='#{changeset.instance.pkey_value}'"
+        q.push "#{changeset.instance.class.primary_key_field}=?"
 
-        exec_execute(conn, q.join(" "), fields_values[:values])
-        execute(conn, "SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field} = '#{changeset.instance.pkey_value}'")
+        exec_execute(conn, q.join(" "), fields_values[:values] + [changeset.instance.pkey_value])
+        execute(conn, "SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field}=?", [changeset.instance.pkey_value])
       end
 
       private def self.delete(conn, changeset)
         q = delete_begin(changeset.instance.class.table_name)
         q.push "WHERE"
-        q.push "#{changeset.instance.class.primary_key_field}='#{changeset.instance.pkey_value}'"
+        q.push "#{changeset.instance.class.primary_key_field}=?"
 
         if conn.is_a?(DB::TopLevelTransaction)
-          exec_execute(conn, q.join(" "))
+          exec_execute(conn, q.join(" "), [changeset.instance.pkey_value])
         else
-          sel = execute(conn, "SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field}='#{changeset.instance.pkey_value}'")
-          exec_execute(conn, q.join(" "))
+          sel = execute(conn, "SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field}=?", [changeset.instance.pkey_value])
+          exec_execute(conn, q.join(" "), [changeset.instance.pkey_value])
           sel
         end
       end

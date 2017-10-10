@@ -1074,7 +1074,7 @@ describe Crecto do
       it "should insert with the generated id" do
         id = SecureRandom.uuid
         user = UserUUID.new
-        user.name = "test"
+        user.name = "te'st"
         user.uuid = id
 
         changeset = Repo.insert(user)
@@ -1086,7 +1086,7 @@ describe Crecto do
       it "should update a user with a generated id" do
         id = SecureRandom.uuid
         user = UserUUID.new
-        user.name = "test"
+        user.name = "te'st"
         user.uuid = id
         user = Repo.insert(user).instance
 
@@ -1099,7 +1099,7 @@ describe Crecto do
       it "should delete a user with a generated id" do
         id = SecureRandom.uuid
         user = UserUUID.new
-        user.name = "test"
+        user.name = "te'st"
         user.uuid = id
         user = Repo.insert(user).instance
 
