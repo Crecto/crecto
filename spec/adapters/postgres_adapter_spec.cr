@@ -70,7 +70,7 @@ if Repo.config.adapter == Crecto::Adapters::Postgres
       Repo.update(changeset.instance)
       check_sql do |sql|
         sql.should eq(["UPDATE users SET (name, things, smallnum, nope, yep, some_date, pageviews, created_at, updated_at, id) = \
-          ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) WHERE id='#{changeset.instance.id}' RETURNING *"])
+          ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) WHERE id=$11 RETURNING *"])
       end
     end
 
