@@ -20,7 +20,7 @@ module Crecto
 
         q = update_begin(changeset.instance.class.table_name, fields_values)
         q.push "WHERE"
-        q.push "#{changeset.instance.class.primary_key_field}=#{changeset.instance.pkey_value}"
+        q.push "#{changeset.instance.class.primary_key_field}='#{changeset.instance.pkey_value}'"
         q.push "RETURNING *"
 
         execute(conn, position_args(q.join(" ")), fields_values[:values])
