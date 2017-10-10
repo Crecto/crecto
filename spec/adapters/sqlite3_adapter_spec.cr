@@ -78,8 +78,8 @@ if Repo.config.adapter == Crecto::Adapters::SQLite3
       Repo.update(changeset.instance)
       check_sql do |sql|
         sql.should eq([
-          "UPDATE users SET name=?, things=?, smallnum=?, nope=?, yep=?, some_date=?, pageviews=?, created_at=?, updated_at=?, id=? WHERE id='#{changeset.instance.id}'",
-          "SELECT * FROM users WHERE id = '#{changeset.instance.id}'",
+          "UPDATE users SET name=?, things=?, smallnum=?, nope=?, yep=?, some_date=?, pageviews=?, created_at=?, updated_at=?, id=? WHERE id=?",
+          "SELECT * FROM users WHERE id=?",
         ])
       end
     end
@@ -92,7 +92,8 @@ if Repo.config.adapter == Crecto::Adapters::SQLite3
         sql.should eq(
           ["DELETE FROM addresses WHERE  addresses.user_id=?",
            "SELECT user_projects.project_id FROM user_projects WHERE  user_projects.user_id=?",
-           "SELECT * FROM users WHERE id='#{changeset.instance.id}'"])
+           "SELECT * FROM users WHERE id=?",
+           "DELETE FROM users WHERE id=?"])
       end
     end
 

@@ -171,10 +171,10 @@ module Crecto
       private def delete(conn, changeset)
         q = delete_begin(changeset.instance.class.table_name)
         q.push "WHERE"
-        q.push "#{changeset.instance.class.primary_key_field}='#{changeset.instance.pkey_value}'"
+        q.push "#{changeset.instance.class.primary_key_field}=$1"
         q.push "RETURNING *" if conn.is_a?(DB::Database)
 
-        exec_execute(conn, q.join(" "))
+        exec_execute(conn, q.join(" "), [changeset.instance.pkey_value])
       end
 
       private def delete(conn, queryable, query : Crecto::Repo::Query)

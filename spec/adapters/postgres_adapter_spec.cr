@@ -82,7 +82,7 @@ if Repo.config.adapter == Crecto::Adapters::Postgres
         sql.should eq(
           ["DELETE FROM addresses WHERE  addresses.user_id=$1",
            "SELECT user_projects.project_id FROM user_projects WHERE  user_projects.user_id=$1",
-           "DELETE FROM users WHERE id='#{changeset.instance.id}' RETURNING *"])
+           "DELETE FROM users WHERE id=$1 RETURNING *"])
       end
     end
 
