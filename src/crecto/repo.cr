@@ -277,6 +277,8 @@ module Crecto
 
       if query.nil?
         changeset.add_error("delete_error", "Delete Failed")
+      elsif tx.nil?
+        query.as(DB::ResultSet).close
       end
 
       changeset.action = :delete
