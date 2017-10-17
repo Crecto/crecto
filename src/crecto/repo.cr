@@ -307,7 +307,10 @@ module Crecto
     def delete_all(queryable, query : Query?, tx : DB::Transaction?)
       query = Query.new if query.nil?
       check_dependents(queryable, query, tx)
-      config.adapter.run(tx || config.get_connection, :delete_all, queryable, query)
+      result = config.adapter.run(tx || config.get_connection, :delete_all, queryable, query)
+      if tx.nil? && config.adapter == Crecto::Adapters::Postgres
+        result.as(DB::ResultSet).close if result.is_a?(DB::ResultSet)
+      end
     end
 
     def delete_all(queryable, query = Query.new)
