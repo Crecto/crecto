@@ -991,6 +991,7 @@ describe Crecto do
       end
 
       it "should delete THROUGH destroy dependents" do
+        Repo.delete_all(Post)
         other_p = Project.new; other_p = Repo.insert(other_p).instance
         other_up = UserProject.new; other_up.user_id = 999999; other_up.project_id = other_p.id; other_up = Repo.insert(other_up).instance
 
