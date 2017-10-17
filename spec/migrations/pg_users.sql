@@ -38,7 +38,8 @@ CREATE TABLE users(
   pageviews bigint,
   some_date timestamp without time zone,
   created_at timestamp without time zone,
-  updated_at timestamp without time zone
+  updated_at timestamp without time zone,
+  unique_field character varying UNIQUE
 );
 
 CREATE SEQUENCE users_id_seq

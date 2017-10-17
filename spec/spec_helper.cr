@@ -27,6 +27,7 @@ class User < Crecto::Model
     field :yep, Bool
     field :some_date, Time
     field :pageviews, Int32 | Int64
+    field :unique_field, String
     has_many :posts, Post, foreign_key: :user_id
     has_one :post, Post
     has_many :addresses, Address, dependent: :destroy
@@ -35,6 +36,7 @@ class User < Crecto::Model
   end
 
   validate_required :name
+  unique_constraint :unique_field
 end
 
 class Project < Crecto::Model

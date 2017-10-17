@@ -36,8 +36,8 @@ if Repo.config.adapter == Crecto::Adapters::Postgres
     it "should generate insert query" do
       Repo.insert(User.from_json(%({ "name": "chuck" })))
       check_sql do |sql|
-        sql.should eq(["INSERT INTO users (name, things, smallnum, nope, yep, some_date, pageviews, created_at, updated_at) \
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *"])
+        sql.should eq(["INSERT INTO users (name, things, smallnum, nope, yep, some_date, pageviews, unique_field, created_at, updated_at) \
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *"])
       end
     end
 
@@ -69,8 +69,8 @@ if Repo.config.adapter == Crecto::Adapters::Postgres
       changeset.instance.name = "snoopy"
       Repo.update(changeset.instance)
       check_sql do |sql|
-        sql.should eq(["UPDATE users SET (name, things, smallnum, nope, yep, some_date, pageviews, created_at, updated_at, id) = \
-          ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) WHERE id=$11 RETURNING *"])
+        sql.should eq(["UPDATE users SET (name, things, smallnum, nope, yep, some_date, pageviews, unique_field, created_at, updated_at, id) = \
+          ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) WHERE id=$12 RETURNING *"])
       end
     end
 

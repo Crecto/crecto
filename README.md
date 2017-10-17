@@ -97,7 +97,7 @@ Query = Crecto::Repo::Query
 Multi = Crecto::Multi
 
 #
-# Define table name, fields and validations in your model
+# Define table name, fields, validations, and constraints in your model
 #
 class User < Crecto::Model
 
@@ -106,11 +106,13 @@ class User < Crecto::Model
     field :name, String
     field :is_admin, Bool
     field :temporary_info, Float64, virtual: true
+    field :email, String
     has_many :posts, Post, dependent: :destroy
   end
 
   validate_required [:name, :age]
   validate_format :name, /^[a-zA-Z]*$/
+  unique_constraint :email
 end
 
 class Post < Crecto::Model

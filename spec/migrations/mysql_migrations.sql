@@ -22,7 +22,8 @@ CREATE TABLE users(
   pageviews bigint,
   some_date DATETIME,
   created_at DATETIME,
-  updated_at DATETIME
+  updated_at DATETIME,
+  unique_field varchar(255) UNIQUE
 );
 
 CREATE UNIQUE INDEX users_4ijlkjdf ON users (id);
