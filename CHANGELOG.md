@@ -4,7 +4,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+
+## [0.7.0] 2017-10-19
 * renamed constants with `CRECTO_` prefix to prevent collisions with other libraries
+* fixed `@crecto_db` instance variable in repo config [@vladfaust](https://github.com/vladfaust)
+* added missing repo config options to the query string
+* added single quote around primary key fields in queries
+* patched a `delete` and `delete_all` query connection leak
+* Added `unique_constraint`
 
 ## [0.6.2] 2017-7-30
 * fixed bug when using model classes like `Module::Class`
@@ -119,6 +126,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Query
 * Postgres Adapter
 
+[0.7.0]: https://github.com/fridgerator/crecto/compare/v0.6.2...v0.7.0
 [0.6.2]: https://github.com/fridgerator/crecto/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/fridgerator/crecto/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/fridgerator/crecto/compare/v0.5.4...v0.6.0
