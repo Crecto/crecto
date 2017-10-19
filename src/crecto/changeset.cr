@@ -22,6 +22,8 @@ module Crecto
     REQUIRED_RANGE_EXCLUSIONS = {} of String => Array({field: Symbol, in: RangeTypes})
     # :nodoc:
     REQUIRED_LENGTHS = {} of String => Array({field: Symbol, is: Int32 | Nil, min: Int32 | Nil, max: Int32 | Nil})
+    # :nodoc:
+    UNIQUE_FIELDS = {} of String => Array(Symbol)
 
     macro extended
       # :nodoc:
@@ -131,8 +133,15 @@ module Crecto
     def validate_acceptance
     end
 
-    # TODO: not done - https://hexdocs.pm/ecto/Ecto.Changeset.html#unique_constraint/3
-    def unique_constraint
+    # Catches unique constraint database errors for *field* and converts them to changeset errors
+    def unique_constraint(field : Symbol)
+      UNIQUE_FIELDS[self.to_s] = [] of Symbol unless UNIQUE_FIELDS.has_key?(self.to_s)
+      UNIQUE_FIELDS[self.to_s].push(field)
+    end
+
+    # Catches unique constraint database errors for all *fields* and converts them to changeset errors
+    def unique_constraint(fields : Array(Symbol))
+      fields.each { |f| unique_constraint(f) }
     end
 
     # Assigns multiple validations for one or many *field*s.

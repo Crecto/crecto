@@ -2,6 +2,57 @@ require "./spec_helper"
 
 describe Crecto do
   describe "Changeset" do
+    describe "#unique_constraint" do
+      it "should not be valid on insert" do
+        Repo.delete_all(Post)
+        Repo.delete_all(User)
+
+        u = User.new
+        u.name = "test uniqueness insert"
+        u.unique_field = "123"
+        Repo.insert(u)
+
+        u = User.new
+        u.name = "test uniqueness insert"
+        u.unique_field = "123"
+        changeset = Repo.insert(u)
+        changeset.errors.empty?.should be_false
+        if Repo.config.adapter == Crecto::Adapters::Postgres
+          changeset.errors[0].should eq({:field => "unique_field", :message => "duplicate key value violates unique constraint \"users_unique_field_key\""})
+        elsif Repo.config.adapter == Crecto::Adapters::Mysql
+          changeset.errors[0].should eq({:field => "unique_field", :message => "Duplicate entry '123' for key 'unique_field'"})
+        elsif Repo.config.adapter == Crecto::Adapters::SQLite3
+          changeset.errors[0].should eq({:field => "unique_field", :message => "UNIQUE constraint failed: users.unique_field"})
+        end
+      end
+
+      it "should not be valid on update" do
+        Repo.delete_all(Post)
+        Repo.delete_all(User)
+
+        u = User.new
+        u.name = "test uniqueness update"
+        u.unique_field = "123"
+        Repo.insert(u)
+
+        u = User.new
+        u.name = "test uniqueness insert"
+        u.unique_field = "before"
+        u = Repo.insert(u).instance
+
+        u.unique_field = "123"
+        changeset = Repo.update(u)
+        changeset.errors.empty?.should be_false
+        if Repo.config.adapter == Crecto::Adapters::Postgres
+          changeset.errors[0].should eq({:field => "unique_field", :message => "duplicate key value violates unique constraint \"users_unique_field_key\""})
+        elsif Repo.config.adapter == Crecto::Adapters::Mysql
+          changeset.errors[0].should eq({:field => "unique_field", :message => "Duplicate entry '123' for key 'unique_field'"})
+        elsif Repo.config.adapter == Crecto::Adapters::SQLite3
+          changeset.errors[0].should eq({:field => "unique_field", :message => "UNIQUE constraint failed: users.unique_field"})
+        end
+      end
+    end
+
     describe "#validate_required" do
       it "should not be valid" do
         u = UserRequired.new

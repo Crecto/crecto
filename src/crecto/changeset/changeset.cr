@@ -53,6 +53,48 @@ module Crecto
         @instance
       end
 
+      def add_error(key, val)
+        errors.push({:field => key, :message => val})
+        @valid = false
+      end
+
+      def check_unique_constraint_from_pq_error!(e : PQ::PQError, queryable_instance)
+        if cname = e.fields.select { |f| f.name === :constraint_name }.first?
+          UNIQUE_FIELDS[@class_key].each do |constraint_field|
+            if cname.message.starts_with?("#{queryable_instance.class.table_name}_#{constraint_field}")
+              self.add_error(constraint_field.to_s, e.message.to_s)
+              return true
+            end
+          end
+        end
+
+        false
+      end
+
+      def check_unique_constraint_from_exception!(e : Exception, queryable_instance)
+        # Mysql
+        if e.message.to_s.starts_with?("Duplicate")
+          UNIQUE_FIELDS[@class_key].each do |constraint_field|
+            if e.message.to_s.includes?("for key '#{constraint_field}'")
+              self.add_error(constraint_field.to_s, e.message.to_s)
+              return true
+            end
+          end
+        end
+
+        # Sqlite
+        if e.message.to_s.downcase.starts_with?("unique constraint failed")
+          UNIQUE_FIELDS[@class_key].each do |constraint_field|
+            if e.message.to_s.includes?("#{queryable_instance.class.table_name}.#{constraint_field}")
+              self.add_error(constraint_field.to_s, e.message.to_s)
+              return true
+            end
+          end
+        end
+
+        false
+      end
+
       private def check_required!
         return unless REQUIRED_FIELDS.has_key?(@class_key)
         REQUIRED_FIELDS[@class_key].each do |field|
@@ -147,11 +189,6 @@ module Crecto
             add_error("_base", tuple[:message])
           end
         end
-      end
-
-      def add_error(key, val)
-        errors.push({field: key, message: val}.to_h)
-        @valid = false
       end
     end
   end

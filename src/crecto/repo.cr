@@ -172,17 +172,23 @@ module Crecto
       changeset = queryable_instance.class.changeset(queryable_instance)
       return changeset unless changeset.valid?
 
-      changeset.instance.updated_at_to_now
-      changeset.instance.created_at_to_now
+      begin
+        changeset.instance.updated_at_to_now
+        changeset.instance.created_at_to_now
 
-      query = config.adapter.run_on_instance(tx || config.get_connection, :insert, changeset)
+        query = config.adapter.run_on_instance(tx || config.get_connection, :insert, changeset)
 
-      if query.nil?
-        changeset.add_error("insert_error", "Insert Failed")
-      elsif config.adapter == Crecto::Adapters::Postgres || (config.adapter == Crecto::Adapters::Mysql && tx.nil?) ||
-            (config.adapter == Crecto::Adapters::SQLite3 && tx.nil?)
-        new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first?
-        changeset = new_instance.class.changeset(new_instance) if new_instance
+        if query.nil?
+          changeset.add_error("insert_error", "Insert Failed")
+        elsif config.adapter == Crecto::Adapters::Postgres || (config.adapter == Crecto::Adapters::Mysql && tx.nil?) ||
+              (config.adapter == Crecto::Adapters::SQLite3 && tx.nil?)
+          new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first?
+          changeset = new_instance.class.changeset(new_instance) if new_instance
+        end
+      rescue e : PQ::PQError
+        raise e unless changeset.check_unique_constraint_from_pq_error!(e, queryable_instance)
+      rescue e
+        raise e unless changeset.check_unique_constraint_from_exception!(e, queryable_instance)
       end
 
       changeset.action = :insert
@@ -213,15 +219,21 @@ module Crecto
       changeset = queryable_instance.class.changeset(queryable_instance)
       return changeset unless changeset.valid?
 
-      changeset.instance.updated_at_to_now
+      begin
+        changeset.instance.updated_at_to_now
 
-      query = config.adapter.run_on_instance(tx || config.get_connection, :update, changeset)
+        query = config.adapter.run_on_instance(tx || config.get_connection, :update, changeset)
 
-      if query.nil?
-        changeset.add_error("update_error", "Update Failed")
-      else
-        new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first?
-        changeset = new_instance.class.changeset(new_instance) if new_instance
+        if query.nil?
+          changeset.add_error("update_error", "Update Failed")
+        else
+          new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first?
+          changeset = new_instance.class.changeset(new_instance) if new_instance
+        end
+      rescue e : PQ::PQError
+        raise e unless changeset.check_unique_constraint_from_pq_error!(e, queryable_instance)
+      rescue e
+        raise e unless changeset.check_unique_constraint_from_exception!(e, queryable_instance)
       end
 
       changeset.action = :update
