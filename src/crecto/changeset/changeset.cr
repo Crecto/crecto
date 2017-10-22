@@ -58,35 +58,34 @@ module Crecto
         @valid = false
       end
 
-      def check_unique_constraint_from_pq_error!(e : PQ::PQError, queryable_instance)
-        if cname = e.fields.select { |f| f.name === :constraint_name }.first?
+      def check_unique_constraint_from_exception!(e : Exception, queryable_instance)
+        message = e.message.to_s
+
+        # Postgres
+        if message.starts_with?("duplicate key value")
           UNIQUE_FIELDS[@class_key].each do |constraint_field|
-            if cname.message.starts_with?("#{queryable_instance.class.table_name}_#{constraint_field}")
-              self.add_error(constraint_field.to_s, e.message.to_s)
+            if message.includes?("unique constraint \"#{queryable_instance.class.table_name}_#{constraint_field}_key\"")
+              self.add_error(constraint_field.to_s, message)
               return true
             end
           end
         end
 
-        false
-      end
-
-      def check_unique_constraint_from_exception!(e : Exception, queryable_instance)
         # Mysql
-        if e.message.to_s.starts_with?("Duplicate")
+        if message.starts_with?("Duplicate")
           UNIQUE_FIELDS[@class_key].each do |constraint_field|
-            if e.message.to_s.includes?("for key '#{constraint_field}'")
-              self.add_error(constraint_field.to_s, e.message.to_s)
+            if message.includes?("for key '#{constraint_field}'")
+              self.add_error(constraint_field.to_s, message)
               return true
             end
           end
         end
 
         # Sqlite
-        if e.message.to_s.downcase.starts_with?("unique constraint failed")
+        if message.downcase.starts_with?("unique constraint failed")
           UNIQUE_FIELDS[@class_key].each do |constraint_field|
-            if e.message.to_s.includes?("#{queryable_instance.class.table_name}.#{constraint_field}")
-              self.add_error(constraint_field.to_s, e.message.to_s)
+            if message.includes?("#{queryable_instance.class.table_name}.#{constraint_field}")
+              self.add_error(constraint_field.to_s, message)
               return true
             end
           end

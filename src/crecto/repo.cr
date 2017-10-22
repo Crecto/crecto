@@ -185,8 +185,6 @@ module Crecto
           new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first?
           changeset = new_instance.class.changeset(new_instance) if new_instance
         end
-      rescue e : PQ::PQError
-        raise e unless changeset.check_unique_constraint_from_pq_error!(e, queryable_instance)
       rescue e
         raise e unless changeset.check_unique_constraint_from_exception!(e, queryable_instance)
       end
@@ -230,8 +228,6 @@ module Crecto
           new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first?
           changeset = new_instance.class.changeset(new_instance) if new_instance
         end
-      rescue e : PQ::PQError
-        raise e unless changeset.check_unique_constraint_from_pq_error!(e, queryable_instance)
       rescue e
         raise e unless changeset.check_unique_constraint_from_exception!(e, queryable_instance)
       end
