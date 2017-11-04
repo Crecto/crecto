@@ -62,7 +62,7 @@ module Crecto
 
       # macro constants
       CRECTO_VALID_FIELD_TYPES = [String, Int64, Int32, Int16, Float32, Float64, Bool, Time, Int32 | Int64, Float32 | Float64, Json, PkeyValue]
-      CRECTO_VALID_FIELD_OPTIONS = [:primary_key, :virtual]
+      CRECTO_VALID_FIELD_OPTIONS = [:primary_key, :virtual, :default]
       CRECTO_FIELDS      = [] of NamedTuple(name: Symbol, type: String)
       CRECTO_ENUM_FIELDS = [] of NamedTuple(name: Symbol, type: String, column_name: String, column_type: String)
 
@@ -92,8 +92,14 @@ module Crecto
         CRECTO_PRIMARY_KEY_FIELD_SYMBOL = {{field_name.id.symbolize}}
         CRECTO_PRIMARY_KEY_FIELD_TYPE = {{field_type.id.stringify}}
         {% primary_key = true %}
-      {% elsif opts[:virtual] %}
+      {% end %}
+
+      {% if opts[:virtual] %}
         {% virtual = true %}
+      {% end %}
+
+      {% if opts[:default] %}
+        @{{field_name.id}} = {{opts[:default]}}
       {% end %}
 
       check_type!({{field_name}}, {{field_type}})

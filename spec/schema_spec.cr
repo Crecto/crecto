@@ -3,6 +3,11 @@ require "./spec_helper"
 describe Crecto do
   describe "Schema" do
     describe "#schema and #field" do
+      it "should set default values" do
+        d = DefaultValue.new
+        d.default.should eq("should set default")
+      end
+
       it "should set the table name" do
         User.table_name.should eq("users")
       end

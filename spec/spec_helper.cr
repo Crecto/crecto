@@ -17,6 +17,12 @@ alias TestFloat = PG::Numeric | Float64
 Query = Crecto::Repo::Query
 Multi = Crecto::Multi
 
+class DefaultValue < Crecto::Model
+  schema "default_values" do
+    field :default, String, default: "should set default"
+  end
+end
+
 class User < Crecto::Model
   schema "users" do
     field :name, String
