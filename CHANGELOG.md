@@ -4,6 +4,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+* added `default` option to fields to set a default value
 
 ## [0.7.1] 2017-10-22
 * fixed bug introduced in 0.7.0 for users not using postgres

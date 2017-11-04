@@ -104,7 +104,7 @@ class User < Crecto::Model
   schema "users" do
     field :age, Int32 # or use `PkeyValue` alias: `field :age, PkeyValue`
     field :name, String
-    field :is_admin, Bool
+    field :is_admin, Bool, default: false
     field :temporary_info, Float64, virtual: true
     field :email, String
     has_many :posts, Post, dependent: :destroy
