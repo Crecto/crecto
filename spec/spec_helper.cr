@@ -19,7 +19,11 @@ Multi = Crecto::Multi
 
 class DefaultValue < Crecto::Model
   schema "default_values" do
-    field :default, String, default: "should set default"
+    field :default_string, String, default: "should set default"
+    field :default_int, Int32, default: 64
+    field :default_float, Float64, default: 3.14
+    field :default_time, Time, default: Time.now
+    field :default_bool, Bool, default: false
   end
 end
 

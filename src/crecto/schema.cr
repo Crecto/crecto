@@ -79,7 +79,7 @@ module Crecto
       # validate field options
       {% for opt in opts %}
         {% unless CRECTO_VALID_FIELD_OPTIONS.includes?(opt.id.symbolize) %}
-          raise Crecto::InvalidOption.new("{{opt}} is not a valid option, must be one of #{VALID_FIELD_OPTIONS.join(", ")}")
+          raise Crecto::InvalidOption.new("{{opt}} is not a valid option, must be one of #{CRECTO_VALID_FIELD_OPTIONS.join(", ")}")
         {% end %}
       {% end %}
 
@@ -87,18 +87,18 @@ module Crecto
       {% virtual = false %}
       {% primary_key = false %}
 
-      {% if opts[:primary_key] %}
+      {% if opts.keys.includes?(:primary_key.id) %}
         CRECTO_PRIMARY_KEY_FIELD = {{field_name.id.stringify}}
         CRECTO_PRIMARY_KEY_FIELD_SYMBOL = {{field_name.id.symbolize}}
         CRECTO_PRIMARY_KEY_FIELD_TYPE = {{field_type.id.stringify}}
         {% primary_key = true %}
       {% end %}
 
-      {% if opts[:virtual] %}
+      {% if opts.keys.includes?(:virtual.id) %}
         {% virtual = true %}
       {% end %}
 
-      {% if opts[:default] %}
+      {% if opts.keys.includes?(:default.id) %}
         @{{field_name.id}} = {{opts[:default]}}
       {% end %}
 

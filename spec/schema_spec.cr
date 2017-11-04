@@ -5,7 +5,11 @@ describe Crecto do
     describe "#schema and #field" do
       it "should set default values" do
         d = DefaultValue.new
-        d.default.should eq("should set default")
+        d.default_string.should eq("should set default")
+        d.default_int.should eq(64)
+        d.default_float.should eq(3.14)
+        d.default_bool.should eq(false)
+        d.default_time.should_not be_nil
       end
 
       it "should set the table name" do
