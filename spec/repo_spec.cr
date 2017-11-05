@@ -4,6 +4,45 @@ require "./helper_methods"
 
 describe Crecto do
   describe "Repo" do
+    describe "#raw_scalar" do
+      it "should perform a scalar query directly on the connection" do
+        Repo.delete_all(Post)
+        Repo.delete_all(User)
+        quick_create_user("one")
+        quick_create_user("two")
+        Repo.raw_scalar("select count(id) from users").should eq(2)
+      end
+    end
+
+    describe "#raw_exec" do
+      it "should run the exec query directly on the connection" do
+        name = SecureRandom.hex(8)
+        x = Repo.config.adapter == Crecto::Adapters::Postgres ? "$1" : "?"
+        Repo.raw_exec("INSERT INTO users (name) VALUES (#{x})", name)
+        user = Repo.get_by!(User, name: name)
+        user.should_not be_nil
+      end
+    end
+
+    describe "#raw_query" do
+      it "should return the result set" do
+        Repo.delete_all(Post)
+        Repo.delete_all(User)
+        names = ["one", "two"]
+        quick_create_user(names[0])
+        quick_create_user(names[1])
+
+        Repo.raw_query("SELECT id, name FROM users") do |rs|
+          i = 0
+          rs.each do
+            rs.read(Int32).should be_a(Int32)
+            rs.read(String).should eq(names[i])
+            i += 1
+          end
+        end
+      end
+    end
+
     describe "#insert" do
       it "should insert the user" do
         u = User.new
