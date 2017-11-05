@@ -13,6 +13,38 @@ module Crecto
       @@config
     end
 
+    # Run a raw `exec` query directly on the adapter connection
+    def raw_exec(args : Array)
+      config.get_connection.exec(args)
+    end
+
+    # Run a raw `exec` query directly on the adapter connection
+    def raw_exec(*args)
+      config.get_connection.exec(*args)
+    end
+
+    # Run a raw `query` query directly on the adapter connection
+    def raw_query(query, *args)
+      config.get_connection.query(query, *args) do |rs|
+        yield rs
+      end
+    end
+
+    # Run a raw `query` query directly on the adapter connection
+    def raw_query(query, args : Array)
+      config.get_connection.query(args)
+    end
+
+    # Run a raw `query` query directly on the adapter connection
+    def raw_query(query, *args)
+      config.get_connection.query(*args)
+    end
+
+    # Run a raw `scalar` query directly on the adapter connection
+    def raw_scalar(*args)
+      config.get_connection.scalar(*args)
+    end
+
     # Return a list of *queryable* instances using *query*
     #
     # ```

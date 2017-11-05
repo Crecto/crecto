@@ -5,6 +5,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 * added `default` option to fields to set a default value
+* added `raw_query`, `raw_exec`, and `raw_scalar` to Repo to run queries directly on adapter connection
 
 ## [0.7.1] 2017-10-22
 * fixed bug introduced in 0.7.0 for users not using postgres
