@@ -61,7 +61,7 @@ module Crecto
       {% end %}
 
       # macro constants
-      CRECTO_VALID_FIELD_TYPES = [String, Int64, Int32, Int16, Float32, Float64, Bool, Time, Int32 | Int64, Float32 | Float64, Json, PkeyValue]
+      CRECTO_VALID_FIELD_TYPES = [String, Int64, Int32, Int16, Float32, Float64, Bool, Time, Int32 | Int64, Float32 | Float64, Json, PkeyValue, Array(String), Array(Int64), Array(Int32), Array(Int16), Array(Float32), Array(Float64), Array(Bool), Array(Time), Array(Int32 | Int64), Array(Float32 | Float64), Array(Json), Array(PkeyValue)]
       CRECTO_VALID_FIELD_OPTIONS = [:primary_key, :virtual, :default]
       CRECTO_FIELDS      = [] of NamedTuple(name: Symbol, type: String)
       CRECTO_ENUM_FIELDS = [] of NamedTuple(name: Symbol, type: String, column_name: String, column_type: String)
@@ -221,7 +221,7 @@ module Crecto
 
       # Builds a hash from all `CRECTO_FIELDS` defined
       def to_query_hash
-        query_hash = {} of Symbol => DbValue
+        query_hash = {} of Symbol => DbValue | ArrayDbValue
 
         {% for field in CRECTO_FIELDS %}
           if @@changeset_fields.includes?({{field[:name]}})

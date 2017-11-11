@@ -1163,5 +1163,50 @@ describe Crecto do
         changeset.errors.any?.should eq false
       end
     end
+
+    if Repo.config.adapter == Crecto::Adapters::Postgres
+      describe "array types" do
+        it "should insert array types" do
+          u = UserArrays.new
+          u.string_array = ["1", "2", "3"]
+          u.int_array = [1, 2, 3]
+          u.float_array = [3.14, 2.56, 76.43]
+          u.bool_array = [true, false, true, false]
+          u = Repo.insert(u).instance
+
+          u = Repo.get!(UserArrays, u.id)
+          u.string_array.should eq ["1", "2", "3"]
+          u.int_array.should eq [1, 2, 3]
+          u.float_array.should eq [3.14, 2.56, 76.43]
+          u.bool_array.should eq [true, false, true, false]
+        end
+
+        it "should update array types" do
+          u = UserArrays.new
+          u.string_array = ["1", "2", "3"]
+          u = Repo.insert(u).instance
+
+          u.string_array = ["one", "two", "three"]
+          changeset = Repo.update(u)
+          changeset.errors.any?.should be_false
+
+          changeset.instance.string_array.should eq ["one", "two", "three"]
+        end
+
+        it "should query array types" do
+          u = UserArrays.new
+          u.string_array = ["3", "3", "3"]
+          u.int_array = [1, 2, 3]
+          u.float_array = [3.14, 2.56, 76.43]
+          u.bool_array = [true, false, true, false]
+          u = Repo.insert(u).instance
+
+          Repo.all(UserArrays, Query.where("? = ANY(string_array)", "3")).size.should_not be < 1
+          Repo.all(UserArrays, Query.where("? = ALL(string_array)", "3")).size.should_not be < 1
+          Repo.all(UserArrays, Query.where("? = ANY(float_array)", 3.14)).size.should_not be < 1
+          Repo.all(UserArrays, Query.where("? = ANY(bool_array)", true)).size.should_not be < 1
+        end
+      end
+    end
   end
 end

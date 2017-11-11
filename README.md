@@ -265,7 +265,9 @@ multi.errors.any?
 #
 
 class UserJson < Crecto::Model
-  field :settings, Json
+  schema "users_json" do
+    field :settings, Json
+  end
 end
 
 user = UserJson.new
@@ -275,6 +277,27 @@ Repo.insert(user)
 
 query = Query.where("settings @> '{\"one\":\"test\"}'")
 users = Repo.all(UserJson, query)
+
+#
+# Array type (Postgres only)
+#
+
+class UserArray < Crecto::Model
+  schema "users_array" do
+    field :string_array, Array(String)
+    field :int_array, Array(Int32)
+    field :float_array, Array(Float64)
+    field :bool_array, Array(Bool)
+  end
+end
+
+user = UserArray.new
+user.string_array = ["one", "two", "three"]
+
+Repo.insert(user)
+
+query = Query.where("? = ANY(string_array)", "one")
+users = Repo.all(UserArray, query)
 
 #
 # Database Logging
