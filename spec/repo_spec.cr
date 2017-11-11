@@ -35,7 +35,11 @@ describe Crecto do
         Repo.raw_query("SELECT id, name FROM users") do |rs|
           i = 0
           rs.each do
-            rs.read(Int32).should be_a(Int32)
+            if Repo.config.adapter == Crecto::Adapters::Postgres
+              rs.read(Int64).should be_a(Int64)
+            else
+              rs.read(Int32).should be_a(Int32)
+            end
             rs.read(String).should eq(names[i])
             i += 1
           end
@@ -906,9 +910,7 @@ describe Crecto do
 
     describe "#joins" do
       it "should enforce a join in the associaton" do
-        user = User.new
-        user.name = "tester"
-        user = Repo.insert(user).instance
+        user = quick_create_user("tester")
 
         users = Repo.all(User, Query.where(id: user.id).join(:posts))
         users.empty?.should eq true
@@ -919,6 +921,20 @@ describe Crecto do
 
         users = Repo.all(User, Query.where(id: user.id).join(:posts))
         users.size.should eq 1
+      end
+
+      it "should double joins" do
+        user = quick_create_user("tester")
+
+        post = Post.new
+        post.user = user
+        post = Repo.insert(post).instance
+
+        address = Address.new
+        address.user = user
+        address = Repo.insert(address).instance
+
+        Repo.all(User, Query.join(:posts).join(:addresses))
       end
     end
 
