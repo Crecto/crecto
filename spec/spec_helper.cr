@@ -86,6 +86,15 @@ class UserLargeDefaults < Crecto::Model
   end
 end
 
+class UserArrays < Crecto::Model
+  schema "users_arrays" do
+    field :string_array, Array(String)
+    field :int_array, Array(Int32)
+    field :float_array, Array(Float64)
+    field :bool_array, Array(Bool)
+  end
+end
+
 class UserRequired < Crecto::Model
   schema "users_required" do
     field :name, String

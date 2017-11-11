@@ -8,6 +8,8 @@ require "./crecto/*"
 
 # :nodoc:
 alias DbValue = Bool | Float32 | Float64 | Int64 | Int32 | Int16 | String | Time | JSON::Any | Nil
+# :nodoc:
+alias ArrayDbValue = Array(Bool) | Array(Float32) | Array(Float64) | Array(Int64) | Array(Int32) | Array(Int16) | Array(String) | Array(Time) | Array(JSON::Any) | Nil
 # alias for Int32 | Int64 | Nil
 alias PkeyValue = Int32 | Int64 | Nil
 # :nodoc:

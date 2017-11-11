@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS users_different_defaults;
 DROP INDEX IF EXISTS users_4asdf;
 DROP TABLE IF EXISTS users_large_defaults;
+DROP TABLE IF EXISTS users_arrays;
 DROP TABLE IF EXISTS projects;
 DROP TABLE IF EXISTS users_json;
 DROP TABLE IF EXISTS things;
@@ -49,6 +50,15 @@ ALTER SEQUENCE users_large_defaults_id_seq OWNED BY users_large_defaults.id;
 ALTER TABLE ONLY users_large_defaults ALTER COLUMN id SET DEFAULT nextval('users_large_defaults_id_seq'::regclass);
 CREATE UNIQUE INDEX users_4asdf ON users_large_defaults (id);
 
+CREATE TABLE users_arrays(
+  id BIGSERIAL PRIMARY KEY,
+  string_array varchar[],
+  int_array INTEGER[],
+  float_array float[],
+  bool_array bool[],
+  created_at timestamp without time zone,
+  updated_at timestamp without time zone
+);
 
 CREATE TABLE posts(
   id BIGSERIAL PRIMARY KEY,
