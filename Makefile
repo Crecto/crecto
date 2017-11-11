@@ -9,7 +9,7 @@ migrate:
 ifndef PG_URL
 	$(error PG_URL is undefined)
 else
-	psql -q $(PG_URL) < ./spec/migrations/pg_users.sql
+	psql -q $(PG_URL) < ./spec/migrations/pg_migrations.sql
 endif
 
 spec:
