@@ -9,7 +9,7 @@ license: MIT
 dependencies:
   db:
     github: crystal-lang/crystal-db
-    version: 0.4.2
+    version: 0.4.3
 
 development_dependencies:
   mysql:
@@ -21,7 +21,5 @@ development_dependencies:
     version: 0.13.4
 
   sqlite3:
-    github: Zhomart/crystal-sqlite3
-    # github: crystal-lang/crystal-sqlite3
-    # version: 0.8.2
-    branch: master
+    github: crystal-lang/crystal-sqlite3
+    version: 0.8.3
