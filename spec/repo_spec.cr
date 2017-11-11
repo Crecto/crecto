@@ -35,7 +35,11 @@ describe Crecto do
         Repo.raw_query("SELECT id, name FROM users") do |rs|
           i = 0
           rs.each do
-            rs.read(Int64).should be_a(Int64)
+            if Repo.config.adapter == Crecto::Adapters::Postgres
+              rs.read(Int64).should be_a(Int64)
+            else
+              rs.read(Int32).should be_a(Int32)
+            end
             rs.read(String).should eq(names[i])
             i += 1
           end
