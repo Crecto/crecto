@@ -22,7 +22,7 @@ Include a database adapter:
 
 #### Postgres
 
-Include [crystal-pg](https://github.com/will/crystal-pg) in your project
+Include [crystal-pg](https://github.com/will/crystal-pg) in your project BEFORE crecto
 
 in your application:
 
@@ -33,7 +33,7 @@ require "crecto"
 
 #### Mysql
 
-Include [crystal-mysql](https://github.com/crystal-lang/crystal-mysql) in your project
+Include [crystal-mysql](https://github.com/crystal-lang/crystal-mysql) in your project BEFORE crecto
 
 in your application:
 
@@ -44,7 +44,7 @@ require "crecto"
 
 #### Sqlite
 
-Include [crystal-sqlite3](https://github.com/crystal-lang/crystal-sqlite3) in your project
+Include [crystal-sqlite3](https://github.com/crystal-lang/crystal-sqlite3) in your project BEFORE crecto
 
 in your appplication:
 
