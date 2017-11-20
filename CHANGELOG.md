@@ -5,6 +5,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [0.8.1] 2017-11-20
+* changeset validations now validate virtual attibutes
+
 ## [0.8.0] 2017-11-11
 * added `default` option to fields to set a default value
 * added `raw_query`, `raw_exec`, and `raw_scalar` to Repo to run queries directly on adapter connection
@@ -134,6 +137,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Query
 * Postgres Adapter
 
+[0.8.1]: https://github.com/fridgerator/crecto/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/fridgerator/crecto/compare/v0.7.1...v0.8.0
 [0.7.1]: https://github.com/fridgerator/crecto/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/fridgerator/crecto/compare/v0.6.2...v0.7.0
