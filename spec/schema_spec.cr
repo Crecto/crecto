@@ -171,6 +171,17 @@ describe Crecto do
 
         u.to_query_hash.should eq({:name => "tester", :things => 6644, :smallnum => nil, :nope => 34.99, :yep => nil, :some_date => nil, :pageviews => 1234567890, :unique_field => nil, :created_at => nil, :updated_at => nil})
       end
+
+      it "should return virtual attributes if `include_virtual` is passed as true" do
+        u = User.new
+        u.name = "tester"
+        u.things = 6644
+        u.stuff = 2343
+        u.nope = 34.9900
+        u.pageviews = 1234567890
+
+        u.to_query_hash(true).should eq({:name => "tester", :things => 6644, :stuff => 2343, :smallnum => nil, :nope => 34.99, :yep => nil, :some_date => nil, :pageviews => 1234567890, :unique_field => nil, :created_at => nil, :updated_at => nil})
+      end
     end
 
     describe "#pkey_value" do
