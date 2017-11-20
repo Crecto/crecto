@@ -220,11 +220,11 @@ module Crecto
 
 
       # Builds a hash from all `CRECTO_FIELDS` defined
-      def to_query_hash
+      def to_query_hash(include_virtual=false)
         query_hash = {} of Symbol => DbValue | ArrayDbValue
 
         {% for field in CRECTO_FIELDS %}
-          if @@changeset_fields.includes?({{field[:name]}})
+          if include_virtual || @@changeset_fields.includes?({{field[:name]}})
             query_hash[{{field[:name]}}] = self.{{field[:name].id}}
             query_hash[{{field[:name]}}] = query_hash[{{field[:name]}}].as(Time).to_utc if query_hash[{{field[:name]}}].is_a?(Time) && query_hash[{{field[:name]}}].as(Time).local?
           end

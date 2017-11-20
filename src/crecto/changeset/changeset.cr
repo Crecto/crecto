@@ -30,7 +30,7 @@ module Crecto
 
       def initialize(@instance : T)
         @class_key = @instance.class.to_s
-        @instance_hash = @instance.to_query_hash
+        @instance_hash = @instance.to_query_hash(true)
         @source = @instance.initial_values
 
         check_required!
