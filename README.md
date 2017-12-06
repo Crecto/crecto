@@ -1,12 +1,10 @@
 # Crecto
 
-Database wrapper for Crystal.  Inspired by [Ecto](https://github.com/elixir-ecto/ecto) for Elixir language.
-
----
-
 [![Build Status](https://travis-ci.org/Crecto/crecto.svg?branch=master)](https://travis-ci.org/Crecto/crecto) [![Join the chat at https://gitter.im/crecto/Lobby](https://badges.gitter.im/crecto/Lobby.svg)](https://gitter.im/crecto/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-#### [Docs](http://docs.crecto.com)
+Database wrapper for Crystal.  Inspired by [Ecto](https://github.com/elixir-ecto/ecto) for Elixir language.
+
+See documentation on <http://docs.crecto.com>
 
 ## Installation
 
@@ -22,7 +20,7 @@ Include a database adapter:
 
 #### Postgres
 
-Include [crystal-pg](https://github.com/will/crystal-pg) in your project BEFORE crecto
+Include [crystal-pg](https://github.com/will/crystal-pg) in your project **before** crecto
 
 in your application:
 
@@ -33,7 +31,7 @@ require "crecto"
 
 #### Mysql
 
-Include [crystal-mysql](https://github.com/crystal-lang/crystal-mysql) in your project BEFORE crecto
+Include [crystal-mysql](https://github.com/crystal-lang/crystal-mysql) in your project **before** crecto
 
 in your application:
 
@@ -44,7 +42,7 @@ require "crecto"
 
 #### Sqlite
 
-Include [crystal-sqlite3](https://github.com/crystal-lang/crystal-sqlite3) in your project BEFORE crecto
+Include [crystal-sqlite3](https://github.com/crystal-lang/crystal-sqlite3) in your project **before** crecto
 
 in your appplication:
 
@@ -59,14 +57,15 @@ require "crecto"
 
 ## Usage
 
+First create a Repo.  The Repo maps to the datastore and the database adapter and is used to run queries.
+You can even create multiple repos if you need to access multiple databases.
+
+> **Note:** For those coming from Active Record:
+> Repo provides a level of abstraction between database logic (Repo) and business logic (Model).
+
+Let's create a repo for Postgres:
+
 ```crystal
-
-# First create a Repo.  The Repo maps to the datastore and the database adapter and is used to run queries.
-# You can even create multiple repos if you need to access multiple databases.
-#
-# For those coming from Active Record:
-#   Repo provides a level of abstraction between database logic (Repo) and business logic (Model).
-
 module Repo
   extend Crecto::Repo
 
@@ -78,10 +77,14 @@ module Repo
     conf.password = "password"
     conf.port = 5432
     # you can also set initial_pool_size, max_pool_size, max_idle_pool_size,
-    #  checkout_timeout, retry_attempts, and retry_delay
+    # checkout_timeout, retry_attempts, and retry_delay
   end
 end
+```
 
+And another for SQLite:
+
+```crystal
 module SqliteRepo
   extend Crecto::Repo
 
@@ -90,14 +93,24 @@ module SqliteRepo
     conf.database = "./path/to/database.db"
   end
 end
+```
 
-# shortcut variables, optional
+#### Shortcut variables
+
+_Optionally_ you can use constants shorcuts using:
+
+```crystal
 Query = Crecto::Repo::Query
 Multi = Crecto::Multi
+```
 
-#
-# Define table name, fields, validations, and constraints in your model
-#
+#### Definitions
+
+Define table name, fields, validations, and constraints in your model
+
+Defining a new class using `Crecto::Model`:
+
+```crystal
 class User < Crecto::Model
 
   schema "users" do
@@ -113,21 +126,30 @@ class User < Crecto::Model
   validate_format :name, /^[a-zA-Z]*$/
   unique_constraint :email
 end
+```
 
+Defining another one:
+
+```crystal
 class Post < Crecto::Model
 
   schema "posts" do
     belongs_to :user, User
   end
 end
+```
 
+Creating a new `User`:
+
+```crystal
 user = User.new
 user.name = "123"
 user.age = 123
+```
 
-#
-# Check the changeset to see changes and errors
-#
+#### Check the changeset to see changes and errors
+
+```crystal
 changeset = User.changeset(user)
 puts changeset.valid? # false
 puts changeset.errors # {:field => "name", :message => "is invalid"}
@@ -136,133 +158,171 @@ puts changeset.changes # {:name => "123", :age => 123}
 user.name = "test"
 changeset = User.changeset(user)
 changeset.valid? # true
+```
 
-#
-# Use Repo to insert into database.  Repo returns a new changeset.
-#
+#### Use Repo to insert into database.
+
+Repo returns a new changeset.
+
+```crystal
 changeset = Repo.insert(user)
 puts changeset.errors # []
+```
 
-#
-# User Repo to update database
-#
+#### User Repo to update database
+
+```crystal
 user.name = "new name"
 changeset = Repo.update(user)
 puts changeset.instance.name # "new name"
+```
 
-#
-# Set Associations
-#
+#### Set Associations
 
+```crystal
 post = Post.new
 post.user = user
 Repo.insert(post)
+```
 
-#
-# Query syntax
-#
+#### Query syntax
+
+```crystal
 query = Query
   .where(name: "new name")
   .where("users.age < ?", [124])
   .order_by("users.name ASC")
   .order_by("users.age DESC")
   .limit(1)
+```
 
-#
-# All
-#
+#### All
+
+```crystal
 users = Repo.all(User, query)
 users.as(Array) unless users.nil?
+```
 
-#
-# Get by primary key
-#
+#### Get by primary key
+
+```crystal
 user = Repo.get(User, 1)
 user.as(User) unless user.nil?
+```
 
-#
-# Get by fields
-#
+#### Get by fields
+
+```crystal
 Repo.get_by(User, name: "new name", id: 1121)
 user.as(User) unless user.nil?
+```
 
-#
-# Delete
-#
+#### Delete
+
+```crystal
 changeset = Repo.delete(user)
+```
 
-#
-# Associations
-#
 
+#### Associations
+
+```crystal
 user = Repo.get(User, id).as(User)
 posts = Repo.get_association(user, :posts)
 
 post = Repo.get(Post, id).as(Post)
 user = Repo.get_association(post, :user)
+```
 
-#
-# Preload associations
-#
+#### Preload associations
+
+```crystal
 users = Repo.all(User, preload: [:posts])
 users[0].posts # has_many relation is preloaded
 
 posts = Repo.all(Post, preload: [:user])
 posts[0].user # belongs_to relation preloaded
+```
 
-#
-# Nil-check associations
-#
-# If an association is not loaded, the normal accessor will raise an error.
+#### Nil-check associations
+
+
+If an association is not loaded, the normal accessor will raise an error.
+
+```crystal
 users = Repo.all(User)
 users[0].posts? # => nil
 users[0].posts  # raises Crecto::AssociationNotLoaded
+```
 
-# For has_many preloads, the result will always be an array.
+For `has_many` preloads, the result will always be an array.
+
+```crystal
 users = Repo.all(User, preload: [:posts])
 users[0].posts? # => Array(Post)
 users[0].posts  # => Array(Post)
+```
 
-# For belongs_to and has_one preloads, the result may still be nil if no
-# record exists. If the association is nullable, always use `association?`.
+For belongs_to and has_one preloads, the result may still be nil if no
+record exists. If the association is nullable, always use `association?`.
+
+```crystal
 post = Repo.insert(Post.new).instance
 post = Repo.get(Post, post.id, preload: [:user])
 post.user? # nil
 post.user  # raises Crecto::AssociationNotLoaded
+```
 
-#
-# Aggregate functions
-#
-# can use the following aggregate functions: :avg, :count, :max, :min:, :sum
+#### Aggregate functions
+
+Can use the following aggregate functions: `:avg`, `:count`, `:max`, `:min:`, `:sum`
+
+```crystal
 Repo.aggregate(User, :count, :id)
 Repo.aggregate(User, :avg, :age, Query.where(name: 'Bill'))
+```
 
-#
-# Multi / Transactions
-#
 
-# create the multi instance
+#### Multi / Transactions
+
+
+Create the multi instance
+
+```crystal
 multi = Multi.new
+```
 
-# build the transactions
+#### Build the transactions
+
+```crystal
 multi.insert(insert_user)
 multi.delete(post)
 multi.delete_all(Comment)
 multi.update(update_user)
 multi.update_all(User, Query.where(name: "stan"), {name: "stan the man"})
 multi.insert(new_user)
+```
 
-# insert the multi using a transaction
+
+#### Insert the multi using a transaction
+
+```crystal
 Repo.transaction(multi)
+```
 
-# check for errors
-# If there are any errors in any of the transactions, the database will rollback as if none of the transactions happened
+#### Check for errors
+
+If there are any errors in any of the transactions, the database will rollback as if none of the transactions happened
+
+```crystal
 multi.errors.any?
+```
 
-#
-# JSON type (Postgres only)
-#
+#### JSON type
 
+_(Postgres only)_
+
+```crystal
 class UserJson < Crecto::Model
   schema "users_json" do
     field :settings, Json
@@ -276,11 +336,13 @@ Repo.insert(user)
 
 query = Query.where("settings @> '{\"one\":\"test\"}'")
 users = Repo.all(UserJson, query)
+```
 
-#
-# Array type (Postgres only)
-#
+#### Array type
 
+_(Postgres only)_
+
+```crystal
 class UserArray < Crecto::Model
   schema "users_array" do
     field :string_array, Array(String)
@@ -297,15 +359,19 @@ Repo.insert(user)
 
 query = Query.where("? = ANY(string_array)", "one")
 users = Repo.all(UserArray, query)
+```
 
-#
-# Database Logging
-#
+#### Database Logging
 
-# By default nothing is logged.  To enable pass any type of IO to the logger.  For STDOUT use:
+By default nothing is logged.  To enable pass any type of IO to the logger.  For `STDOUT` use:
+
+```crystal
 Crecto::DbLogger.set_handler(STDOUT)
+```
 
-# Write to a file
+##### Write to a file
+
+```crystal
 f = File.open("database.log", "w")
 f.sync = true
 Crecto::DbLogger.set_handler(f)
