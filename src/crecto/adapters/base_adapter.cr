@@ -127,7 +127,7 @@ module Crecto
       end
 
       private def build_aggregate_query(queryable, ag, field)
-        "SELECT #{ag}(#{field}) from #{queryable.table_name}"
+        "SELECT #{ag}(#{queryable.table_name}.#{field}) from #{queryable.table_name}"
       end
 
       private def all(conn, queryable, query)
