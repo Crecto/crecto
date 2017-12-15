@@ -123,7 +123,11 @@ module Crecto
         q.push limit(query) unless query.limit.nil?
         q.push offset(query) unless query.offset.nil?
 
-        conn.scalar(position_args(q.join(" ")), params)
+        start = Time.now
+        query_string = position_args(q.join(" "))
+        results = conn.scalar(query_string, params)
+        DbLogger.log(query_string, Time.new - start, params)
+        results
       end
 
       private def build_aggregate_query(queryable, ag, field)
