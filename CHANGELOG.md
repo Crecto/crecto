@@ -3,7 +3,10 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+## [0.8.2] 2017-12-15
+* Cleaned up README [@faustinoaq](https://github.com/faustinoaq)
+* Fixed join on belogns_to associations
+* Enabled logging on aggregate queries
 
 ## [0.8.1] 2017-11-20
 * changeset validations now validate virtual attibutes
@@ -137,6 +140,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Query
 * Postgres Adapter
 
+[0.8.2]: https://github.com/fridgerator/crecto/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/fridgerator/crecto/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/fridgerator/crecto/compare/v0.7.1...v0.8.0
 [0.7.1]: https://github.com/fridgerator/crecto/compare/v0.7.0...v0.7.1
