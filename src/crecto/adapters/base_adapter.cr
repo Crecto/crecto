@@ -254,9 +254,21 @@ module Crecto
         q = ["INNER JOIN"]
         q.push association_klass.table_name
         q.push "ON"
-        q.push association_klass.table_name + "." + queryable.foreign_key_for_association(join).to_s
+
+        if queryable.association_type_for_association(join) == :belongs_to
+          q.push association_klass.table_name + "." + association_klass.primary_key_field
+        else
+          q.push association_klass.table_name + "." + queryable.foreign_key_for_association(join).to_s
+        end
+
         q.push "="
-        q.push queryable.table_name + '.' + queryable.primary_key_field
+
+        if queryable.association_type_for_association(join) == :belongs_to
+          q.push queryable.table_name + '.' + association_klass.foreign_key_for_association(queryable).to_s
+        else
+          q.push queryable.table_name + '.' + queryable.primary_key_field
+        end
+
         q.join(" ")
       end
 
