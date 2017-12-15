@@ -936,6 +936,16 @@ describe Crecto do
 
         Repo.all(User, Query.join(:posts).join(:addresses))
       end
+
+      it "should join has_many associations" do
+        query = Query.join(:user_projects)
+        Repo.all(User, query).should be_a(Array(User))
+      end
+
+      it "should join belongs_to associations" do
+        query = Query.join(:user)
+        Repo.all(UserProject, query).should be_a(Array(UserProject))
+      end
     end
 
     describe "#distinct" do
