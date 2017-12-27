@@ -9,16 +9,16 @@ license: MIT
 dependencies:
   db:
     github: crystal-lang/crystal-db
-    version: 0.4.3
+    branch: crystal/v0.24.0
 
 development_dependencies:
   mysql:
     github: crystal-lang/crystal-mysql
-    version: 0.3.2
+    branch: crystal/v0.24.1
 
   pg:
     github: will/crystal-pg
-    version: 0.13.4
+    branch: crystalv024
 
   sqlite3:
     github: crystal-lang/crystal-sqlite3
