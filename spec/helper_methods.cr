@@ -1,6 +1,7 @@
 def quick_create_user(name)
   user = User.new
   user.name = name
+  user.unique_field = Random::Secure.hex(8).to_s
   Repo.insert(user).instance
 end
 
