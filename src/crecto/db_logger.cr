@@ -1,16 +1,21 @@
+require "logger"
 require "colorize"
 
 module Crecto
   module DbLogger
-    @@log_handler : IO?
+    @@log_handler : IO? | Logger?
     @@tty = true
 
     def self.log(string, elapsed) : Nil
       if handler = @@log_handler
-        handler << if @@tty
-          "#{("%7.7s" % elapsed_text(elapsed)).colorize(:magenta)} #{string.colorize(:blue)}\n"
+        if handler.class == Logger
+          handler.as(Logger).info("#{("%7.7s" % elapsed_text(elapsed)).colorize(:magenta)} #{string.colorize(:blue)}")
         else
-          "#{"%7.7s" % elapsed_text(elapsed)} #{string}\n"
+          handler.as(IO) << if @@tty
+            "#{("%7.7s" % elapsed_text(elapsed)).colorize(:magenta)} #{string.colorize(:blue)}\n"
+          else
+            "#{"%7.7s" % elapsed_text(elapsed)} #{string}\n"
+          end
         end
       end
     end
@@ -20,6 +25,11 @@ module Crecto
         string = string.sub(/(\$\d+|\?)/, "'#{param}'")
       end
       log(string, elapsed)
+    end
+
+    def self.set_handler(logger : Logger)
+      @@log_handler = logger
+      @@log_handler.level = Logger::INFO
     end
 
     def self.set_handler(io : IO)
