@@ -39,6 +39,10 @@ describe Crecto do
         u.nope.should eq(3.343)
         u.yep.should eq(false)
         u.pageviews.should eq(123451651234)
+
+        u.name!.should eq("fridge")
+        typeof(u.name!).should eq(String)
+        typeof(u.name).should eq((Nil | String))
       end
 
       describe "changing default values" do
