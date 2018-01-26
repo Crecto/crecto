@@ -44,13 +44,13 @@ module Crecto
     CRECTO_PRIMARY_KEY_FIELD_TYPE = "PkeyValue"
     # :nodoc:
     CRECTO_ASSOCIATIONS = Array(NamedTuple(association_type: Symbol,
-    key: Symbol,
-    this_klass: Model.class,
-    klass: Model.class,
-    foreign_key: Symbol,
-    foreign_key_value: Proc(Model, PkeyValue),
-    set_association: Proc(Model, (Array(Crecto::Model) | Model), Nil),
-    through: Symbol?)).new
+      key: Symbol,
+      this_klass: Model.class,
+      klass: Model.class,
+      foreign_key: Symbol,
+      foreign_key_value: Proc(Model, PkeyValue),
+      set_association: Proc(Model, (Array(Crecto::Model) | Model), Nil),
+      through: Symbol?)).new
 
     # schema block macro
     macro schema(table_name, **opts, &block)
@@ -181,6 +181,13 @@ module Crecto
 
       DB.mapping({ {{mapping.uniq.join(", ").id}} }, false)
       JSON.mapping({ {{mapping.uniq.join(", ").id}} })
+
+      # Builds fields' cast typed method
+      {% for field in CRECTO_FIELDS %}
+        def {{field[:name].id}}!
+          @{{field[:name].id}}.as({{field[:type].id}})
+        end
+      {% end %}
 
       {% for field in json_fields %}
         def {{field.id}}=(val)
