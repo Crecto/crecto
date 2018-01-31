@@ -3,6 +3,11 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.8.4] 2018-01-31
+* Added support for crystal `Logger`
+* Fixed Logger support [@grig191](https://github.com/grig191)
+* Added type cast (non nilable) attributes [@jianghengle](https://github.com/jianghengle)
+
 ## [0.8.3] 2018-01-14
 * Updated for Crystal 0.24.1
 
@@ -143,6 +148,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Query
 * Postgres Adapter
 
+[0.8.4]: https://github.com/fridgerator/crecto/compare/v0.8.3...v0.8.4
 [0.8.3]: https://github.com/fridgerator/crecto/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/fridgerator/crecto/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/fridgerator/crecto/compare/v0.8.0...v0.8.1

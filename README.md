@@ -318,6 +318,15 @@ If there are any errors in any of the transactions, the database will rollback a
 multi.errors.any?
 ```
 
+#### Non-nillable attributes
+
+If you wish to access attributes of a model without having to check for nil, in the case that you are using a `NOT NULL` database constraint you can use the non-nillable attribute accessors.  CAUTION: Mis-use of this could lead to Nil reference runtime errors.
+
+```crystal
+user.name!
+user.age!
+```
+
 #### JSON type
 
 _(Postgres only)_
