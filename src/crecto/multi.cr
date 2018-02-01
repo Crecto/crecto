@@ -8,50 +8,52 @@ module Crecto
   #
   class Multi
     # :nodoc:
-    property sortorder = 0
-    # :nodoc:
     property errors = Array(Hash(Symbol, String)).new
     # :nodoc:
-    property inserts = Array(NamedTuple(sortorder: Int32, instance: Crecto::Model)).new
+    record Insert, instance : Crecto::Model
     # :nodoc:
-    property deletes = Array(NamedTuple(sortorder: Int32, instance: Crecto::Model)).new
+    record Delete, instance : Crecto::Model
     # :nodoc:
-    property delete_alls = Array(NamedTuple(sortorder: Int32, queryable: Crecto::Model.class, query: Crecto::Repo::Query)).new
+    record DeleteAll, queryable : Crecto::Model.class, query : Crecto::Repo::Query
     # :nodoc:
-    property updates = Array(NamedTuple(sortorder: Int32, instance: Crecto::Model)).new
+    record Update, instance : Crecto::Model
+
     # :nodoc:
-    property update_alls = Array(NamedTuple(sortorder: Int32, queryable: Crecto::Model.class, query: Crecto::Repo::Query, update_hash: Hash(Symbol, PkeyValue) | Hash(Symbol, DbValue) | Hash(Symbol, Array(DbValue)) | Hash(Symbol, Array(PkeyValue)) | Hash(Symbol, Array(Int32)) | Hash(Symbol, Array(Int64)) | Hash(Symbol, Array(String)) | Hash(Symbol, Int32 | String) | Hash(Symbol, Int32) | Hash(Symbol, Int64) | Hash(Symbol, String) | Hash(Symbol, Int32 | Int64 | String | Nil))).new
+    alias UpdateHash =
+      Hash(Symbol, PkeyValue) |
+      Hash(Symbol, DbValue) |
+      Hash(Symbol, Array(DbValue)) |
+      Hash(Symbol, Array(PkeyValue)) |
+      Hash(Symbol, Array(Int32)) |
+      Hash(Symbol, Array(Int64)) |
+      Hash(Symbol, Array(String)) |
+      Hash(Symbol, Int32 | String) |
+      Hash(Symbol, Int32) |
+      Hash(Symbol, Int64) |
+      Hash(Symbol, String) |
+      Hash(Symbol, Int32 | Int64 | String | Nil)
 
-    def insert(queryable_instance : Crecto::Model)
-      @inserts.push({sortorder: @sortorder += 1, instance: queryable_instance})
-    end
+    # :nodoc:
+    record UpdateAll, queryable : Crecto::Model.class, query : Crecto::Repo::Query, update_hash : UpdateHash
+    # :nodoc:
+    property operations = Array(Insert | Delete | DeleteAll | Update | UpdateAll).new
 
-    def insert(changeset : Crecto::Changeset::Changeset)
-      insert(changeset.instance)
-    end
+    {% for type in %w[insert delete update] %}
+      def {{type.id}}(queryable_instance : Crecto::Model)
+        operations.push({{type.camelcase.id}}.new(queryable_instance))
+      end
 
-    def delete(queryable_instance : Crecto::Model)
-      @deletes.push({sortorder: @sortorder += 1, instance: queryable_instance})
-    end
-
-    def delete(changeset : Crecto::Changeset::Changeset)
-      delete(changeset.instance)
-    end
+      def {{type.id}}(changeset : Crecto::Changeset::Changeset)
+        {{type.id}}(changeset.instance)
+      end
+    {% end %}
 
     def delete_all(queryable, query = Crecto::Repo::Query.new)
-      @delete_alls.push({sortorder: @sortorder += 1, queryable: queryable, query: query})
+      operations.push(DeleteAll.new(queryable, query))
     end
 
-    def update(queryable_instance : Crecto::Model)
-      @updates.push({sortorder: @sortorder += 1, instance: queryable_instance})
-    end
-
-    def update(changeset : Crecto::Changeset::Changeset)
-      update(changeset.instance)
-    end
-
-    def update_all(queryable, query, update_hash : Hash)
-      @update_alls.push({sortorder: @sortorder += 1, queryable: queryable, query: query, update_hash: update_hash})
+    def update_all(queryable, query, update_hash : UpdateHash)
+      operations.push(UpdateAll.new(queryable, query, update_hash))
     end
 
     def update_all(queryable, query, update_tuple : NamedTuple)
@@ -59,34 +61,16 @@ module Crecto
     end
 
     def changesets_valid?
-      @inserts.each do |i|
-        changeset = i[:instance].get_changeset
-        unless changeset.valid?
-          @errors = changeset.errors
-          @errors.not_nil![0][:queryable] = i[:instance].class.to_s
-          @errors.not_nil![0][:failed_operation] = "insert"
-          return false
-        end
-      end
+      operations.each do |operation|
+        next unless operation.is_a?(Insert | Delete | Update)
 
-      @deletes.each do |d|
-        changeset = d[:instance].get_changeset
-        unless changeset.valid?
-          @errors = changeset.errors
-          @errors.not_nil![0][:queryable] = d[:instance].class.to_s
-          @errors.not_nil![0][:failed_operation] = "insert"
-          return false
+        changeset = operation.instance.get_changeset
+        next if changeset.valid?
+        @errors = changeset.errors.tap do |errors|
+          errors.first[:queryable] = operation.instance.class.to_s
+          errors.first[:failed_operation] = operation.class.to_s
         end
-      end
-
-      @updates.each do |u|
-        changeset = u[:instance].get_changeset
-        unless changeset.valid?
-          @errors = changeset.errors
-          @errors.not_nil![0][:queryable] = u[:instance].class.to_s
-          @errors.not_nil![0][:failed_operation] = "insert"
-          return false
-        end
+        return false
       end
 
       return true
