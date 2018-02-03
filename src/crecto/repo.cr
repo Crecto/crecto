@@ -1,6 +1,20 @@
 module Crecto
   # A repository maps to an underlying data store, controlled by the adapter.
   module Repo
+    class OperationError < Exception
+      def initialize(error : Exception, @queryable : Model.class, @failed_operation : String)
+        super(error.message)
+      end
+
+      def to_h
+        {
+          :message => @message.to_s,
+          :queryable => @queryable.to_s,
+          :failed_operation => @failed_operation
+        }
+      end
+    end
+
     macro extended
       @@config = Crecto::Repo::Config.new
     end
@@ -386,53 +400,40 @@ module Crecto
     end
 
     def transaction(multi : Crecto::Multi)
-      if multi.changesets_valid?
-        total_size = multi.inserts.size + multi.deletes.size + multi.delete_alls.size + multi.updates.size + multi.update_alls.size
-        config.get_connection.transaction do |tx|
-          (1..total_size).each do |x|
-            inserts = multi.inserts.select { |i| i[:sortorder] == x }
-            begin
-              insert(inserts[0][:instance], tx) && next if inserts.any?
-            rescue ex : Exception
-              multi.errors = [{:message => "#{ex.message}", :queryable => "#{inserts[0][:instance].class}", :failed_operation => "insert"}]
-              tx.rollback && break
-            end
+      return multi unless multi.changesets_valid?
 
-            deletes = multi.deletes.select { |i| i[:sortorder] == x }
-            begin
-              delete(deletes[0][:instance], tx) && next if deletes.any?
-            rescue ex : Exception
-              multi.errors = [{:message => "#{ex.message}", :queryable => "#{deletes[0][:instance].class}", :failed_operation => "delete"}]
-              tx.rollback && break
-            end
-
-            delete_alls = multi.delete_alls.select { |i| i[:sortorder] == x }
-            begin
-              delete_all(delete_alls[0][:queryable], delete_alls[0][:query], tx) && next if delete_alls.any?
-            rescue ex : Exception
-              multi.errors = [{:message => "#{ex.message}", :queryable => "#{delete_alls[0][:queryable]}", :failed_operation => "delete_all"}]
-              tx.rollback && break
-            end
-
-            updates = multi.updates.select { |i| i[:sortorder] == x }
-            begin
-              update(updates[0][:instance], tx) && next if updates.any?
-            rescue ex : Exception
-              multi.errors = [{:message => "#{ex.message}", :queryable => "#{updates[0][:instance].class}", :failed_operation => "update"}]
-              tx.rollback && break
-            end
-
-            update_alls = multi.update_alls.select { |i| i[:sortorder] == x }
-            begin
-              update_all(update_alls[0][:queryable], update_alls[0][:query], update_alls[0][:update_hash], tx) if update_alls.any?
-            rescue ex : Exception
-              multi.errors = [{:message => "#{ex.message}", :queryable => "#{update_alls[0][:queryable]}", :failed_operation => "update_all"}]
-              tx.rollback && break
-            end
+      config.get_connection.transaction do |tx|
+        begin
+          multi.operations.each do |operation|
+            run_operation(operation, tx)
           end
+        rescue error : OperationError
+          multi.errors = [error.to_h]
+          tx.rollback
         end
       end
+
       multi
+    end
+
+    {% for operation in %w[insert update delete] %}
+      private def run_operation(operation : Multi::{{operation.camelcase.id}}, tx)
+        {{operation.id}}(operation.instance, tx)
+      rescue ex : Exception
+        raise OperationError.new(ex, operation.instance.class, {{operation}})
+      end
+    {% end %}
+
+    private def run_operation(operation : Multi::UpdateAll, tx)
+      update_all(operation.queryable, operation.query, operation.update_hash, tx)
+    rescue ex : Exception
+      raise OperationError.new(ex, operation.queryable, "update_all")
+    end
+
+    private def run_operation(operation : Multi::DeleteAll, tx)
+      delete_all(operation.queryable, operation.query, tx)
+    rescue ex : Exception
+      raise OperationError.new(ex, operation.queryable, "delete_all")
     end
 
     # Calculate the given aggregate `aggregate_function` over the given `field`
