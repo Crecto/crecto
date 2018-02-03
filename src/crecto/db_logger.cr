@@ -8,7 +8,7 @@ module Crecto
 
     def self.log(string, elapsed) : Nil
       if handler = @@log_handler
-        if handler.class == Logger
+        if handler.is_a?(Logger)
           handler.as(Logger).info("#{("%7.7s" % elapsed_text(elapsed)).colorize(:magenta)} #{string.colorize(:blue)}")
         else
           handler.as(IO) << if @@tty
