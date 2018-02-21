@@ -34,7 +34,7 @@ module Crecto
 
     def self.set_handler(io : IO)
       @@log_handler = io
-      @@tty = @@log_handler.not_nil!.tty?
+      @@tty = @@log_handler.not_nil!.as(IO).tty?
     end
 
     def self.unset_handler
