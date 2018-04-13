@@ -11,6 +11,8 @@ DROP TABLE IF EXISTS projects CASCADE;
 DROP TABLE IF EXISTS users_json CASCADE;
 DROP TABLE IF EXISTS things CASCADE;
 DROP TABLE IF EXISTS users_uuid CASCADE;
+DROP TABLE IF EXISTS users_uuid_custom CASCADE;
+DROP TABLE IF EXISTS things_that_belong_to_user_uuid_custom CASCADE;
 DROP TABLE IF EXISTS vehicles CASCADE;
 
 CREATE TABLE users(
@@ -110,6 +112,21 @@ CREATE TABLE users_uuid(
   updated_at timestamp without time zone
 );
 
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE TABLE users_uuid_custom(
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name character varying,
+  created_at timestamp NOT NULL DEFAULT now(),
+  updated_at timestamp NOT NULL DEFAULT now()
+);
+
+CREATE TABLE things_that_belong_to_user_uuid_custom(
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name character varying,
+  user_uuid_custom_id uuid NOT NULL REFERENCES users_uuid_custom(id),
+  created_at timestamp NOT NULL DEFAULT now(),
+  updated_at timestamp NOT NULL DEFAULT now()
+);
 
 CREATE TABLE vehicles(
   id BIGSERIAL PRIMARY KEY,

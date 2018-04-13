@@ -210,6 +210,21 @@ class UserUUID < Crecto::Model
   end
 end
 
+class UserUUIDCustom < Crecto::Model
+  schema "users_uuid_custom" do
+    field :id, String, primary_key: true
+    field :name, String
+  end
+end
+
+class ThingThatBelongsToUserUUIDCustom < Crecto::Model
+  schema "things_that_belong_to_user_uuid_custom" do
+    field :id, String, primary_key: true
+    field :name, String
+    belongs_to :user_uuid_custom, UserUUIDCustom
+  end
+end
+
 class Vehicle < Crecto::Model
   enum State
     OFF
