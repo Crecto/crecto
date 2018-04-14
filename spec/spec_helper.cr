@@ -8,6 +8,7 @@ end
 require "pg"
 require "mysql"
 require "sqlite3"
+require "uuid"
 require "spec"
 require "../src/crecto"
 require "./repo"
@@ -207,6 +208,21 @@ class UserUUID < Crecto::Model
   schema "users_uuid" do
     field :uuid, String, primary_key: true
     field :name, String
+  end
+end
+
+class UserUUIDCustom < Crecto::Model
+  schema "users_uuid_custom" do
+    field :id, String, primary_key: true
+    field :name, String
+  end
+end
+
+class ThingThatBelongsToUserUUIDCustom < Crecto::Model
+  schema "things_that_belong_to_user_uuid_custom" do
+    field :id, String, primary_key: true
+    field :name, String
+    belongs_to :user_uuid_custom, UserUUIDCustom
   end
 end
 
