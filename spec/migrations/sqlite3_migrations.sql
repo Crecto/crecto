@@ -120,8 +120,7 @@ CREATE TABLE things_that_belong_to_user_uuid_custom(
   users_uuid_custom_id VARCHAR(36) NOT NULL REFERENCES users_uuid_custom(id),
   name VARCHAR(255),
   created_at DATETIME,
-  updated_at DATETIME,
-  PRIMARY KEY ( id )
+  updated_at DATETIME
 );
 
 CREATE UNIQUE INDEX things_that_belong_to_user_uuid_custom_kugvegdgbvu on things_that_belong_to_user_uuid_custom(id);
