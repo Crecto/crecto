@@ -8,6 +8,7 @@ end
 require "pg"
 require "mysql"
 require "sqlite3"
+require "uuid"
 require "spec"
 require "../src/crecto"
 require "./repo"
