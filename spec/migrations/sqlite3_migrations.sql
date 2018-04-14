@@ -7,6 +7,8 @@ DROP TABLE IF EXISTS user_projects;
 DROP TABLE IF EXISTS projects;
 DROP TABLE IF EXISTS things;
 DROP TABLE IF EXISTS vehicles;
+DROP TABLE IF EXISTS users_uuid_custom;
+DROP TABLE IF EXISTS things_that_belong_to_user_uuid_custom;
 
 CREATE TABLE users(
   id INTEGER NOT NULL PRIMARY KEY,
@@ -103,3 +105,24 @@ CREATE TABLE vehicles(
 );
 
 CREATE UNIQUE INDEX vehicles_f4f74ccccc on vehicles (id);
+
+CREATE TABLE users_uuid_custom(
+  id VARCHAR(36) NOT NULL PRIMARY KEY,
+  name VARCHAR(255),
+  created_at DATETIME,
+  updated_at DATETIME
+);
+
+CREATE UNIQUE INDEX users_uuid_custom_cccccchh on users_uuid_custom(id);
+
+CREATE TABLE things_that_belong_to_user_uuid_custom(
+  id VARCHAR(36) NOT NULL PRIMARY KEY,
+  users_uuid_custom_id VARCHAR(36) NOT NULL REFERENCES users_uuid_custom(id),
+  name VARCHAR(255),
+  created_at DATETIME,
+  updated_at DATETIME,
+  PRIMARY KEY ( id )
+);
+
+CREATE UNIQUE INDEX things_that_belong_to_user_uuid_custom_kugvegdgbvu on things_that_belong_to_user_uuid_custom(id);
+
