@@ -45,16 +45,6 @@ describe Crecto do
         )
         multi.operations.size.should eq(1)
       end
-
-      it "should delete all" do
-        quick_create_user("delete_all1")
-        quick_create_user("delete_all2")
-        Repo.all(User).size.should be >= 2
-        multi = Multi.new
-        multi.delete_all(User)
-        Repo.transaction(multi)
-        Repo.all(User).size.should eq(0)
-      end
     end
 
     describe "#update" do
