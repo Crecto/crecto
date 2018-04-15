@@ -266,6 +266,8 @@ module Crecto
                 @{{field[:name].id}} = value.to_i16 if value.to_i16?
               {% elsif field[:type].id.stringify.includes?("Int") %}
                 @{{field[:name].id}} = value.to_i if value.to_i?
+              {% elsif field[:type].id.stringify == "PkeyValue" %}
+                @{{field[:name].id}} = value.to_i if value.to_i?
               {% elsif field[:type].id.stringify.includes?("Float") %}
                 @{{field[:name].id}} = value.to_f if value.to_f?
               {% elsif field[:type].id.stringify == "Bool" %}
