@@ -108,7 +108,7 @@ Multi = Crecto::Multi
 
 #### Definitions
 
-Define table name, fields, validations, and constraints in your model
+Define table name, fields, validations, and constraints in your model. By default, Crecto assumes your table has the following columns defined `id`, `created_at`, `updated_at`. These are in addition to whatever columns you decide to add.
 
 Defining a new class using `Crecto::Model`:
 
@@ -162,7 +162,7 @@ changeset = User.changeset(user)
 changeset.valid? # true
 ```
 
-#### Use Repo to insert into database.
+#### Use Repo to insert record into table.
 
 Repo returns a new changeset.
 
@@ -171,12 +171,24 @@ changeset = Repo.insert(user)
 puts changeset.errors # []
 ```
 
-#### User Repo to update database
+#### Use Repo to update record in table.
 
 ```crystal
 user.name = "new name"
 changeset = Repo.update(user)
 puts changeset.instance.name # "new name"
+```
+
+#### Use Repo to delete record from table.
+
+```crystal
+changeset = Repo.delete(user)
+```
+
+#### Use Repo to delete all records from table.
+
+```crystal
+Repo.delete_all(User)
 ```
 
 #### Set Associations
@@ -201,6 +213,12 @@ query = Query
 #### All
 
 ```crystal
+users = Repo.all(User)
+users.as(Array) unless users.nil?
+```
+
+Or you can optionally filter with a query
+```crystal
 users = Repo.all(User, query)
 users.as(Array) unless users.nil?
 ```
@@ -218,13 +236,6 @@ user.as(User) unless user.nil?
 Repo.get_by(User, name: "new name", id: 1121)
 user.as(User) unless user.nil?
 ```
-
-#### Delete
-
-```crystal
-changeset = Repo.delete(user)
-```
-
 
 #### Associations
 
