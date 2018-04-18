@@ -55,7 +55,7 @@ require "crecto"
 
 ## Migrations
 
-[Micrate](https://github.com/juanedi/micrate) is recommended.  It is used and supported by core crystal members.
+[Micrate](https://github.com/amberframework/micrate) is recommended. It is used and supported by core crystal members.
 
 ## Usage
 
@@ -108,7 +108,7 @@ Multi = Crecto::Multi
 
 #### Definitions
 
-Define table name, fields, validations, and constraints in your model
+Define table name, fields, validations, and constraints in your model. By default, Crecto assumes your table has the following columns defined `id`, `created_at`, `updated_at`. These are in addition to whatever columns you decide to add.
 
 Defining a new class using `Crecto::Model`:
 
@@ -149,6 +149,34 @@ user.name = "123"
 user.age = 123
 ```
 
+If your schema doesn't require the default fields (`id`, `created_at`, `updated_at`), you can ommit them.
+
+```crystal
+class UserTags < Crecto::Model
+  set_created_at_field nil # or you can set the name of your created_at field
+  set_updated_at_field nil # ditto
+
+  # primary_key: false tells the schema there's no `id` field
+  schema "user_tags", primary_key: false do
+    belongs_to :user, User
+    belongs_to :tag, Tag
+  end
+end
+```
+
+For a schema with an ID that is custom (UUID, Random String, etc...)
+
+```crystal
+class Comment <  Crecto::Model
+  schema "comments" do
+    field :id, String, primary_key: true
+    field :content, String
+  end
+end
+```
+
+You can check out the `spec/spec_helper.cr` for more examples.
+
 #### Check the changeset to see changes and errors
 
 ```crystal
@@ -162,7 +190,7 @@ changeset = User.changeset(user)
 changeset.valid? # true
 ```
 
-#### Use Repo to insert into database.
+#### Use Repo to insert record into table.
 
 Repo returns a new changeset.
 
@@ -171,12 +199,24 @@ changeset = Repo.insert(user)
 puts changeset.errors # []
 ```
 
-#### User Repo to update database
+#### Use Repo to update record in table.
 
 ```crystal
 user.name = "new name"
 changeset = Repo.update(user)
 puts changeset.instance.name # "new name"
+```
+
+#### Use Repo to delete record from table.
+
+```crystal
+changeset = Repo.delete(user)
+```
+
+#### Use Repo to delete all records from table.
+
+```crystal
+Repo.delete_all(User)
 ```
 
 #### Set Associations
@@ -198,10 +238,37 @@ query = Query
   .limit(1)
 ```
 
+If you need to query through a join table, `Query` also has a `join` method.
+
+```crystal
+# SELECT * FROM users INNER JOIN user_tags ON user_tags.user_id = users.id WHERE user_tags.tag_id = ?
+query = Query
+  .join(:user_tags)
+  .where("user_tags.tag_id = ?", 123)
+```
+
+One thing to note about the query syntax is that the table you query on isn't decided until you pass the query to `Repo`.
+
+```crystal
+query = Query.where(x: 1)
+
+# SELECT * FROM things WHERE x = 1
+Repo.all(Thing, query)
+
+# SELECT * FROM weebls WHERE x = 1
+Repo.all(Weebl, query)
+```
+
 #### All
 
 ```crystal
 users = Repo.all(User, query)
+users.as(Array) unless users.nil?
+```
+
+Or you can just get all the records
+```crystal
+users = Repo.all(User)
 users.as(Array) unless users.nil?
 ```
 
@@ -218,13 +285,6 @@ user.as(User) unless user.nil?
 Repo.get_by(User, name: "new name", id: 1121)
 user.as(User) unless user.nil?
 ```
-
-#### Delete
-
-```crystal
-changeset = Repo.delete(user)
-```
-
 
 #### Associations
 
