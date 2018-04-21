@@ -59,6 +59,7 @@ module Crecto
       end
 
       def check_unique_constraint_from_exception!(e : Exception, queryable_instance)
+        return false unless UNIQUE_FIELDS[@class_key]?
         message = e.message.to_s
 
         # Postgres
@@ -69,6 +70,8 @@ module Crecto
               return true
             end
           end
+          self.add_error("_base", message)
+          return true
         end
 
         # Mysql
@@ -79,6 +82,8 @@ module Crecto
               return true
             end
           end
+          self.add_error("_base", message)
+          return true
         end
 
         # Sqlite
@@ -89,6 +94,8 @@ module Crecto
               return true
             end
           end
+          self.add_error("_base", message)
+          return true
         end
 
         false

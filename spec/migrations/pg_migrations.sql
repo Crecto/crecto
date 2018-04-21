@@ -106,7 +106,7 @@ CREATE TABLE things(
 );
 
 CREATE TABLE users_uuid(
-  uuid character varying NOT NULL,
+  uuid character varying NOT NULL PRIMARY KEY,
   name character varying,
   created_at timestamp without time zone,
   updated_at timestamp without time zone
