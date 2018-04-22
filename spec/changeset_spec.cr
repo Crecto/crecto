@@ -1,3 +1,4 @@
+require "uuid"
 require "./spec_helper"
 
 describe Crecto do
@@ -50,6 +51,18 @@ describe Crecto do
         elsif Repo.config.adapter == Crecto::Adapters::SQLite3
           changeset.errors[0].should eq({:field => "unique_field", :message => "UNIQUE constraint failed: users.unique_field"})
         end
+      end
+
+      it "should check uniqueness on primary_key fields" do
+        id = UUID.random.to_s
+
+        u = UserUUID.new
+        u.uuid = id
+        Repo.insert(u).errors.empty?.should be_true
+
+        u = UserUUID.new
+        u.uuid = id
+        Repo.insert(u).errors.empty?.should be_false
       end
     end
 

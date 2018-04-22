@@ -167,6 +167,7 @@ module Crecto
       {% if CRECTO_USE_PRIMARY_KEY %}
         {% mapping.push(CRECTO_PRIMARY_KEY_FIELD.id.stringify + ": {type: #{CRECTO_PRIMARY_KEY_FIELD_TYPE.id}, nilable: true}") %}
         CRECTO_MODEL_FIELDS.push({name: {{CRECTO_PRIMARY_KEY_FIELD.id.symbolize}}, type: {{CRECTO_PRIMARY_KEY_FIELD_TYPE}}})
+        unique_constraint(CRECTO_PRIMARY_KEY_FIELD_SYMBOL)
       {% end %}
 
       {% unless CRECTO_CREATED_AT_FIELD == nil %}
