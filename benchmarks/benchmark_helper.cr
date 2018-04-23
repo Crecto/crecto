@@ -54,9 +54,9 @@ def random_time
   Time.new(year, month, day, hour, minute, second)
 end
 
-def make_users(save = false)
+def make_users(save = false, x = 10_000)
   users = Array(User).new
-  10_000.times do
+  x.times do
     user = User.new
     user.name = Random::Secure.hex(8).to_s
     user.things = Random.rand(100)

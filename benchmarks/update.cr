@@ -20,7 +20,7 @@ def change_users_attributes(users)
 end
 
 Benchmark.bm do |x|
-  x.report("update crecto : ") do
+  x.report("update crecto :") do
     change_users_attributes(users)
     users.each do |user|
       Repo.update(user)
@@ -28,7 +28,7 @@ Benchmark.bm do |x|
   end
 
   DB.open "postgresql://localhost:5432/crecto_test" do |db|
-    x.report("update crystal-pg : ") do
+    x.report("update crystal-pg :") do
       change_users_attributes(users)
       users.each do |user|
         db.exec "UPDATE users SET (name, things, smallnum, nope, yep, some_date) = ($1, $2, $3, $4, $5, $6) WHERE id=$7 RETURNING *", user.name, user.things, user.smallnum, user.nope, user.yep, user.some_date, user.id

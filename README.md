@@ -448,6 +448,10 @@ f.sync = true
 Crecto::DbLogger.set_handler(f)
 ```
 
+#### Benchmarks
+
+* [VS raw crystal-pg](https://github.com/Crecto/crecto/wiki/Benchmarks)
+
 ## Contributing
 
 1. Fork it ( https://github.com/fridgerator/crecto/fork )
