@@ -275,6 +275,14 @@ describe Crecto do
 
           Repo.aggregate(User, :sum, :things).should eq 30
         end
+
+        it "should allow to_i" do
+          Repo.aggregate(User, :sum, :things).to_i.should_not be_nil
+        end
+
+        it "should allow to_f" do
+          Repo.aggregate(User, :sum, :things).to_f.should_not be_nil
+        end
       end
 
       describe "with a query" do
