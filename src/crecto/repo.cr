@@ -8,9 +8,9 @@ module Crecto
 
       def to_h
         {
-          :message => @message.to_s,
-          :queryable => @queryable.to_s,
-          :failed_operation => @failed_operation
+          :message          => @message.to_s,
+          :queryable        => @queryable.to_s,
+          :failed_operation => @failed_operation,
         }
       end
     end
@@ -441,13 +441,13 @@ module Crecto
     def aggregate(queryable, aggregate_function : Symbol, field : Symbol)
       raise InvalidOption.new("Aggregate must be one of :avg, :count, :max, :min:, :sum") unless [:avg, :count, :max, :min, :sum].includes?(aggregate_function)
 
-      config.adapter.aggregate(config.get_connection, queryable, aggregate_function, field)
+      config.adapter.aggregate(config.get_connection, queryable, aggregate_function, field).as(Number)
     end
 
     def aggregate(queryable, aggregate_function : Symbol, field : Symbol, query : Crecto::Repo::Query)
       raise InvalidOption.new("Aggregate must be one of :avg, :count, :max, :min:, :sum") unless [:avg, :count, :max, :min, :sum].includes?(aggregate_function)
 
-      config.adapter.aggregate(config.get_connection, queryable, aggregate_function, field, query)
+      config.adapter.aggregate(config.get_connection, queryable, aggregate_function, field, query).as(Number)
     end
 
     private def check_dependents(changeset, tx : DB::Transaction?) : Nil
