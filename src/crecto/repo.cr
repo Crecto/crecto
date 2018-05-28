@@ -8,9 +8,9 @@ module Crecto
 
       def to_h
         {
-          :message => @message.to_s,
-          :queryable => @queryable.to_s,
-          :failed_operation => @failed_operation
+          :message          => @message.to_s,
+          :queryable        => @queryable.to_s,
+          :failed_operation => @failed_operation,
         }
       end
     end
@@ -228,8 +228,12 @@ module Crecto
           changeset.add_error("insert_error", "Insert Failed")
         elsif config.adapter == Crecto::Adapters::Postgres || (config.adapter == Crecto::Adapters::Mysql && tx.nil?) ||
               (config.adapter == Crecto::Adapters::SQLite3 && tx.nil?)
-          new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first?
-          changeset = new_instance.class.changeset(new_instance) if new_instance
+          if query.is_a?(DB::ResultSet)
+            new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first?
+            changeset = new_instance.class.changeset(new_instance) if new_instance
+          else
+            changeset = queryable_instance.class.changeset(queryable_instance)
+          end
         end
       rescue e
         raise e unless changeset.check_unique_constraint_from_exception!(e, queryable_instance)

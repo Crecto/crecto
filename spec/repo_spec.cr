@@ -91,6 +91,18 @@ describe Crecto do
         changeset = Repo.insert(u)
         changeset.instance.id.should_not eq(nil)
       end
+
+      it "should insert records with no primary key or date fields" do
+        project = Project.new
+        project = Repo.insert(project).instance
+
+        up = UserProject.new
+        up.user_id = 123
+        up.project_id = project.id
+
+        changeset = Repo.insert(up)
+        changeset.errors.empty?.should be_true
+      end
     end
 
     describe "#all" do
@@ -1056,6 +1068,8 @@ describe Crecto do
       end
 
       it "should delete THROUGH destroy dependents" do
+        Repo.delete_all(UserProject)
+        Repo.delete_all(Project)
         Repo.delete_all(Post)
         other_p = Project.new; other_p = Repo.insert(other_p).instance
         other_up = UserProject.new; other_up.user_id = 999999; other_up.project_id = other_p.id; other_up = Repo.insert(other_up).instance

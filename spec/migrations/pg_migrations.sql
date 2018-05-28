@@ -86,9 +86,7 @@ CREATE TABLE projects(
 
 CREATE TABLE user_projects(
   user_id INTEGER,
-  project_id INTEGER references projects(id),
-  created_at timestamp without time zone,
-  updated_at timestamp without time zone
+  project_id INTEGER references projects(id)
 );
 
 CREATE TABLE users_json(

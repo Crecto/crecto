@@ -31,7 +31,11 @@ describe Crecto do
         Repo.delete_all(Post)
         Repo.delete_all(User)
 
+        puts "\n\nusers: #{Repo.all(User)}\n\n"
+
         user = quick_create_user("this should delete")
+
+        puts "\n\nusers: #{Repo.all(User)}\n\n"
 
         multi = Multi.new
         multi.delete(user)
