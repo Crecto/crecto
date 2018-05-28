@@ -58,6 +58,9 @@ class Project < Crecto::Model
 end
 
 class UserProject < Crecto::Model
+  set_created_at_field nil
+  set_updated_at_field nil
+
   schema "user_projects", primary_key: false do
     belongs_to :user, User
     belongs_to :project, Project

@@ -73,9 +73,7 @@ CREATE UNIQUE INDEX projects_88fsssfsf ON projects (id);
 
 CREATE TABLE user_projects(
   user_id INTEGER references users(id),
-  project_id INTEGER references projects(id),
-  created_at DATETIME,
-  updated_at DATETIME
+  project_id INTEGER references projects(id)
 );
 
 CREATE TABLE things(

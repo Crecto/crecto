@@ -50,6 +50,8 @@ module Crecto
         if changeset.instance.class.use_primary_key?
           last_insert_id = changeset.instance.pkey_value.nil? ? res.last_insert_id : changeset.instance.pkey_value.not_nil!
           execute(conn, "SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field} = '#{last_insert_id}'")
+        else
+          res
         end
       end
 
