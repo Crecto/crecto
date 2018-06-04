@@ -103,6 +103,20 @@ describe Crecto do
         changeset = Repo.insert(up)
         changeset.errors.empty?.should be_true
       end
+
+      if Repo.config.adapter == Crecto::Adapters::Postgres
+        it "should insert records with no primary key, and array fields" do
+          project = Project.new
+          project = Repo.insert(project).instance
+
+          up = UserProject.new
+          up.user_id = 123
+          up.project_id = project.id
+          up.periods = [1.to_i64, 2.to_i64, 3.to_i64, 4.to_i64]
+          cs = Repo.insert(up)
+          puts cs.errors
+        end
+      end
     end
 
     describe "#all" do
