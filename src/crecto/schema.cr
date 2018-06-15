@@ -192,8 +192,7 @@ module Crecto
 
       {% for field in json_fields %}
         def {{field.id}}=(val)
-          json = Crecto::Helpers.jsonize(val)
-          @{{field.id}} = JSON::Any.new(json)
+          @{{field.id}} = JSON.parse(val.to_json)
         end
       {% end %}
 

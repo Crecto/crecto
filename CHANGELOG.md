@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Fixed inserts of records with no primary key
 * README updates [@jwoertink](https://github.com/jwoertink)
 * Added more benchmarks
-* Moved to guide on gitbook, updated to simple readm
+* Moved to guide on gitbook, updated to simple readme
 
 ## [0.8.5] 2018-04-16
 * Refactor types and transactions [@jreinert](https://github.com/jreinert)
