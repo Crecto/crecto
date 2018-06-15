@@ -1,5 +1,8 @@
 # Crecto
-#### [https://www.crecto.com/](https://www.crecto.com/)
+
+![crecto](crecto.png)
+
+[https://www.crecto.com/](https://www.crecto.com/)
 
 [![Build Status](https://travis-ci.org/Crecto/crecto.svg?branch=master)](https://travis-ci.org/Crecto/crecto) [![Join the chat at https://gitter.im/crecto/Lobby](https://badges.gitter.im/crecto/Lobby.svg)](https://gitter.im/crecto/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
