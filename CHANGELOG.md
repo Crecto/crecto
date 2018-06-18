@@ -3,12 +3,16 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.8.7] 2018-06-18
+* Added Crecto logo thanks to [@faustinoaq](https://github.com/faustinoaq)
+* Updated for crystal 0.25.0
+
 ## [0.8.6] 2018-05-28
 * Fixed unique constraint on primary key fields
 * Fixed inserts of records with no primary key
 * README updates [@jwoertink](https://github.com/jwoertink)
 * Added more benchmarks
-* Moved to guide on gitbook, updated to simple readm
+* Moved to guide on gitbook, updated to simple readme
 
 ## [0.8.5] 2018-04-16
 * Refactor types and transactions [@jreinert](https://github.com/jreinert)
@@ -161,6 +165,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Query
 * Postgres Adapter
 
+[0.8.7]: https://github.com/fridgerator/crecto/compare/v0.8.6...v0.8.7
 [0.8.6]: https://github.com/fridgerator/crecto/compare/v0.8.5...v0.8.6
 [0.8.5]: https://github.com/fridgerator/crecto/compare/v0.8.4...v0.8.5
 [0.8.4]: https://github.com/fridgerator/crecto/compare/v0.8.3...v0.8.4
