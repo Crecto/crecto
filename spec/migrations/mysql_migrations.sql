@@ -134,6 +134,15 @@ CREATE TABLE things_that_belong_to_user_uuid_custom(
 
 CREATE UNIQUE INDEX things_that_belong_to_user_uuid_custom_kugvegdgbvu on things_that_belong_to_user_uuid_custom(id);
 
+CREATE TABLE things_without_fields(
+  id INTEGER NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (id),
+  created_at DATETIME,
+  updated_at DATETIME
+);
+
+CREATE UNIQUE INDEX things_without_fields_cccccchh on things_without_fields (id);
+
 DELIMITER ;;
 CREATE TRIGGER before_insert_users_uuid_custom
 BEFORE INSERT ON users_uuid_custom

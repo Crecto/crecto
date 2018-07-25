@@ -123,3 +123,10 @@ CREATE TABLE things_that_belong_to_user_uuid_custom(
 
 CREATE UNIQUE INDEX things_that_belong_to_user_uuid_custom_kugvegdgbvu on things_that_belong_to_user_uuid_custom(id);
 
+CREATE TABLE things_without_fields(
+  id INTEGER NOT NULL PRIMARY KEY,
+  created_at DATETIME,
+  updated_at DATETIME
+);
+
+CREATE UNIQUE INDEX things_without_fields_cccccchh on things_without_fields (id);

@@ -134,4 +134,10 @@ CREATE TABLE vehicles(
   updated_at timestamp without time zone
 );
 
+CREATE TABLE things_without_fields(
+  id BIGSERIAL PRIMARY KEY,
+  created_at timestamp without time zone,
+  updated_at timestamp without time zone
+);
+
 COMMIT;

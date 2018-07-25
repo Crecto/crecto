@@ -45,6 +45,10 @@ describe Crecto do
         typeof(u.name).should eq((Nil | String))
       end
 
+      it "should work with empty blocks" do
+        ThingWithoutFields.new
+      end
+
       describe "changing default values" do
         it "should set properties for the values" do
           u = UserDifferentDefaults.new
