@@ -830,6 +830,36 @@ describe Crecto do
         user.user_projects.size.should eq 1
         user.projects.size.should eq 1
       end
+      
+      it "should preload the has_many through association with a query" do
+        user = User.new
+        user.name = "tester"
+        user = Repo.insert(user).instance
+
+        project = Project.new
+        project.name = "project 1"
+        project = Repo.insert(project).instance
+
+        user_project = UserProject.new
+        user_project.project = project
+        user_project.user = user
+        Repo.insert(user_project).instance
+
+        project = Project.new
+        project.name = "project 2"
+        project = Repo.insert(project).instance
+
+        user_project = UserProject.new
+        user_project.project = project
+        user_project.user = user
+        Repo.insert(user_project).instance
+
+        preload_query = Query.where(name: "project 2")
+        users = Repo.all(User, Query.where(id: user.id).preload(:projects, preload_query))
+        user = users[0]
+        user.projects.size.should eq 1
+        user.projects.first.name.should eq "project 2"
+      end
 
       it "should preload the has_many through association with get!" do
         user = quick_create_user("through with get!")
