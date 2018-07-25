@@ -253,36 +253,38 @@ module Crecto
       end
 
       def update_from_hash(hash : Hash(String, DbValue))
-        hash.each do |key, value|
-          case key.to_s
-          {% for field in CRECTO_FIELDS %}
-          when "{{field[:name].id}}"
-            if value.to_s.empty?
-              @{{field[:name].id}} = nil
-            else
-              {% if field[:type].id.stringify == "String" %}
-                @{{field[:name].id}} = value.to_s
-              {% elsif field[:type].id.stringify == "Int16" %}
-                @{{field[:name].id}} = value.to_i16 if value.to_i16?
-              {% elsif field[:type].id.stringify.includes?("Int") %}
-                @{{field[:name].id}} = value.to_i if value.to_i?
-              {% elsif field[:type].id.stringify == "PkeyValue" %}
-                @{{field[:name].id}} = value.to_i if value.to_i?
-              {% elsif field[:type].id.stringify.includes?("Float") %}
-                @{{field[:name].id}} = value.to_f if value.to_f?
-              {% elsif field[:type].id.stringify == "Bool" %}
-                @{{field[:name].id}} = (value == "true")
-              {% elsif field[:type].id.stringify == "Json" %}
-                @{{field[:name].id}} = JSON.parse(value)
-              {% elsif field[:type].id.stringify == "Time" %}
-                begin
-                  @{{field[:name].id}} = Time.parse(value, "%F %T %z")
-                end
-              {% end %}
+        {% unless CRECTO_FIELDS.empty? %}
+          hash.each do |key, value|
+            case key.to_s
+            {% for field in CRECTO_FIELDS %}
+            when "{{field[:name].id}}"
+              if value.to_s.empty?
+                @{{field[:name].id}} = nil
+              else
+                {% if field[:type].id.stringify == "String" %}
+                  @{{field[:name].id}} = value.to_s
+                {% elsif field[:type].id.stringify == "Int16" %}
+                  @{{field[:name].id}} = value.to_i16 if value.to_i16?
+                {% elsif field[:type].id.stringify.includes?("Int") %}
+                  @{{field[:name].id}} = value.to_i if value.to_i?
+                {% elsif field[:type].id.stringify == "PkeyValue" %}
+                  @{{field[:name].id}} = value.to_i if value.to_i?
+                {% elsif field[:type].id.stringify.includes?("Float") %}
+                  @{{field[:name].id}} = value.to_f if value.to_f?
+                {% elsif field[:type].id.stringify == "Bool" %}
+                  @{{field[:name].id}} = (value == "true")
+                {% elsif field[:type].id.stringify == "Json" %}
+                  @{{field[:name].id}} = JSON.parse(value)
+                {% elsif field[:type].id.stringify == "Time" %}
+                  begin
+                    @{{field[:name].id}} = Time.parse(value, "%F %T %z")
+                  end
+                {% end %}
+              end
+            {% end %}
             end
-          {% end %}
           end
-        end
+        {% end %}
       end
 
       # Returns the value of the primary key field
