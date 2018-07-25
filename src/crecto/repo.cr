@@ -70,7 +70,8 @@ module Crecto
 
       results = queryable.from_rs(q.as(DB::ResultSet))
 
-      preloads = query.preloads + opts.fetch(:preload, [] of Symbol)
+      opt_preloads = opts.fetch(:preload, [] of Symbol)
+      preloads = query.preloads + opt_preloads.map{|a| {symbol: a, query: nil}}
       if preloads.any?
         add_preloads(results, queryable, preloads)
       end
@@ -512,7 +513,7 @@ module Crecto
 
     private def add_preloads(results, queryable, preloads)
       preloads.each do |preload|
-        case queryable.association_type_for_association(preload)
+        case queryable.association_type_for_association(preload[:symbol])
         when :has_many
           has_many_preload(results, queryable, preload)
         when :has_one
@@ -524,80 +525,92 @@ module Crecto
     end
 
     private def has_one_preload(results, queryable, preload)
-      query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(preload), results[0].pkey_value)
-      relation_item = all(queryable.klass_for_association(preload), query)
+      query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(preload[:symbol]), results[0].pkey_value)
+      if preload_query = preload[:query]
+        query = query.combine(preload_query)
+      end
+      relation_item = all(queryable.klass_for_association(preload[:symbol]), query)
       if relation_item.first?
-        queryable.set_value_for_association(preload, results[0], relation_item.first)
+        queryable.set_value_for_association(preload[:symbol], results[0], relation_item.first)
       end
     end
 
     private def has_many_preload(results, queryable, preload)
-      if queryable.through_key_for_association(preload)
+      if queryable.through_key_for_association(preload[:symbol])
         join_through(results, queryable, preload)
       else
-        join_single(results, queryable, preload)
+        join_direct(results, queryable, preload)
       end
     end
 
-    private def join_single(results, queryable, preload)
+    private def join_direct(results, queryable, preload)
       ids = results.map(&.pkey_value.as(PkeyValue))
-      query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(preload), ids)
-      relation_items = all(queryable.klass_for_association(preload), query)
-      relation_items = relation_items.group_by { |t| queryable.foreign_key_value_for_association(preload, t) }
+      query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(preload[:symbol]), ids)
+      if preload_query = preload[:query]
+        query = query.combine(preload_query)
+      end
+      relation_items = all(queryable.klass_for_association(preload[:symbol]), query)
+      relation_items = relation_items.group_by { |t| queryable.foreign_key_value_for_association(preload[:symbol], t) }
 
       results.each do |result|
         items = relation_items[result.pkey_value]? || [] of Crecto::Model
-        queryable.set_value_for_association(preload, result, items.map { |i| i.as(Crecto::Model) })
+        queryable.set_value_for_association(preload[:symbol], result, items.map { |i| i.as(Crecto::Model) })
       end
     end
 
     private def join_through(results, queryable, preload)
       ids = results.map(&.pkey_value.as(PkeyValue))
-      join_query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(preload), ids)
+      join_query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(preload[:symbol]), ids)
       # UserProjects
-      join_table_items = all(queryable.klass_for_association(queryable.through_key_for_association(preload).as(Symbol)), join_query)
+      join_table_items = all(queryable.klass_for_association(queryable.through_key_for_association(preload[:symbol]).as(Symbol)), join_query)
 
       # array of Project id's
       if join_table_items.empty?
         # Set default association values as empty arrays to avoid confusion
         # between empty results and non-loaded associations.
         results.each do |result|
-          queryable.set_value_for_association(queryable.through_key_for_association(preload).as(Symbol), result, [] of Crecto::Model)
-          queryable.set_value_for_association(preload, result, [] of Crecto::Model)
+          queryable.set_value_for_association(queryable.through_key_for_association(preload[:symbol]).as(Symbol), result, [] of Crecto::Model)
+          queryable.set_value_for_association(preload[:symbol], result, [] of Crecto::Model)
         end
       else
-        join_ids = join_table_items.map { |i| queryable.klass_for_association(preload).foreign_key_value_for_association(queryable.through_key_for_association(preload).as(Symbol), i) }
-        association_query = Crecto::Repo::Query.where(queryable.klass_for_association(preload).primary_key_field_symbol, join_ids)
+        join_ids = join_table_items.map { |i| queryable.klass_for_association(preload[:symbol]).foreign_key_value_for_association(queryable.through_key_for_association(preload[:symbol]).as(Symbol), i) }
+        association_query = Crecto::Repo::Query.where(queryable.klass_for_association(preload[:symbol]).primary_key_field_symbol, join_ids)
+        if preload_query = preload[:query]
+          association_query = association_query.combine(preload_query)
+        end
         # Projects
-        relation_items = all(queryable.klass_for_association(preload), association_query)
+        relation_items = all(queryable.klass_for_association(preload[:symbol]), association_query)
         # UserProject grouped by user_id
-        join_table_items = join_table_items.group_by { |t| queryable.foreign_key_value_for_association(queryable.through_key_for_association(preload).as(Symbol), t) }
+        join_table_items = join_table_items.group_by { |t| queryable.foreign_key_value_for_association(queryable.through_key_for_association(preload[:symbol]).as(Symbol), t) }
 
         results.each do |result|
           join_items = join_table_items[result.pkey_value]? || [] of Crecto::Model
           # set join table has_many assocation i.e. user.user_projects
-          queryable.set_value_for_association(queryable.through_key_for_association(preload).as(Symbol), result, join_items.map { |i| i.as(Crecto::Model) })
+          queryable.set_value_for_association(queryable.through_key_for_association(preload[:symbol]).as(Symbol), result, join_items.map { |i| i.as(Crecto::Model) })
           queryable_relation_items = relation_items.select { |i| join_ids.includes?(i.pkey_value) }
           # set association i.e. user.projects
-          queryable.set_value_for_association(preload, result, queryable_relation_items.map { |i| i.as(Crecto::Model) })
+          queryable.set_value_for_association(preload[:symbol], result, queryable_relation_items.map { |i| i.as(Crecto::Model) })
         end
       end
     end
 
     private def belongs_to_preload(results, queryable, preload)
-      ids = results.map { |r| queryable.foreign_key_value_for_association(preload, r) }
+      ids = results.map { |r| queryable.foreign_key_value_for_association(preload[:symbol], r) }
       return if ids.empty?
       query = Crecto::Repo::Query.where(id: ids)
-      relation_items = all(queryable.klass_for_association(preload), query)
+      if preload_query = preload[:query]
+        query = query.combine(preload_query)
+      end
+      relation_items = all(queryable.klass_for_association(preload[:symbol]), query)
 
       unless relation_items.nil?
         relation_items = relation_items.group_by { |t| t.pkey_value.as(PkeyValue) }
 
         results.each do |result|
-          fkey = queryable.foreign_key_value_for_association(preload, result)
+          fkey = queryable.foreign_key_value_for_association(preload[:symbol], result)
           if relation_items.has_key?(fkey)
             items = relation_items[fkey]
-            queryable.set_value_for_association(preload, result, items.map { |i| i.as(Crecto::Model) })
+            queryable.set_value_for_association(preload[:symbol], result, items.map { |i| i.as(Crecto::Model) })
           end
         end
       end

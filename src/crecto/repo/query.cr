@@ -10,7 +10,7 @@ module Crecto
       property wheres = [] of WhereType
       property or_wheres = [] of WhereType
       property joins = [] of Symbol
-      property preloads = [] of Symbol
+      property preloads = [] of NamedTuple(symbol: Symbol, query: Query?)
       property order_bys = [] of String
       property limit : Int32?
       property offset : Int32?
@@ -21,7 +21,7 @@ module Crecto
       # ```
       # Query.distinct("users.name")
       # ```
-      def self.distinct(dist : String)
+      def self.distinct(dist : String)2
         self.new.distinct(dist)
       end
 
@@ -124,6 +124,15 @@ module Crecto
         self.new.preload(preload_associations)
       end
 
+      # Preload associations, queries the association
+      #
+      # ```
+      # Query.preload([:posts, :projects], Query.where(name: "name"))
+      # ```
+      def self.preload(preload_associations : Array(Symbol), query : Query)
+        self.new.preload(preload_associations, query)
+      end
+
       # Preload associations
       #
       # ```
@@ -131,6 +140,15 @@ module Crecto
       # ```
       def self.preload(preload_association : Symbol)
         self.new.preload(preload_association)
+      end
+
+      # Preload associations, queries the association
+      #
+      # ```
+      # Query.preload(:posts, Query.where(name: "name"))
+      # ```
+      def self.preload(preload_association : Symbol, query : Query)
+        self.new.preload(preload_association, query)
       end
 
       # Field to ORDER BY
@@ -171,7 +189,28 @@ module Crecto
 
       def initialize
         @selects = ["*"]
-        # @selects = Array(String).new
+      end
+
+      # Combine two queries and returns a new query. Array type properties will be concatenated, however non
+      # array type properties will be overridden by the passed "query"
+      #
+      # ```
+      # query = Query.where(name: "user_name")
+      # query2 = Query.where(age: 21)
+      # query.combine(query2)
+      # ```
+      def combine(query : Query)
+        new_query = self.dup
+
+        {% for prop in ["selects", "wheres", "or_wheres", "joins", "preloads", "order_bys"] %}
+          new_query.{{prop.id}} = (new_query.{{prop.id}} + query.{{prop.id}}).uniq
+        {% end %}
+
+        {% for prop in ["distincts", "limit", "offset", "group_bys"] %}
+          new_query.{{prop.id}} = query.{{prop.id}}
+        {% end %}
+
+        new_query
       end
 
       # Adds `DISTINCT` to the query
@@ -286,13 +325,23 @@ module Crecto
         self
       end
 
-      # Preload assoications
+      # Preload associations
       #
       # ```
       # Query.preload([:posts, :projects])
       # ```
       def preload(preload_associations : Array(Symbol))
-        @preloads += preload_associations
+        @preloads += preload_associations.map{|a| {symbol: a, query: nil}}
+        self
+      end
+
+      # Preload associations, queries the association
+      #
+      # ```
+      # Query.preload([:posts, :projects], Query.where(name: "name"))
+      # ```
+      def preload(preload_associations : Array(Symbol), query : Query)
+        @preloads += preload_associations.map{|a| {symbol: a, query: query}}
         self
       end
 
@@ -302,7 +351,17 @@ module Crecto
       # Query.preload(:posts)
       # ```
       def preload(preload_association : Symbol)
-        @preloads.push(preload_association)
+        @preloads.push({symbol: preload_association, query: nil})
+        self
+      end
+
+      # Preload assoication, queries the association
+      #
+      # ```
+      # Query.preload(:posts, Query.where(name: "name"))
+      # ```
+      def preload(preload_association : Symbol, query : Query)
+        @preloads.push({symbol: preload_association, query: query})
         self
       end
 
