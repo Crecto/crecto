@@ -32,10 +32,12 @@ describe Crecto do
         Repo.delete_all(User)
 
         puts "\n\nusers: #{Repo.all(User)}\n\n"
+        sleep 0.1
 
         user = quick_create_user("this should delete")
 
         puts "\n\nusers: #{Repo.all(User)}\n\n"
+        sleep 0.1
 
         multi = Multi.new
         multi.delete(user)
