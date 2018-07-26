@@ -174,5 +174,169 @@ describe Crecto do
         Repo.all(User, Query.where(name: "perform_all_io2oj999")).size.should eq 0
       end
     end
+
+    describe "#transaction!" do
+      it "with an invalid changeset using #insert!, should raise" do
+        user = User.new
+
+        expect_raises Crecto::InvalidChangeset do
+          Repo.transaction! do
+            Repo.insert!(user)
+          end
+        end
+      end
+
+      it "with a valid insert, should insert the record" do
+        user = User.new
+        user.name = "this should insert in the transaction"
+
+        Repo.transaction! do
+          Repo.insert(user)
+        end
+
+        users = Repo.all(User, Query.where(name: "this should insert in the transaction"))
+        users.size.should be > 0
+      end
+
+      it "with a valid delete, should delete the record" do
+        Repo.delete_all(Post)
+        Repo.delete_all(User)
+
+        puts "\n\nusers: #{Repo.all(User)}\n\n"
+
+        user = quick_create_user("this should delete")
+
+        puts "\n\nusers: #{Repo.all(User)}\n\n"
+
+        Repo.transaction! do
+          Repo.delete!(user)
+        end
+
+        users = Repo.all(User, Query.where(id: user.id))
+        users.any?.should eq(false)
+      end
+
+      it "with a valid delete_all, should delete all records" do
+        2.times do
+          quick_create_user("test")
+        end
+
+        Repo.delete_all(Post)
+
+        Repo.transaction! do
+          Repo.delete_all(User)
+        end
+
+        users = Repo.all(User)
+        users.size.should eq(0)
+      end
+
+      it "with a valid update, should update the record" do
+        user = quick_create_user("this will change 89ffsf")
+
+        user.name = "this should have changed 89ffsf"
+
+        Repo.transaction! do
+          Repo.update(user)
+        end
+
+        user = Repo.get!(User, user.id)
+        user.name.should eq("this should have changed 89ffsf")
+      end
+
+      it "with a valid update_all, should update all records" do
+        quick_create_user_with_things("testing_update_all", 123)
+        quick_create_user_with_things("testing_update_all", 123)
+        quick_create_user_with_things("testing_update_all", 123)
+
+        Repo.transaction! do
+          Repo.update_all(User, Query.where(name: "testing_update_all"), {things: 9494})
+        end
+
+        Repo.all(User, Query.where(things: 123)).size.should eq 0
+        Repo.all(User, Query.where(things: 9494)).size.should eq 3
+      end
+
+      it "should perform all transaction types" do
+        Repo.delete_all(Post)
+        Repo.delete_all(User)
+
+        delete_user = quick_create_user("all_transactions_delete_user")
+        update_user = quick_create_user("all_transactions_update_user")
+        update_user.name = "all_transactions_update_user_ojjl2032"
+        quick_create_post(quick_create_user("perform_all"))
+        quick_create_post(quick_create_user("perform_all"))
+        insert_user = User.new
+        insert_user.name = "all_transactions_insert_user"
+
+        Repo.transaction! do
+          Repo.insert!(insert_user)
+          Repo.delete!(delete_user)
+          Repo.delete_all(Post)
+          Repo.update!(update_user)
+          Repo.update_all(User, Query.where(name: "perform_all"), {name: "perform_all_io2oj999"})
+        end
+
+        # check insert happened
+        Repo.all(User, Query.where(name: "all_transactions_insert_user")).size.should eq 1
+
+        # check delete happened
+        Repo.all(User, Query.where(name: "all_transactions_delete_user")).size.should eq 0
+
+        # check delete all happened
+        Repo.all(Post).size.should eq 0
+
+        # check update happened
+        Repo.all(User, Query.where(name: "all_transactions_update_user")).size.should eq 0
+        Repo.all(User, Query.where(name: "all_transactions_update_user_ojjl2032")).size.should eq 1
+
+        # check update all happened
+        Repo.all(User, Query.where(name: "perform_all")).size.should eq 0
+        Repo.all(User, Query.where(name: "perform_all_io2oj999")).size.should eq 2
+      end
+
+      it "should rollback and not perform any of the transactions with an invalid query" do
+        Repo.delete_all(Post)
+        Repo.delete_all(User)
+
+        delete_user = quick_create_user("all_transactions_delete_user")
+        update_user = quick_create_user("all_transactions_update_user")
+        update_user.name = "all_transactions_update_user_ojjl2032"
+        quick_create_post(quick_create_user("perform_all"))
+        quick_create_post(quick_create_user("perform_all"))
+        insert_user = User.new
+        insert_user.name = "all_transactions_insert_user"
+
+        invalid_user = User.new
+
+        expect_raises Crecto::InvalidChangeset do
+          Repo.transaction! do |tx|
+            tx.insert!(insert_user)
+            tx.delete!(delete_user)
+            tx.delete_all(Post)
+            tx.update!(update_user)
+            tx.update_all(User, Query.where(name: "perform_all"), {name: "perform_all_io2oj999"})
+            tx.insert!(invalid_user)
+          end
+        end
+
+        # check insert didn't happen
+        Repo.all(User, Query.where(name: "all_transactions_insert_user")).size.should eq 0
+
+        # check delete didn't happen
+        Repo.all(User, Query.where(name: "all_transactions_delete_user")).size.should eq 1
+
+        # check delete all didn't happen
+        Repo.all(Post).size.should eq 2
+
+        # check update didn't happen
+        Repo.all(User, Query.where(name: "all_transactions_update_user")).size.should eq 1
+        Repo.all(User, Query.where(name: "all_transactions_update_user_ojjl2032")).size.should eq 0
+
+        # check update all didn't happen
+        Repo.all(User, Query.where(name: "perform_all")).size.should eq 2
+        Repo.all(User, Query.where(name: "perform_all_io2oj999")).size.should eq 0
+      end
+    end
   end
 end

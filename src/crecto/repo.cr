@@ -491,6 +491,17 @@ module Crecto
       multi
     end
 
+    def transaction!
+      config.get_connection.transaction do |tx|
+        begin
+          yield LiveTransaction.new(tx, self)
+        rescue error : Exception
+          tx.rollback
+          raise error
+        end
+      end
+    end
+
     {% for operation in %w[insert update delete] %}
       private def run_operation(operation : Multi::{{operation.camelcase.id}}, tx)
         {{operation.id}}(operation.instance, tx)
