@@ -1,3 +1,4 @@
+require "uuid"
 require "./spec_helper"
 require "./helper_methods"
 
@@ -172,6 +173,42 @@ describe Crecto do
         # check update all didn't happen
         Repo.all(User, Query.where(name: "perform_all")).size.should eq 2
         Repo.all(User, Query.where(name: "perform_all_io2oj999")).size.should eq 0
+      end
+
+      it "with a valid run block, should insert the previous record" do
+        id = UUID.random.to_s
+        user = UserUUID.new
+        user.uuid = id
+        user.name = "test_run_uuid_user"
+
+        multi = Multi.new
+        multi.insert user
+        multi.run do |prev|
+          prev.is_a?(Crecto::Changeset::GenericChangeset).should be_true
+        end
+        Repo.transaction(multi)
+
+        multi.errors.any?.should be_false
+        Repo.all(UserUUID, Query.where(uuid: id)).size.should eq 1
+      end
+
+      it "with an exceptoin run block, should not insert the previous record" do
+        id = UUID.random.to_s
+        user = UserUUID.new
+        user.uuid = id
+        user.name = "test_run_uuid_user2"
+
+        multi = Multi.new
+        multi.insert user
+        multi.run do |prev|
+          prev.is_a?(Crecto::Changeset::GenericChangeset).should be_true
+          raise Exception.new("stop it")
+        end
+        Repo.transaction(multi)
+
+        multi.errors.any?.should be_true
+        multi.errors.first[:message].should eq "stop it"
+        Repo.all(UserUUID, Query.where(uuid: id)).any?.should be_false
       end
     end
   end
