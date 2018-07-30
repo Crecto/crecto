@@ -2,7 +2,7 @@ module Crecto
   # A repository maps to an underlying data store, controlled by the adapter.
   module Repo
     class OperationError < Exception
-      def initialize(error : Exception, @queryable : Model.class, @failed_operation : String)
+      def initialize(error : Exception, @queryable : Model.class | Nil, @failed_operation : String)
         super(error.message)
       end
 
@@ -408,9 +408,14 @@ module Crecto
       return multi unless multi.changesets_valid?
 
       config.get_connection.transaction do |tx|
+        prev = nil
         begin
           multi.operations.each do |operation|
-            run_operation(operation, tx)
+            if operation.is_a?(Proc)
+              prev = run_operation(operation, tx, prev)
+            else
+              prev = run_operation(operation, tx)
+            end
           end
         rescue error : OperationError
           multi.errors = [error.to_h]
@@ -428,6 +433,17 @@ module Crecto
         raise OperationError.new(ex, operation.instance.class, {{operation}})
       end
     {% end %}
+
+    private def run_operation(operation, tx, prev)
+      if prev.is_a?(Crecto::Changeset::Changeset)
+        generic = Crecto::Changeset::GenericChangeset.from_changeset(prev)
+        operation.call(generic)
+      else
+        operation.call(prev)
+      end
+    rescue ex : Exception
+      raise OperationError.new(ex, nil, "run")
+    end
 
     private def run_operation(operation : Multi::UpdateAll, tx)
       update_all(operation.queryable, operation.query, operation.update_hash, tx)

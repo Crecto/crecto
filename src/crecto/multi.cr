@@ -36,7 +36,7 @@ module Crecto
     # :nodoc:
     record UpdateAll, queryable : Crecto::Model.class, query : Crecto::Repo::Query, update_hash : UpdateHash
     # :nodoc:
-    property operations = Array(Insert | Delete | DeleteAll | Update | UpdateAll).new
+    property operations = Array(Insert | Delete | DeleteAll | Update | UpdateAll | Proc(MultiRunType, Nil)).new
 
     {% for type in %w[insert delete update] %}
       def {{type.id}}(queryable_instance : Crecto::Model)
@@ -47,6 +47,10 @@ module Crecto
         {{type.id}}(changeset.instance)
       end
     {% end %}
+
+    def run(&block: MultiRunType -> Nil)
+      operations.push block
+    end
 
     def delete_all(queryable, query = Crecto::Repo::Query.new)
       operations.push(DeleteAll.new(queryable, query))

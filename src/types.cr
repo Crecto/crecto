@@ -10,3 +10,5 @@ alias PkeyValue = String | Int32 | Int64 | Nil
 alias WhereType = Hash(Symbol, PkeyValue) | Hash(Symbol, DbValue) | Hash(Symbol, Array(DbValue)) | Hash(Symbol, Array(PkeyValue)) | Hash(Symbol, Array(Int32)) | Hash(Symbol, Array(Int64)) | Hash(Symbol, Array(String)) | Hash(Symbol, Int32 | String) | Hash(Symbol, Int64 | String) | Hash(Symbol, Int32) | Hash(Symbol, Int64) | Hash(Symbol, Nil) | Hash(Symbol, String) | Hash(Symbol, Int32 | Int64 | String) | Hash(Symbol, Int32 | Int64 | String | Nil) | NamedTuple(clause: String, params: Array(DbValue | PkeyValue))
 # :nodoc:
 alias Json = JSON::Any
+# :nodoc:
+alias MultiRunType = Bool | Crecto::Changeset::GenericChangeset | DB::ExecResult | DB::ResultSet | Nil
