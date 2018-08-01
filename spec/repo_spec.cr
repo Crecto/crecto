@@ -786,6 +786,7 @@ describe Crecto do
       end
 
       it "should raise an error if the changeset is invalid (dangling dependents)" do
+        next unless Repo.config.adapter == Crecto::Adapters::Postgres
         u = User.new
         u.name = "fridge"
         u = Repo.insert(u).instance
