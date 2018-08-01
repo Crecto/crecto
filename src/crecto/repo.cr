@@ -491,6 +491,18 @@ module Crecto
       multi
     end
 
+    # Run a live transaction. As opposed to transactions using `Multi` every
+    # operation on the yielded `LiveTransaction` object is executed immediately.
+    # This allows checking for results of previous operations. Any raise inside
+    # the block will roll back the transaction.
+    #
+    # ```
+    # Crecto::Repo.transaction! do |tx|
+    #   tx.insert!(user)
+    #   post = Post.new.tap { |p| p.user = user }
+    #   tx.insert!(post)
+    # end
+    # ```
     def transaction!
       config.get_connection.transaction do |tx|
         begin
