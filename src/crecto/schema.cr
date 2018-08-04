@@ -54,6 +54,8 @@ module Crecto
 
     # schema block macro
     macro schema(table_name, **opts, &block)
+      include JSON::Serializable
+
       {% for opt in opts %}
         {% if opt.id.stringify == "primary_key" %}
           CRECTO_USE_PRIMARY_KEY = {{opts[:primary_key]}}
@@ -100,6 +102,8 @@ module Crecto
 
       {% if opts.keys.includes?(:default.id) %}
         @{{field_name.id}} = {{opts[:default]}}
+      {% else %}
+        @{{field_name.id}} : {{field_type.id}}?
       {% end %}
 
       check_type!({{field_name}}, {{field_type}})
@@ -181,7 +185,6 @@ module Crecto
       {% end %}
 
       DB.mapping({ {{mapping.uniq.join(", ").id}} }, false)
-      JSON.mapping({ {{mapping.uniq.join(", ").id}} })
 
       # Builds fields' cast typed method
       {% for field in CRECTO_FIELDS %}

@@ -51,6 +51,7 @@ module Crecto
       @@initial_values = {} of Symbol => DbValue
 
       # Instance properties
+      @[JSON::Field(ignore: true)]
       property initial_values : Hash(Symbol, DbValue)?
 
       def initialize
