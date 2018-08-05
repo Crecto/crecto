@@ -259,6 +259,31 @@ module Crecto
       insert(changeset.instance)
     end
 
+    # Insert a schema instance into the data store or raise if the resulting
+    # changeset is invalid.
+    #
+    # ```
+    # user = User.new
+    # Repo.insert!(user)
+    # ```
+    def insert!(queryable_instance, tx : DB::Transaction? = nil)
+      insert(queryable_instance, tx).tap do |changeset|
+        raise InvalidChangeset.new(changeset) unless changeset.valid?
+      end
+    end
+
+    # Insert a changeset instance into the data store or raise if the
+    # resulting changest is invalid.
+    #
+    # ```
+    # user = User.new
+    # changeset = User.changeset(user)
+    # Repo.insert!(changeset)
+    # ```
+    def insert!(changeset : Crecto::Changeset::Changeset)
+      insert!(changeset.instance)
+    end
+
     # Update a shema instance in the data store.
     #
     # ```
@@ -298,6 +323,28 @@ module Crecto
     # ```
     def update(changeset : Crecto::Changeset::Changeset)
       update(changeset.instance)
+    end
+
+    # Update a schema instance in the data store or raise if the resulting
+    # changeset is invalid
+    #
+    # ```
+    # Repo.update!(user)
+    # ```
+    def update!(queryable_instance, tx : DB::Transaction? = nil)
+      update(queryable_instance, tx).tap do |changeset|
+        raise InvalidChangeset.new(changeset) unless changeset.valid?
+      end
+    end
+
+    # Update a changeset instance in the data store or raise if the resulting
+    # changeset is invalid
+    #
+    # ```
+    # Repo.update(changeset)
+    # ```
+    def update!(changeset : Crecto::Changeset::Changeset)
+      update!(changeset.instance)
     end
 
     # Update multipile records with a single query
@@ -355,6 +402,29 @@ module Crecto
     # ```
     def delete(changeset : Crecto::Changeset::Changeset)
       delete(changeset.instance)
+    end
+
+
+    # Delete a schema instance from the data store or raise if the resulting
+    # changeset is invalid
+    #
+    # ```
+    # Repo.delete!(user)
+    # ```
+    def delete!(queryable_instance, tx : DB::Transaction? = nil)
+      delete(queryable_instance, tx).tap do |changeset|
+        raise InvalidChangeset.new(changeset) unless changeset.valid?
+      end
+    end
+
+    # Delete a changeset instance from the data store or raise if the
+    # resulting changeset is invalid
+    #
+    # ```
+    # Repo.delete!(changeset)
+    # ```
+    def delete!(changeset : Crecto::Changeset::Changeset)
+      delete!(changeset.instance)
     end
 
     # Delete multipile records with a single query
@@ -419,6 +489,29 @@ module Crecto
       end
 
       multi
+    end
+
+    # Run a live transaction. As opposed to transactions using `Multi` every
+    # operation on the yielded `LiveTransaction` object is executed immediately.
+    # This allows checking for results of previous operations. Any raise inside
+    # the block will roll back the transaction.
+    #
+    # ```
+    # Crecto::Repo.transaction! do |tx|
+    #   tx.insert!(user)
+    #   post = Post.new.tap { |p| p.user = user }
+    #   tx.insert!(post)
+    # end
+    # ```
+    def transaction!
+      config.get_connection.transaction do |tx|
+        begin
+          yield LiveTransaction.new(tx, self)
+        rescue error : Exception
+          tx.rollback
+          raise error
+        end
+      end
     end
 
     {% for operation in %w[insert update delete] %}
