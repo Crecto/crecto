@@ -90,7 +90,7 @@ module Crecto
       private def get(conn, queryable, id)
         q = ["SELECT *"]
         q.push "FROM #{queryable.table_name}"
-        q.push "WHERE #{queryable.primary_key_field}=$1"
+        q.push "WHERE (#{queryable.primary_key_field}=$1)"
         q.push "LIMIT 1"
 
         execute(conn, q.join(" "), [id])
@@ -175,7 +175,7 @@ module Crecto
       private def delete(conn, changeset)
         q = delete_begin(changeset.instance.class.table_name)
         q.push "WHERE"
-        q.push "#{changeset.instance.class.primary_key_field}=$1"
+        q.push "(#{changeset.instance.class.primary_key_field}=$1)"
         q.push "RETURNING *" if conn.is_a?(DB::Database)
 
         exec_execute(conn, q.join(" "), [changeset.instance.pkey_value])
@@ -219,25 +219,30 @@ module Crecto
 
       private def add_where(where : NamedTuple, params)
         where[:params].each { |param| params.push(param) }
-        where[:clause]
+        String.build do |str|
+          str << "("
+          str << where[:clause]
+          str << ")"
+        end
       end
 
       private def add_where(where : Hash, queryable, params)
         where.keys.map do |key|
           [where[key]].flatten.uniq.each { |param| params.push(param) unless param.is_a?(Nil) }
 
-          results = " #{queryable.table_name}.#{key.to_s}"
-          results += if where[key].is_a?(Array)
-                       if where[key].as(Array).size === 0
-                         next " 1=0"
-                       else
-                         " IN (" + where[key].as(Array).uniq.map { |p| "?" }.join(", ") + ")"
-                       end
-                     elsif where[key].is_a?(Nil)
-                       " IS NULL"
-                     else
-                       "=?"
-                     end
+          next " 1=0" if where[key].is_a?(Array) && where[key].as(Array).size === 0
+
+          String.build do |str|
+            str << " (#{queryable.table_name}.#{key.to_s}"
+            if where[key].is_a?(Array)
+              str << " IN (" + where[key].as(Array).uniq.map { |p| "?" }.join(", ") + ")"
+            elsif where[key].is_a?(Nil)
+              str << " IS NULL"
+            else
+              str << "=?"
+            end
+            str << ")"
+          end
         end
       end
 
