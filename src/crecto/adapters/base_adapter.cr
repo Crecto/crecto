@@ -197,26 +197,14 @@ module Crecto
 
       private def wheres(queryable, query, params)
         q = ["WHERE"]
-        where_clauses = [] of String
-
-        query.wheres.each do |where|
-          if where.is_a?(NamedTuple)
-            where_clauses.push(add_where(where, params))
-          elsif where.is_a?(Hash)
-            where_clauses += add_where(where, queryable, params)
-          end
-        end
+        where_clauses = map_wheres(queryable, query.wheres, params)
         q.push where_clauses.join(" AND ")
         q.join(" ")
       end
 
       private def or_wheres(queryable, query, params)
         q = ["WHERE"]
-        where_clauses = [] of String
-
-        query.or_wheres.each do |where|
-          where_clauses += add_where(where.as(Hash), queryable, params)
-        end
+        where_clauses = map_wheres(queryable, query.or_wheres, params)
         q.push where_clauses.join(" OR")
         q.join(" ")
       end
@@ -228,6 +216,20 @@ module Crecto
           str << where[:clause]
           str << ")"
         end
+      end
+
+      private def map_wheres(queryable, wheres, params)
+        result = [] of String
+
+        wheres.each do |where|
+          if where.is_a?(NamedTuple)
+            result.push(add_where(where, params))
+          elsif where.is_a?(Hash)
+            result += add_where(where, queryable, params)
+          end
+        end
+
+        result
       end
 
       private def add_where(where : Hash, queryable, params)

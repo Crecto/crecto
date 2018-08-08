@@ -34,112 +34,122 @@ module Crecto
         self.new.select(selects)
       end
 
-      # Key => Value pair(s) used in query `WHERE`
-      #
-      # ```
-      # Query.where(name: "Thor", age: 60)
-      # ```
-      def self.where(**wheres)
-        self.new.where(**wheres)
-      end
+      {% for method in %i[where or_where] %}
+        # Query.{{ method.id }} with Key => Value pair(s)
+        #
+        # ```
+        # Query.{{ method.id }}(name: "Thor", age: 60)
+        # ```
+        def self.{{ method.id }}(**wheres)
+          self.new.{{ method.id }}(**wheres)
+        end
 
-      # Query WHERE with a string
-      #
-      # ```
-      # Query.where("users.id > ?", [10])
-      # ```
-      def self.where(where_string : String, params : Array(DbValue | PkeyValue))
-        self.new.where(where_string, params)
-      end
+        # Query#{{ method.id }} with Key => Value pair(s)
+        #
+        # ```
+        # query.{{ method.id }}(name: "Thor", age: 60)
+        # ```
+        def {{ method.id }}(**wheres)
+          wheres = wheres.to_h
+          @{{ method.id }}s.push(Hash.zip(wheres.keys, wheres.values))
+          self
+        end
 
-      # Query WHERE with a Symbol and DbValue
-      #
-      # ```
-      # Query.where(:name, "Conan")
-      # ```
-      def self.where(where_sym : Symbol, param : DbValue)
-        self.new.where(where_sym, param)
-      end
+        # Query.{{ method.id }} with a String and Array(DbValue)
+        #
+        # ```
+        # Query.{{ method.id }}("users.id > ?", [10])
+        # ```
+        def self.{{ method.id }}(where_string : String, params : Array(DbValue | PkeyValue))
+          self.new.{{ method.id }}(where_string, params)
+        end
 
-      # Query WHERE IN with a Symbol and Array(DbValue)
-      #
-      # ```
-      # Query.where(:name, ["Conan", "Zeus"])
-      # ```
-      def self.where(where_sym : Symbol, params : Array(DbValue | PkeyValue))
-        self.new.where(where_sym, params)
-      end
+        # Query#{{ method.id }} with a String and Array(DbValue)
+        #
+        # ```
+        # query.{{ method.id }}("users.id > ?", [10])
+        # ```
+        def {{ method.id }}(where_string : String, params : Array(DbValue))
+          @{{ method.id }}s.push({ clause: where_string, params: params.map { |p| p.as(DbValue) }})
+          self
+        end
 
-      # Query WHERE with a String
-      #
-      # ```
-      # Query.where("name IS NOT NULL")
-      # ```
-      def self.where(where_string : String)
-        self.new.where(where_string)
-      end
+        # Query.{{ method.id }} with a Symbol and DbValue
+        #
+        # ```
+        # Query.{{ method.id }}(:name, "Conan")
+        # ```
+        def self.{{ method.id }}(where_sym : Symbol, param : DbValue)
+          self.new.{{ method.id }}(where_sym, param)
+        end
 
-      # Query WHERE with a String and String parameter
-      #
-      # ```
-      # Query.where("name LIKE ?", "%phyllis%")
-      # ```
-      def self.where(where_string : String, param : DbValue | PkeyValue)
-        self.new.where(where_string, param)
-      end
+        # Query#{{ method.id }} with a Symbol and DbValue
+        #
+        # ```
+        # query.{{ method.id }}(:name, "Conan")
+        # ```
+        def {{ method.id }}(where_sym : Symbol, param : DbValue)
+          @{{ method.id }}s.push({where_sym => param.as(DbValue)})
+          self
+        end
 
-      # Key => Value pair(s) used in query `OR WHERE`
-      #
-      # ```
-      # Query.where(name: "Thor", age: 60)
-      # ```
-      def self.or_where(**or_wheres)
-        self.new.or_where(**or_wheres)
-      end
+        # Query.{{ method.id }} with a Symbol and Array(DbValue)
+        #
+        # ```
+        # Query.{{ method.id }}(:name, ["Conan", "Zeus"])
+        # ```
+        def self.{{ method.id }}(where_sym : Symbol, params : Array(DbValue | PkeyValue))
+          self.new.{{ method.id }}(where_sym, params)
+        end
 
-      # Query `OR WHERE` with a String
-      # ```
-      # Query.or_where("name IS NOT NULL")
-      # ```
-      def self.or_where(or_where_string : String)
-        self.new.or_where(or_where_string)
-      end
+        # Query#{{ method.id }} with a Symbol and Array(DbValue)
+        #
+        # ```
+        # query.{{ method.id }}(:name, ["Conan", "Zeus"])
+        # ```
+        def {{ method.id }}(where_sym : Symbol, params : Array(DbValue))
+          w = {} of Symbol => Array(DbValue)
+          w[where_sym] = params.map { |x| x.as(DbValue) }
+          @{{ method.id }}s.push(w)
+          self
+        end
 
-      # Query `OR WHERE` with a String and String parameter
-      #
-      # ```
-      # Query.or_where("name LIKE ?", "%phyllis%")
-      # ```
-      def self.or_where(or_where_string : String, param : DbValue | PkeyValue)
-        self.new.or_where(or_where_string, param)
-      end
+        # Query.{{ method.id }} with a String
+        #
+        # ```
+        # Query.{{ method.id }}("name IS NOT NULL")
+        # ```
+        def self.{{ method.id }}(where_string : String)
+          self.new.{{ method.id }}(where_string)
+        end
 
-      # Query `OR WHERE` with a string and array
-      #
-      # ```
-      # Query.or_where("users.id > ?", [10])
-      # ```
-      def self.or_where(or_where_string : String, params : Array(DbValue | PkeyValue))
-        self.new.or_where(or_where_string, params)
-      end
+        # Query#{{ method.id }} with a String
+        #
+        # ```
+        # query.{{ method.id }}("name IS NOT NULL")
+        # ```
+        def {{ method.id }}(where_string : String)
+          {{ method.id }}(where_string, Array(String).new)
+        end
 
-      # Query `OR WHERE` with a Symbol and DbValue
-      #
-      # ```
-      # Query.or_where(:name, "Conan")
-      # ```
-      def self.or_where(or_where_sym : Symbol, param : DbValue)
-        self.new.or_where(or_where_sym, param)
-      end
+        # Query.{{ method.id }} with a String and String parameter
+        #
+        # ```
+        # Query.{{ method.id }}("name LIKE ?", "%phyllis%")
+        # ```
+        def self.{{ method.id }}(where_string : String, param : DbValue | PkeyValue)
+          self.new.{{ method.id }}(where_string, param)
+        end
 
-      # Query `OR WHERE` with a Symbol and Array(DbValue)
-      #
-      # ```
-      # Query.or_where(:name, ["Conan", "Zeus"])
-      # ```
-      def self.or_where(or_where_sym : Symbol, params : Array(DbValue | PkeyValue))
-        self.new.or_where(or_where_sym, params)
-      end
+        # Query.{{ method.id }} with a String and String parameter
+        #
+        # ```
+        # query.{{ method.id }}("name LIKE ?", "%phyllis%")
+        # ```
+        def {{ method.id }}(where_string : String, param : DbValue | PkeyValue)
+          {{ method.id }}(where_string, [param])
+        end
+      {% end %}
 
       # Join query with *join_associations*
       #
@@ -286,127 +296,6 @@ module Crecto
         self
       end
 
-      # Key => Value pair(s) used in query `WHERE`
-      #
-      # ```
-      # Query.where(name: "Thor", age: 60)
-      # ```
-      def where(**wheres)
-        wheres = wheres.to_h
-        @wheres.push(Hash.zip(wheres.keys, wheres.values))
-        self
-      end
-
-      # Query where with a string
-      #
-      # ```
-      # Query.where("users.id > ?", [10])
-      # ```
-      def where(where_string : String, params : Array(DbValue))
-        @wheres.push({clause: where_string, params: params.map { |p| p.as(DbValue) }})
-        self
-      end
-
-      # Query WHERE with a Symbol and DbValue
-      #
-      # ```
-      # Query.where(:name, "Conan")
-      # ```
-      def where(where_sym : Symbol, param : DbValue)
-        @wheres.push({where_sym => param.as(DbValue)})
-        self
-      end
-
-      # Query WHERE IN with a Symbol and Array(DbValue)
-      #
-      # ```
-      # Query.where(:name, ["Conan", "Zeus"])
-      # ```
-      def where(where_sym : Symbol, params : Array(DbValue))
-        w = {} of Symbol => Array(DbValue)
-        w[where_sym] = params.map { |x| x.as(DbValue) }
-        @wheres.push(w)
-        self
-      end
-
-      # Query WHERE with a String
-      #
-      # ```
-      # Query.where("name IS NOT NULL")
-      # ```
-      def where(where_string : String)
-        where(where_string, Array(String).new)
-      end
-
-      # Query WHERE with a String and String parameter
-      #
-      # ```
-      # Query.where("name LIKE ?", "%phyllis%")
-      # ```
-      def where(where_string : String, param : DbValue | PkeyValue)
-        where(where_string, [param])
-      end
-
-      # Key => Value pair(s) used in query `OR WHERE`
-      #
-      # ```
-      # Query.where(name: "Thor", age: 60)
-      # ```
-      def or_where(**or_wheres)
-        or_wheres = or_wheres.to_h
-        @or_wheres.push or_wheres
-        self
-      end
-
-      # Query or_where with a string
-      #
-      # ```
-      # Query.or_where("users.id > ?", [10])
-      # ```
-      def or_where(or_where_string : String, params : Array(DbValue))
-        @or_wheres.push({clause: or_where_string, params: params.map { |p| p.as(DbValue) }})
-        self
-      end
-
-      # Query OR_WHERE with a Symbol and DbValue
-      #
-      # ```
-      # Query.or_where(:name, "Conan")
-      # ```
-      def or_where(or_where_sym : Symbol, param : DbValue)
-        @or_wheres.push({or_where_sym => param.as(DbValue)})
-        self
-      end
-
-      # Query OR_WHERE IN with a Symbol and Array(DbValue)
-      #
-      # ```
-      # Query.or_where(:name, ["Conan", "Zeus"])
-      # ```
-      def or_where(or_where_sym : Symbol, params : Array(DbValue))
-        w = {} of Symbol => Array(DbValue)
-        w[or_where_sym] = params.map { |x| x.as(DbValue) }
-        @or_wheres.push(w)
-        self
-      end
-
-      # Query OR_WHERE with a String
-      #
-      # ```
-      # Query.or_where("name IS NOT NULL")
-      # ```
-      def or_where(or_where_string : String)
-        or_where(or_where_string, Array(String).new)
-      end
-
-      # Query OR_WHERE with a String and String parameter
-      #
-      # ```
-      # Query.or_where("name LIKE ?", "%phyllis%")
-      # ```
-      def or_where(or_where_string : String, param : DbValue | PkeyValue)
-        or_where(or_where_string, [param])
-      end
       # Join query with *join_associations*
       #
       # ```
