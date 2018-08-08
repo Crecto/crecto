@@ -97,6 +97,50 @@ module Crecto
         self.new.or_where(**or_wheres)
       end
 
+      # Query `OR WHERE` with a String
+      # ```
+      # Query.or_where("name IS NOT NULL")
+      # ```
+      def self.or_where(or_where_string : String)
+        self.new.or_where(or_where_string)
+      end
+
+      # Query `OR WHERE` with a String and String parameter
+      #
+      # ```
+      # Query.or_where("name LIKE ?", "%phyllis%")
+      # ```
+      def self.or_where(or_where_string : String, param : DbValue | PkeyValue)
+        self.new.or_where(or_where_string, param)
+      end
+
+      # Query `OR WHERE` with a string and array
+      #
+      # ```
+      # Query.or_where("users.id > ?", [10])
+      # ```
+      def self.or_where(or_where_string : String, params : Array(DbValue | PkeyValue))
+        self.new.or_where(or_where_string, params)
+      end
+
+      # Query `OR WHERE` with a Symbol and DbValue
+      #
+      # ```
+      # Query.or_where(:name, "Conan")
+      # ```
+      def self.or_where(or_where_sym : Symbol, param : DbValue)
+        self.new.or_where(or_where_sym, param)
+      end
+
+      # Query `OR WHERE` with a Symbol and Array(DbValue)
+      #
+      # ```
+      # Query.or_where(:name, ["Conan", "Zeus"])
+      # ```
+      def self.or_where(or_where_sym : Symbol, params : Array(DbValue | PkeyValue))
+        self.new.or_where(or_where_sym, params)
+      end
+
       # Join query with *join_associations*
       #
       # ```
@@ -314,6 +358,55 @@ module Crecto
         self
       end
 
+      # Query or_where with a string
+      #
+      # ```
+      # Query.or_where("users.id > ?", [10])
+      # ```
+      def or_where(or_where_string : String, params : Array(DbValue))
+        @or_wheres.push({clause: or_where_string, params: params.map { |p| p.as(DbValue) }})
+        self
+      end
+
+      # Query OR_WHERE with a Symbol and DbValue
+      #
+      # ```
+      # Query.or_where(:name, "Conan")
+      # ```
+      def or_where(or_where_sym : Symbol, param : DbValue)
+        @or_wheres.push({or_where_sym => param.as(DbValue)})
+        self
+      end
+
+      # Query OR_WHERE IN with a Symbol and Array(DbValue)
+      #
+      # ```
+      # Query.or_where(:name, ["Conan", "Zeus"])
+      # ```
+      def or_where(or_where_sym : Symbol, params : Array(DbValue))
+        w = {} of Symbol => Array(DbValue)
+        w[or_where_sym] = params.map { |x| x.as(DbValue) }
+        @or_wheres.push(w)
+        self
+      end
+
+      # Query OR_WHERE with a String
+      #
+      # ```
+      # Query.or_where("name IS NOT NULL")
+      # ```
+      def or_where(or_where_string : String)
+        or_where(or_where_string, Array(String).new)
+      end
+
+      # Query OR_WHERE with a String and String parameter
+      #
+      # ```
+      # Query.or_where("name LIKE ?", "%phyllis%")
+      # ```
+      def or_where(or_where_string : String, param : DbValue | PkeyValue)
+        or_where(or_where_string, [param])
+      end
       # Join query with *join_associations*
       #
       # ```
