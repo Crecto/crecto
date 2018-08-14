@@ -104,7 +104,7 @@ module Crecto
       private def check_required!
         return unless REQUIRED_FIELDS.has_key?(@class_key)
         REQUIRED_FIELDS[@class_key].each do |field|
-          add_error(field.to_s, "is required") unless @instance_hash[field]?
+          add_error(field.to_s, "is required") if @instance_hash[field].nil?
         end
       end
 
