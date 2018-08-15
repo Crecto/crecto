@@ -26,5 +26,9 @@ module Crecto
     def update_all(queryable, query, update_tuple : NamedTuple)
       update_all(queryable, query, update_tuple.to_h)
     end
+
+    def lock(queryable, query = Crecto::Repo::Query.new)
+      @repo.lock(@tx, queryable, query)
+    end
   end
 end

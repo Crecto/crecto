@@ -13,6 +13,8 @@ module Crecto
           all(conn, queryable, query)
         when :delete_all
           delete(conn, queryable, query)
+        when :lock
+          all(conn, queryable, query, true)
         end
       end
 
@@ -134,7 +136,7 @@ module Crecto
         "SELECT #{ag}(#{queryable.table_name}.#{field}) from #{queryable.table_name}"
       end
 
-      private def all(conn, queryable, query)
+      private def all(conn, queryable, query, for_update = false)
         params = [] of DbValue | Array(DbValue)
 
         q = ["SELECT"]
@@ -152,6 +154,8 @@ module Crecto
         q.push limit(query) unless query.limit.nil?
         q.push offset(query) unless query.offset.nil?
         q.push "GROUP BY #{query.group_bys}" if !query.group_bys.nil?
+
+        q.push "FOR UPDATE" if for_update
 
         execute(conn, position_args(q.join(" ")), params)
       end
