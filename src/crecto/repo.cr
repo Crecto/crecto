@@ -514,6 +514,20 @@ module Crecto
       end
     end
 
+    # Returns a list of locked *queryable* instances.  Accepts an optional `query`
+    #
+    # ```
+    # Crecto::Repo.config.get_connection.transaction do |tx|
+    #   users = Crecto::Repo.lock(tx, User)
+    # end
+    # ```
+    def lock(tx : DB::Transaction, queryable, query = Query.new) : Array
+      raise Crecto::InvalidAdapter.new "SQLite3 cannot use lock feature." if config.adapter == Crecto::Adapters::SQLite3
+      q = config.adapter.run(tx, :lock, queryable, query).as(DB::ResultSet)
+      results = queryable.from_rs(q)
+      results
+    end
+
     {% for operation in %w[insert update delete] %}
       private def run_operation(operation : Multi::{{operation.camelcase.id}}, tx)
         {{operation.id}}(operation.instance, tx)
