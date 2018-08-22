@@ -57,24 +57,28 @@ module Crecto
 
       def execute(conn, query_string, params)
         start = Time.now
-        results = if conn.is_a?(DB::Database)
-                    conn.query(query_string, params)
-                  else
-                    conn.connection.query(query_string, params)
-                  end
-        DbLogger.log(query_string, Time.new - start, params)
-        results
+        begin
+          if conn.is_a?(DB::Database)
+            conn.query(query_string, params)
+          else
+            conn.connection.query(query_string, params)
+          end
+        ensure
+          DbLogger.log(query_string, Time.new - start, params)
+        end
       end
 
       def execute(conn, query_string)
         start = Time.now
-        results = if conn.is_a?(DB::Database)
-                    conn.query(query_string)
-                  else
-                    conn.connection.query(query_string)
-                  end
-        DbLogger.log(query_string, Time.new - start)
-        results
+        begin
+          if conn.is_a?(DB::Database)
+            conn.query(query_string)
+          else
+            conn.connection.query(query_string)
+          end
+        ensure
+          DbLogger.log(query_string, Time.new - start)
+        end
       end
 
       def exec_execute(conn, query_string, params)
