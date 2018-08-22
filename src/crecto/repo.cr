@@ -151,25 +151,45 @@ module Crecto
       end
     end
 
-    # Return a single nilable instance of *queryable* using the *query* param
+    # Return a single nilable instance of *queryable* using the *opts* param
     #
     # ```
     # user = Repo.get_by(User, name: "fred", age: 21)
     # ```
     def get_by(queryable, **opts)
-      q = config.adapter.run(config.get_connection, :all, queryable, Query.where(**opts).limit(1)).as(DB::ResultSet)
+      get_by(queryable, Query.where(**opts))
+    end
+
+    # Return a single nilable instance of *queryable* using the *query* param
+    # Allows for association preloading
+    #
+    # ```
+    # user = Repo.get_by(User, Query.where(name: "fred", age: 21))
+    # ```
+    def get_by(queryable, query)
+      q = config.adapter.run(config.get_connection, :all, queryable, query.limit(1)).as(DB::ResultSet)
       results = queryable.from_rs(q)
       results.first if results.any?
     end
 
-    # Return a single instance of *queryable* using the *query* param
+    # Return a single instance of *queryable* using the *opts* param
     # Raises `NoResults` error if the record does not exist
     #
     # ```
     # user = Repo.get_by(User, name: "fred", age: 21)
     # ```
     def get_by!(queryable, **opts)
-      if result = get_by(queryable, **opts)
+      get_by!(queryable, Query.where(**opts))
+    end
+
+    # Return a single instance of *queryable* using the *query* param
+    # Raises `NoResults` error if the record does not exist
+    #
+    # ```
+    # user = Repo.get_by(User, Query.where(name: "fred", age: 21))
+    # ```
+    def get_by!(queryable, query)
+      if result = get_by(queryable, query)
         result
       else
         raise NoResults.new("No Results")
