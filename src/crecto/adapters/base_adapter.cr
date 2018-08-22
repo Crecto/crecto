@@ -251,6 +251,13 @@ module Crecto
         builder.back(join_string.bytesize)
       end
 
+      private def or_wheres(builder, queryable, query, params)
+        return if query.or_wheres.empty?
+
+        builder << (query.wheres.empty? ? " WHERE " : " OR ")
+        add_where_clauses(builder, queryable, query.or_wheres, params, " OR ")
+      end
+
       private def add_where(builder, where : NamedTuple, params)
         where[:params].each { |param| params.push(param) }
         builder << '(' << where[:clause] << ')'
