@@ -6,24 +6,27 @@ module Crecto
     module Postgres
       extend BaseAdapter
 
-      private def self.update_begin(table_name, fields_values)
-        q = ["UPDATE"]
-        q.push "#{table_name}"
-        q.push "SET"
-        q.push "(#{fields_values[:fields]})"
-        q.push "="
-        q.push "(#{(1..fields_values[:values].size).map { "?" }.join(", ")})"
+      private def self.update_begin(builder, table_name, fields_values)
+        builder << "UPDATE " << table_name << " SET ("
+        builder << fields_values[:fields] << ')'
+        builder << " = ("
+        fields_values[:values].size.times do
+          builder << "?, "
+        end
+        builder.back(2)
+        builder << ')'
       end
 
       private def self.update(conn, changeset)
         fields_values = instance_fields_and_values(changeset.instance)
 
-        q = update_begin(changeset.instance.class.table_name, fields_values)
-        q.push "WHERE"
-        q.push "(#{changeset.instance.class.primary_key_field}=?)"
-        q.push "RETURNING *"
+        q = String.build do |builder|
+          update_begin(builder, changeset.instance.class.table_name, fields_values)
+          builder << " WHERE (" << changeset.instance.class.primary_key_field << "=?)"
+          builder << " RETURNING *"
+        end
 
-        execute(conn, position_args(q.join(" ")), fields_values[:values] + [changeset.instance.pkey_value])
+        execute(conn, position_args(q), fields_values[:values] + [changeset.instance.pkey_value])
       end
 
       private def self.instance_fields_and_values(query_hash : Hash)

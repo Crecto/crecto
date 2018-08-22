@@ -92,234 +92,276 @@ module Crecto
       end
 
       private def get(conn, queryable, id)
-        q = ["SELECT *"]
-        q.push "FROM #{queryable.table_name}"
-        q.push "WHERE (#{queryable.primary_key_field}=$1)"
-        q.push "LIMIT 1"
+        q = String.build do |builder|
+          builder <<
+            "SELECT * FROM " << queryable.table_name <<
+            " WHERE (" << queryable.primary_key_field << "=$1)"  <<
+            " LIMIT 1"
+        end
 
-        execute(conn, q.join(" "), [id])
+        execute(conn, q, [id])
       end
 
       private def insert(conn, changeset)
         fields_values = instance_fields_and_values(changeset.instance)
 
-        q = ["INSERT INTO"]
-        q.push "#{changeset.instance.class.table_name}"
-        q.push "(#{fields_values[:fields]})"
-        q.push "VALUES"
-        q.push "(#{(1..fields_values[:values].size).map { "?" }.join(", ")})"
-        q.push "RETURNING *"
+        q = String.build do |builder|
+          builder <<
+            "INSERT INTO " << changeset.instance.class.table_name <<
+            " (" << fields_values[:fields] << ')' <<
+            " VALUES" <<
+            " ("
+          fields_values[:values].size.times do
+            builder << "?, "
+          end
+          builder.back(2)
+          builder << ") RETURNING *"
+        end
 
-        execute(conn, position_args(q.join(" ")), fields_values[:values])
+
+        execute(conn, position_args(q), fields_values[:values])
       end
 
       def aggregate(conn, queryable, ag, field)
-        conn.scalar(build_aggregate_query(queryable, ag, field))
+        q = String.build do |builder|
+          build_aggregate_query(builder, queryable, ag, field)
+        end
+
+        conn.scalar(q)
       end
 
       def aggregate(conn, queryable, ag, field, query : Crecto::Repo::Query)
         params = [] of DbValue | Array(DbValue)
-        q = [build_aggregate_query(queryable, ag, field)]
-        q.push joins(queryable, query, params) if query.joins.any?
-        q.push wheres(queryable, query, params) if query.wheres.any?
-        q.push or_wheres(queryable, query, params) if query.or_wheres.any?
-        q.push order_bys(query) if query.order_bys.any?
-        q.push limit(query) unless query.limit.nil?
-        q.push offset(query) unless query.offset.nil?
+        q = String.build do |builder|
+          build_aggregate_query(builder, queryable, ag, field)
+          joins(builder, queryable, query, params)
+          wheres(builder, queryable, query, params)
+          or_wheres(builder, queryable, query, params)
+          order_bys(builder, query)
+          limit(builder, query)
+          offset(builder, query)
+        end
 
         start = Time.now
-        query_string = position_args(q.join(" "))
+        query_string = position_args(q)
         results = conn.scalar(query_string, params)
         DbLogger.log(query_string, Time.new - start, params)
         results
       end
 
-      private def build_aggregate_query(queryable, ag, field)
-        "SELECT #{ag}(#{queryable.table_name}.#{field}) from #{queryable.table_name}"
+      private def build_aggregate_query(builder, queryable, ag, field)
+        builder << " SELECT " << ag << '(' << queryable.table_name << '.' << field << ") FROM " << queryable.table_name
       end
+
 
       private def all(conn, queryable, query)
         params = [] of DbValue | Array(DbValue)
 
-        q = ["SELECT"]
+        q = String.build do |builder|
+          builder << "SELECT"
+          if query.distincts.nil?
+            query.selects.each do |s|
+              builder << ' ' << queryable.table_name << '.' << s << ','
+            end
 
-        if query.distincts.nil?
-          q.push query.selects.map { |s| "#{queryable.table_name}.#{s}" }.join(", ")
-        else
-          q.push "DISTINCT #{query.distincts}"
+            builder.back(1)
+          else
+            builder << " DISTINCT " << query.distincts
+          end
+
+          builder << " FROM " << queryable.table_name
+          joins(builder, queryable, query, params)
+          wheres(builder, queryable, query, params)
+          or_wheres(builder, queryable, query, params)
+          order_bys(builder, query) 
+          limit(builder, query)
+          offset(builder, query)
+          group_by(builder, query)
         end
-        q.push "FROM #{queryable.table_name}"
-        q.push joins(queryable, query, params) if query.joins.any?
-        q.push wheres(queryable, query, params) if query.wheres.any?
-        q.push or_wheres(queryable, query, params) if query.or_wheres.any?
-        q.push order_bys(query) if query.order_bys.any?
-        q.push limit(query) unless query.limit.nil?
-        q.push offset(query) unless query.offset.nil?
-        q.push "GROUP BY #{query.group_bys}" if !query.group_bys.nil?
 
-        execute(conn, position_args(q.join(" ")), params)
+        execute(conn, position_args(q), params)
       end
 
       private def update(conn, queryable, query, query_hash)
         fields_values = instance_fields_and_values(query_hash)
         params = [] of DbValue | Array(DbValue)
 
-        q = update_begin(queryable.table_name, fields_values)
-        q.push wheres(queryable, query, params) if query.wheres.any?
-        q.push or_wheres(queryable, query, params) if query.or_wheres.any?
+        q = String.build do |builder|
+          update_begin(builder, queryable.table_name, fields_values)
+          wheres(builder, queryable, query, params)
+          or_wheres(builder, queryable, query, params)
+        end
 
-        exec_execute(conn, position_args(q.join(" ")), fields_values[:values] + params)
+        exec_execute(conn, position_args(q), fields_values[:values] + params)
       end
 
-      private def delete_begin(table_name)
-        q = ["DELETE FROM"]
-        q.push "#{table_name}"
+      private def delete_begin(builder, table_name)
+        builder << "DELETE FROM " << table_name
       end
 
       private def delete(conn, changeset)
-        q = delete_begin(changeset.instance.class.table_name)
-        q.push "WHERE"
-        q.push "(#{changeset.instance.class.primary_key_field}=$1)"
-        q.push "RETURNING *" if conn.is_a?(DB::Database)
+        q = String.build do |builder|
+          delete_begin(builder, changeset.instance.class.table_name)
+          builder << " WHERE "
+          builder << '(' << changeset.instance.class.primary_key_field << "=$1" << ')'
+          builder << " RETURNING *" if conn.is_a?(DB::Database)
+        end
 
-        exec_execute(conn, q.join(" "), [changeset.instance.pkey_value])
+        exec_execute(conn, q, [changeset.instance.pkey_value])
       end
 
       private def delete(conn, queryable, query : Crecto::Repo::Query)
         params = [] of DbValue | Array(DbValue)
 
-        q = delete_begin(queryable.table_name)
-        q.push wheres(queryable, query, params) if query.wheres.any?
-        q.push or_wheres(queryable, query, params) if query.or_wheres.any?
+        q = String.build do |builder|
+          delete_begin(builder, queryable.table_name)
 
-        exec_execute(conn, position_args(q.join(" ")), params)
-      end
-
-      private def wheres(queryable, query, params)
-        q = ["WHERE"]
-        where_clauses = map_wheres(queryable, query.wheres, params)
-        q.push where_clauses.join(" AND ")
-        q.join(" ")
-      end
-
-      private def or_wheres(queryable, query, params)
-        q = ["WHERE"]
-        where_clauses = map_wheres(queryable, query.or_wheres, params)
-        q.push where_clauses.join(" OR")
-        q.join(" ")
-      end
-
-      private def add_where(where : NamedTuple, params)
-        where[:params].each { |param| params.push(param) }
-        String.build do |str|
-          str << "("
-          str << where[:clause]
-          str << ")"
+          wheres(builder, queryable, query, params) 
+          or_wheres(builder, queryable, query, params)
         end
+
+        exec_execute(conn, position_args(q), params)
       end
 
-      private def map_wheres(queryable, wheres, params)
-        result = [] of String
+      private def wheres(builder, queryable, query, params)
+        return if query.wheres.empty?
 
+        builder << " WHERE "
+        add_where_clauses(builder, queryable, query.wheres, params, " AND ")
+      end
+
+      private def or_wheres(builder, queryable, query, params)
+        return if query.or_wheres.empty?
+
+        builder << " WHERE "
+        add_where_clauses(builder, queryable, query.or_wheres, params, " OR ")
+      end
+
+      private def add_where_clauses(builder, queryable, wheres, params, join_string)
         wheres.each do |where|
           if where.is_a?(NamedTuple)
-            result.push(add_where(where, params))
+            add_where(builder, where, params)
           elsif where.is_a?(Hash)
-            result += add_where(where, queryable, params)
+            add_where(builder, where, queryable, params, join_string)
           end
+
+          builder << join_string
         end
 
-        result
+        builder.back(join_string.bytesize)
       end
 
-      private def add_where(where : Hash, queryable, params)
-        where.keys.map do |key|
+      private def add_where(builder, where : NamedTuple, params)
+        where[:params].each { |param| params.push(param) }
+        builder << '(' << where[:clause] << ')'
+      end
+
+      private def add_where(builder, where : Hash, queryable, params, join_string)
+        where.keys.each do |key|
           [where[key]].flatten.uniq.each { |param| params.push(param) unless param.is_a?(Nil) }
 
-          next " 1=0" if where[key].is_a?(Array) && where[key].as(Array).size === 0
-
-          String.build do |str|
-            str << " (#{queryable.table_name}.#{key.to_s}"
-            if where[key].is_a?(Array)
-              str << " IN (" + where[key].as(Array).uniq.map { |p| "?" }.join(", ") + ")"
-            elsif where[key].is_a?(Nil)
-              str << " IS NULL"
-            else
-              str << "=?"
-            end
-            str << ")"
+          if where[key].is_a?(Array) && where[key].as(Array).size === 0
+            builder << " 1=0" << join_string
+            next
           end
+
+          builder << " (" << queryable.table_name << '.' << key.to_s
+          if where[key].is_a?(Array)
+            builder << " IN ("
+            where[key].as(Array).uniq.size.times do
+              builder << "?, "
+            end
+            builder.back(2)
+            builder << ')'
+          elsif where[key].is_a?(Nil)
+            builder << " IS NULL"
+          else
+            builder << "=?"
+          end
+
+          builder << ')' << join_string
         end
+
+        builder.back(join_string.bytesize)
       end
 
-      private def joins(queryable, query, params)
-        joins = query.joins.map do |join|
+      private def joins(builder, queryable, query, params)
+        return if query.joins.empty?
+
+        query.joins.each do |join|
           if join.is_a? Symbol
             if queryable.through_key_for_association(join)
-              join_through(queryable, join)
+              join_through(builder, queryable, join)
             else
-              join_single(queryable, join)
+              join_single(builder, queryable, join)
             end
           else
-            join
+            builder << ' ' << join
           end
         end
-        joins.join(" ")
       end
 
-      private def join_single(queryable, join)
+      private def join_single(builder, queryable, join)
         association_klass = queryable.klass_for_association(join)
 
-        q = ["INNER JOIN"]
-        q.push association_klass.table_name
-        q.push "ON"
+        builder << " INNER JOIN " << association_klass.table_name << " ON "
 
         if queryable.association_type_for_association(join) == :belongs_to
-          q.push association_klass.table_name + "." + association_klass.primary_key_field
+          builder << association_klass.table_name << '.' << association_klass.primary_key_field
         else
-          q.push association_klass.table_name + "." + queryable.foreign_key_for_association(join).to_s
+          builder << association_klass.table_name << '.' << queryable.foreign_key_for_association(join).to_s
         end
 
-        q.push "="
+        builder << " = "
 
         if queryable.association_type_for_association(join) == :belongs_to
-          q.push queryable.table_name + '.' + association_klass.foreign_key_for_association(queryable).to_s
+          builder << queryable.table_name << '.' << association_klass.foreign_key_for_association(queryable).to_s
         else
-          q.push queryable.table_name + '.' + queryable.primary_key_field
+          builder << queryable.table_name << '.' << queryable.primary_key_field
         end
-
-        q.join(" ")
       end
 
-      private def join_through(queryable, join)
+      private def join_through(builder, queryable, join)
         association_klass = queryable.klass_for_association(join)
         join_klass = queryable.klass_for_association(queryable.through_key_for_association(join).as(Symbol))
 
-        q = ["INNER JOIN"]
-        q.push join_klass.table_name
-        q.push "ON"
-        q.push join_klass.table_name + "." + queryable.foreign_key_for_association(join).to_s
-        q.push "="
-        q.push queryable.table_name + "." + queryable.primary_key_field
-        q.push "INNER JOIN"
-        q.push association_klass.table_name
-        q.push "ON"
-        q.push association_klass.table_name + "." + association_klass.primary_key_field
-        q.push "="
-        q.push join_klass.table_name + "." + join_klass.foreign_key_for_association(association_klass).to_s
-        q.join(" ")
+        builder << " INNER JOIN " << join_klass.table_name << " ON "
+        builder << join_klass.table_name << '.' << queryable.foreign_key_for_association(join).to_s
+        builder << " = "
+        builder << queryable.table_name << '.' << queryable.primary_key_field
+        builder << " INNER JOIN " << association_klass.table_name << " ON "
+        builder << association_klass.table_name << '.' << association_klass.primary_key_field
+        builder << " = "
+        builder << join_klass.table_name << '.' << join_klass.foreign_key_for_association(association_klass).to_s
       end
 
-      private def order_bys(query)
-        "ORDER BY #{query.order_bys.join(", ")}"
+      private def order_bys(builder, query)
+        return if query.order_bys.empty?
+
+        builder << " ORDER BY "
+        query.order_bys.each do |order_by|
+          builder << order_by << ", "
+        end
+
+        builder.back(2)
       end
 
-      private def limit(query)
-        "LIMIT #{query.limit}"
+      private def limit(builder, query)
+        return unless query.limit
+
+        builder << " LIMIT " << query.limit
       end
 
-      private def offset(query)
-        "OFFSET #{query.offset}"
+      private def offset(builder, query)
+        return unless query.offset
+
+        builder << " OFFSET " << query.offset
+      end
+
+      private def group_by(builder, query)
+        return unless query.group_bys
+
+        builder << " GROUP BY " << query.group_bys
       end
 
       private def instance_fields_and_values(queryable_instance)
