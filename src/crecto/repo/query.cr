@@ -9,7 +9,7 @@ module Crecto
       property selects : Array(String)
       property wheres = [] of WhereType
       property or_wheres = [] of WhereType
-      property joins = [] of Symbol
+      property joins = [] of Symbol | String
       property preloads = [] of NamedTuple(symbol: Symbol, query: Query?)
       property order_bys = [] of String
       property limit : Int32?
@@ -113,6 +113,15 @@ module Crecto
       # ```
       def self.join(join_association : Symbol)
         self.new.join(join_association)
+      end
+
+      # Join query with a String
+      #
+      # ```
+      # Query.join("INNER JOIN users ON users.id = posts.user_id")
+      # ```
+      def self.join(join_string : String)
+        self.new.join(join_string)
       end
 
       # Preload associations
@@ -322,6 +331,17 @@ module Crecto
       # ```
       def join(join_association : Symbol)
         @joins.push(join_association)
+        self
+      end
+
+      # Join query with a String
+      #
+      # ```
+      # q = Query.new
+      # q.join("INNER JOIN users ON users.id = posts.user_id")
+      # ```
+      def join(join_string : String)
+        @joins.push(join_string)
         self
       end
 

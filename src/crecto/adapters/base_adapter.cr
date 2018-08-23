@@ -252,10 +252,14 @@ module Crecto
 
       private def joins(queryable, query, params)
         joins = query.joins.map do |join|
-          if queryable.through_key_for_association(join)
-            join_through(queryable, join)
+          if join.is_a? Symbol
+            if queryable.through_key_for_association(join)
+              join_through(queryable, join)
+            else
+              join_single(queryable, join)
+            end
           else
-            join_single(queryable, join)
+            join
           end
         end
         joins.join(" ")

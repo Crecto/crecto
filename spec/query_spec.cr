@@ -33,5 +33,24 @@ describe Crecto do
         new_query.limit.should eq 2
       end
     end
+
+    describe "#join" do
+      it "should add JOIN clause string from Query class" do
+        query = Crecto::Repo::Query.join("INNER JOIN users ON users.id = posts.user_id")
+
+        query.joins.size.should eq 1
+        query.joins[0].should eq "INNER JOIN users ON users.id = posts.user_id"
+      end
+
+      it "should add JOIN clause string from Query instance" do
+        query = Crecto::Repo::Query.new
+        query.joins.size.should eq 0
+
+        query = query.join("INNER JOIN users ON users.id = posts.user_id")
+
+        query.joins.size.should eq 1
+        query.joins[0].should eq "INNER JOIN users ON users.id = posts.user_id"
+      end
+    end
   end
 end

@@ -106,5 +106,13 @@ if Repo.config.adapter == Crecto::Adapters::SQLite3
         sql.should eq(["SELECT users.* FROM users WHERE  (users.things IS NULL)"])
       end
     end
+
+    it "should generates JOIN clause from string" do
+      query = Query.join "INNER JOIN users ON users.id = posts.user_id"
+      Repo.all(Post, query)
+      check_sql do |sql|
+        sql.should eq(["SELECT posts.* FROM posts INNER JOIN users ON users.id = posts.user_id"])
+      end
+    end
   end
 end
