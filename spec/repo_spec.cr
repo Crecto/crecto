@@ -230,6 +230,34 @@ describe Crecto do
           users = Repo.all(User, query)
           users.size.should be > 0
         end
+
+        it "should work with query strings" do
+          user = User.new
+          user.name = "or_where_user"
+          user.things = 123
+          Repo.insert(user)
+
+          query = Query
+            .or_where("name LIKE ?", "%#{user.name}foo%")
+            .or_where("name LIKE '%or_where%'")
+
+          users = Repo.all(User, query)
+          users.size.should be > 0
+        end
+
+        it "should work with symbols and arrays" do
+          user = User.new
+          user.name = "or_where_user"
+          user.things = 123
+          Repo.insert(user)
+
+          query = Query
+            .or_where(:name, ["or_where_user", "foobar"])
+            .or_where(:name, "foobar")
+
+          users = Repo.all(User, query)
+          users.size.should be > 0
+        end
       end
     end
 
