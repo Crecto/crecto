@@ -31,13 +31,11 @@ describe Crecto do
         Repo.delete_all(Post)
         Repo.delete_all(User)
 
-        puts "\n\nusers: #{Repo.all(User)}\n\n"
-        sleep 0.1
-
         user = quick_create_user("this should delete")
 
-        puts "\n\nusers: #{Repo.all(User)}\n\n"
-        sleep 0.1
+        while !Repo.get(User, user.id)
+          sleep 0.1
+        end
 
         multi = Multi.new
         multi.delete(user)
@@ -202,11 +200,7 @@ describe Crecto do
         Repo.delete_all(Post)
         Repo.delete_all(User)
 
-        puts "\n\nusers: #{Repo.all(User)}\n\n"
-
         user = quick_create_user("this should delete")
-
-        puts "\n\nusers: #{Repo.all(User)}\n\n"
 
         Repo.transaction! do
           Repo.delete!(user)
