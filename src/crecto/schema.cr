@@ -44,16 +44,18 @@ module Crecto
     CRECTO_PRIMARY_KEY_FIELD_TYPE = "PkeyValue"
     # :nodoc:
     CRECTO_ASSOCIATIONS = Array(NamedTuple(association_type: Symbol,
-    key: Symbol,
-    this_klass: Model.class,
-    klass: Model.class,
-    foreign_key: Symbol,
-    foreign_key_value: Proc(Model, PkeyValue),
-    set_association: Proc(Model, (Array(Crecto::Model) | Model), Nil),
-    through: Symbol?)).new
+      key: Symbol,
+      this_klass: Model.class,
+      klass: Model.class,
+      foreign_key: Symbol,
+      foreign_key_value: Proc(Model, PkeyValue),
+      set_association: Proc(Model, (Array(Crecto::Model) | Model), Nil),
+      through: Symbol?)).new
 
     # schema block macro
     macro schema(table_name, **opts, &block)
+      include JSON::Serializable
+
       {% for opt in opts %}
         {% if opt.id.stringify == "primary_key" %}
           CRECTO_USE_PRIMARY_KEY = {{opts[:primary_key]}}
@@ -100,6 +102,8 @@ module Crecto
 
       {% if opts.keys.includes?(:default.id) %}
         @{{field_name.id}} = {{opts[:default]}}
+      {% else %}
+        @{{field_name.id}} : {{field_type.id}}?
       {% end %}
 
       check_type!({{field_name}}, {{field_type}})
@@ -167,6 +171,7 @@ module Crecto
       {% if CRECTO_USE_PRIMARY_KEY %}
         {% mapping.push(CRECTO_PRIMARY_KEY_FIELD.id.stringify + ": {type: #{CRECTO_PRIMARY_KEY_FIELD_TYPE.id}, nilable: true}") %}
         CRECTO_MODEL_FIELDS.push({name: {{CRECTO_PRIMARY_KEY_FIELD.id.symbolize}}, type: {{CRECTO_PRIMARY_KEY_FIELD_TYPE}}})
+        unique_constraint(CRECTO_PRIMARY_KEY_FIELD_SYMBOL)
       {% end %}
 
       {% unless CRECTO_CREATED_AT_FIELD == nil %}
@@ -180,12 +185,17 @@ module Crecto
       {% end %}
 
       DB.mapping({ {{mapping.uniq.join(", ").id}} }, false)
-      JSON.mapping({ {{mapping.uniq.join(", ").id}} })
+
+      # Builds fields' cast typed method
+      {% for field in CRECTO_FIELDS %}
+        def {{field[:name].id}}!
+          @{{field[:name].id}}.as({{field[:type].id}})
+        end
+      {% end %}
 
       {% for field in json_fields %}
         def {{field.id}}=(val)
-          json = Crecto::Helpers.jsonize(val)
-          @{{field.id}} = JSON::Any.new(json)
+          @{{field.id}} = JSON.parse(val.to_json)
         end
       {% end %}
 
@@ -246,34 +256,38 @@ module Crecto
       end
 
       def update_from_hash(hash : Hash(String, DbValue))
-        hash.each do |key, value|
-          case key.to_s
-          {% for field in CRECTO_FIELDS %}
-          when "{{field[:name].id}}"
-            if value.to_s.empty?
-              @{{field[:name].id}} = nil
-            else
-              {% if field[:type].id.stringify == "String" %}
-                @{{field[:name].id}} = value.to_s
-              {% elsif field[:type].id.stringify == "Int16" %}
-                @{{field[:name].id}} = value.to_i16 if value.to_i16?
-              {% elsif field[:type].id.stringify.includes?("Int") %}
-                @{{field[:name].id}} = value.to_i if value.to_i?
-              {% elsif field[:type].id.stringify.includes?("Float") %}
-                @{{field[:name].id}} = value.to_f if value.to_f?
-              {% elsif field[:type].id.stringify == "Bool" %}
-                @{{field[:name].id}} = (value == "true")
-              {% elsif field[:type].id.stringify == "Json" %}
-                @{{field[:name].id}} = JSON.parse(value)
-              {% elsif field[:type].id.stringify == "Time" %}
-                begin
-                  @{{field[:name].id}} = Time.parse(value, "%F %T %z")
-                end
-              {% end %}
+        {% unless CRECTO_FIELDS.empty? %}
+          hash.each do |key, value|
+            case key.to_s
+            {% for field in CRECTO_FIELDS %}
+            when "{{field[:name].id}}"
+              if value.to_s.empty?
+                @{{field[:name].id}} = nil
+              else
+                {% if field[:type].id.stringify == "String" %}
+                  @{{field[:name].id}} = value.to_s
+                {% elsif field[:type].id.stringify == "Int16" %}
+                  @{{field[:name].id}} = value.to_i16 if value.to_i16?
+                {% elsif field[:type].id.stringify.includes?("Int") %}
+                  @{{field[:name].id}} = value.to_i if value.to_i?
+                {% elsif field[:type].id.stringify == "PkeyValue" %}
+                  @{{field[:name].id}} = value.to_i if value.to_i?
+                {% elsif field[:type].id.stringify.includes?("Float") %}
+                  @{{field[:name].id}} = value.to_f if value.to_f?
+                {% elsif field[:type].id.stringify == "Bool" %}
+                  @{{field[:name].id}} = (value == "true")
+                {% elsif field[:type].id.stringify == "Json" %}
+                  @{{field[:name].id}} = JSON.parse(value)
+                {% elsif field[:type].id.stringify == "Time" %}
+                  begin
+                    @{{field[:name].id}} = Time.parse(value, "%F %T %z")
+                  end
+                {% end %}
+              end
+            {% end %}
             end
-          {% end %}
           end
-        end
+        {% end %}
       end
 
       # Returns the value of the primary key field

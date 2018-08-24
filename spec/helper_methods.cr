@@ -10,6 +10,7 @@ def quick_create_user_with_{{x.id}}(name, {{x.id}})
   user = User.new
   user.name = name
   user.{{x.id}} = {{x.id}}
+  user.unique_field = Random::Secure.hex(8).to_s
   Repo.insert(user).instance
 end
 {% end %}

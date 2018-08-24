@@ -31,7 +31,7 @@ module Crecto
       private def self.get(conn, queryable, id)
         q = ["SELECT *"]
         q.push "FROM #{queryable.table_name}"
-        q.push "WHERE #{queryable.primary_key_field}=?"
+        q.push "WHERE (#{queryable.primary_key_field}=?)"
         q.push "LIMIT 1"
 
         execute(conn, q.join(" "), [id])
@@ -49,7 +49,9 @@ module Crecto
         res = exec_execute(conn, q.join(" "), fields_values[:values])
         if changeset.instance.class.use_primary_key?
           last_insert_id = changeset.instance.pkey_value.nil? ? res.last_insert_id : changeset.instance.pkey_value.not_nil!
-          execute(conn, "SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field} = '#{last_insert_id}'")
+          execute(conn, "SELECT * FROM #{changeset.instance.class.table_name} WHERE (#{changeset.instance.class.primary_key_field} = '#{last_insert_id}')")
+        else
+          res
         end
       end
 
@@ -66,21 +68,21 @@ module Crecto
 
         q = update_begin(changeset.instance.class.table_name, fields_values)
         q.push "WHERE"
-        q.push "#{changeset.instance.class.primary_key_field}=?"
+        q.push "(#{changeset.instance.class.primary_key_field}=?)"
 
         exec_execute(conn, q.join(" "), fields_values[:values] + [changeset.instance.pkey_value])
-        execute(conn, "SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field}=?", [changeset.instance.pkey_value])
+        execute(conn, "SELECT * FROM #{changeset.instance.class.table_name} WHERE (#{changeset.instance.class.primary_key_field}=?)", [changeset.instance.pkey_value])
       end
 
       private def self.delete(conn, changeset)
         q = delete_begin(changeset.instance.class.table_name)
         q.push "WHERE"
-        q.push "#{changeset.instance.class.primary_key_field}=?"
+        q.push "(#{changeset.instance.class.primary_key_field}=?)"
 
         if conn.is_a?(DB::TopLevelTransaction)
           exec_execute(conn, q.join(" "), [changeset.instance.pkey_value])
         else
-          sel = execute(conn, "SELECT * FROM #{changeset.instance.class.table_name} WHERE #{changeset.instance.class.primary_key_field}=?", [changeset.instance.pkey_value])
+          sel = execute(conn, "SELECT * FROM #{changeset.instance.class.table_name} WHERE (#{changeset.instance.class.primary_key_field}=?)", [changeset.instance.pkey_value])
           exec_execute(conn, q.join(" "), [changeset.instance.pkey_value])
           sel
         end

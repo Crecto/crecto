@@ -57,24 +57,28 @@ module Crecto
 
       def execute(conn, query_string, params)
         start = Time.now
-        results = if conn.is_a?(DB::Database)
-                    conn.query(query_string, params)
-                  else
-                    conn.connection.query(query_string, params)
-                  end
-        DbLogger.log(query_string, Time.new - start, params)
-        results
+        begin
+          if conn.is_a?(DB::Database)
+            conn.query(query_string, params)
+          else
+            conn.connection.query(query_string, params)
+          end
+        ensure
+          DbLogger.log(query_string, Time.new - start, params)
+        end
       end
 
       def execute(conn, query_string)
         start = Time.now
-        results = if conn.is_a?(DB::Database)
-                    conn.query(query_string)
-                  else
-                    conn.connection.query(query_string)
-                  end
-        DbLogger.log(query_string, Time.new - start)
-        results
+        begin
+          if conn.is_a?(DB::Database)
+            conn.query(query_string)
+          else
+            conn.connection.query(query_string)
+          end
+        ensure
+          DbLogger.log(query_string, Time.new - start)
+        end
       end
 
       def exec_execute(conn, query_string, params)
@@ -90,7 +94,7 @@ module Crecto
       private def get(conn, queryable, id)
         q = ["SELECT *"]
         q.push "FROM #{queryable.table_name}"
-        q.push "WHERE #{queryable.primary_key_field}=$1"
+        q.push "WHERE (#{queryable.primary_key_field}=$1)"
         q.push "LIMIT 1"
 
         execute(conn, q.join(" "), [id])
@@ -175,7 +179,7 @@ module Crecto
       private def delete(conn, changeset)
         q = delete_begin(changeset.instance.class.table_name)
         q.push "WHERE"
-        q.push "#{changeset.instance.class.primary_key_field}=$1"
+        q.push "(#{changeset.instance.class.primary_key_field}=$1)"
         q.push "RETURNING *" if conn.is_a?(DB::Database)
 
         exec_execute(conn, q.join(" "), [changeset.instance.pkey_value])
@@ -193,60 +197,71 @@ module Crecto
 
       private def wheres(queryable, query, params)
         q = ["WHERE"]
-        where_clauses = [] of String
-
-        query.wheres.each do |where|
-          if where.is_a?(NamedTuple)
-            where_clauses.push(add_where(where, params))
-          elsif where.is_a?(Hash)
-            where_clauses += add_where(where, queryable, params)
-          end
-        end
+        where_clauses = map_wheres(queryable, query.wheres, params)
         q.push where_clauses.join(" AND ")
         q.join(" ")
       end
 
       private def or_wheres(queryable, query, params)
         q = ["WHERE"]
-        where_clauses = [] of String
-
-        query.or_wheres.each do |where|
-          where_clauses += add_where(where.as(Hash), queryable, params)
-        end
+        where_clauses = map_wheres(queryable, query.or_wheres, params)
         q.push where_clauses.join(" OR")
         q.join(" ")
       end
 
       private def add_where(where : NamedTuple, params)
         where[:params].each { |param| params.push(param) }
-        where[:clause]
+        String.build do |str|
+          str << "("
+          str << where[:clause]
+          str << ")"
+        end
+      end
+
+      private def map_wheres(queryable, wheres, params)
+        result = [] of String
+
+        wheres.each do |where|
+          if where.is_a?(NamedTuple)
+            result.push(add_where(where, params))
+          elsif where.is_a?(Hash)
+            result += add_where(where, queryable, params)
+          end
+        end
+
+        result
       end
 
       private def add_where(where : Hash, queryable, params)
         where.keys.map do |key|
           [where[key]].flatten.uniq.each { |param| params.push(param) unless param.is_a?(Nil) }
 
-          results = " #{queryable.table_name}.#{key.to_s}"
-          results += if where[key].is_a?(Array)
-                       if where[key].as(Array).size === 0
-                         next " 1=0"
-                       else
-                         " IN (" + where[key].as(Array).uniq.map { |p| "?" }.join(", ") + ")"
-                       end
-                     elsif where[key].is_a?(Nil)
-                       " IS NULL"
-                     else
-                       "=?"
-                     end
+          next " 1=0" if where[key].is_a?(Array) && where[key].as(Array).size === 0
+
+          String.build do |str|
+            str << " (#{queryable.table_name}.#{key.to_s}"
+            if where[key].is_a?(Array)
+              str << " IN (" + where[key].as(Array).uniq.map { |p| "?" }.join(", ") + ")"
+            elsif where[key].is_a?(Nil)
+              str << " IS NULL"
+            else
+              str << "=?"
+            end
+            str << ")"
+          end
         end
       end
 
       private def joins(queryable, query, params)
         joins = query.joins.map do |join|
-          if queryable.through_key_for_association(join)
-            join_through(queryable, join)
+          if join.is_a? Symbol
+            if queryable.through_key_for_association(join)
+              join_through(queryable, join)
+            else
+              join_single(queryable, join)
+            end
           else
-            join_single(queryable, join)
+            join
           end
         end
         joins.join(" ")

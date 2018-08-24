@@ -1,17 +1,19 @@
 BEGIN;
-DROP TABLE IF EXISTS user_projects;
-DROP TABLE IF EXISTS addresses;
-DROP TABLE IF EXISTS posts;
-DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS users_different_defaults;
-DROP INDEX IF EXISTS users_4asdf;
-DROP TABLE IF EXISTS users_large_defaults;
-DROP TABLE IF EXISTS users_arrays;
-DROP TABLE IF EXISTS projects;
-DROP TABLE IF EXISTS users_json;
-DROP TABLE IF EXISTS things;
-DROP TABLE IF EXISTS users_uuid;
-DROP TABLE IF EXISTS vehicles;
+DROP TABLE IF EXISTS user_projects CASCADE;
+DROP TABLE IF EXISTS addresses CASCADE;
+DROP TABLE IF EXISTS posts CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS users_different_defaults CASCADE;
+DROP INDEX IF EXISTS users_4asdf CASCADE;
+DROP TABLE IF EXISTS users_large_defaults CASCADE;
+DROP TABLE IF EXISTS users_arrays CASCADE;
+DROP TABLE IF EXISTS projects CASCADE;
+DROP TABLE IF EXISTS users_json CASCADE;
+DROP TABLE IF EXISTS things CASCADE;
+DROP TABLE IF EXISTS users_uuid CASCADE;
+DROP TABLE IF EXISTS users_uuid_custom CASCADE;
+DROP TABLE IF EXISTS things_that_belong_to_user_uuid_custom CASCADE;
+DROP TABLE IF EXISTS vehicles CASCADE;
 
 CREATE TABLE users(
   id BIGSERIAL PRIMARY KEY,
@@ -84,9 +86,7 @@ CREATE TABLE projects(
 
 CREATE TABLE user_projects(
   user_id INTEGER,
-  project_id INTEGER references projects(id),
-  created_at timestamp without time zone,
-  updated_at timestamp without time zone
+  project_id INTEGER references projects(id)
 );
 
 CREATE TABLE users_json(
@@ -104,17 +104,38 @@ CREATE TABLE things(
 );
 
 CREATE TABLE users_uuid(
-  uuid character varying NOT NULL,
+  uuid character varying NOT NULL PRIMARY KEY,
   name character varying,
   created_at timestamp without time zone,
   updated_at timestamp without time zone
 );
 
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE TABLE users_uuid_custom(
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name character varying,
+  created_at timestamp NOT NULL DEFAULT now(),
+  updated_at timestamp NOT NULL DEFAULT now()
+);
+
+CREATE TABLE things_that_belong_to_user_uuid_custom(
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name character varying,
+  user_uuid_custom_id uuid NOT NULL REFERENCES users_uuid_custom(id),
+  created_at timestamp NOT NULL DEFAULT now(),
+  updated_at timestamp NOT NULL DEFAULT now()
+);
 
 CREATE TABLE vehicles(
   id BIGSERIAL PRIMARY KEY,
   state_string character varying NOT NULL,
   vehicle_type INTEGER NOT NULL,
+  created_at timestamp without time zone,
+  updated_at timestamp without time zone
+);
+
+CREATE TABLE things_without_fields(
+  id BIGSERIAL PRIMARY KEY,
   created_at timestamp without time zone,
   updated_at timestamp without time zone
 );

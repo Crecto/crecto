@@ -1,6 +1,20 @@
 module Crecto
   # A repository maps to an underlying data store, controlled by the adapter.
   module Repo
+    class OperationError < Exception
+      def initialize(error : Exception, @queryable : Model.class, @failed_operation : String)
+        super(error.message)
+      end
+
+      def to_h
+        {
+          :message          => @message.to_s,
+          :queryable        => @queryable.to_s,
+          :failed_operation => @failed_operation,
+        }
+      end
+    end
+
     macro extended
       @@config = Crecto::Repo::Config.new
     end
@@ -56,7 +70,8 @@ module Crecto
 
       results = queryable.from_rs(q.as(DB::ResultSet))
 
-      preloads = query.preloads + opts.fetch(:preload, [] of Symbol)
+      opt_preloads = opts.fetch(:preload, [] of Symbol)
+      preloads = query.preloads + opt_preloads.map{|a| {symbol: a, query: nil}}
       if preloads.any?
         add_preloads(results, queryable, preloads)
       end
@@ -214,8 +229,12 @@ module Crecto
           changeset.add_error("insert_error", "Insert Failed")
         elsif config.adapter == Crecto::Adapters::Postgres || (config.adapter == Crecto::Adapters::Mysql && tx.nil?) ||
               (config.adapter == Crecto::Adapters::SQLite3 && tx.nil?)
-          new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first?
-          changeset = new_instance.class.changeset(new_instance) if new_instance
+          if query.is_a?(DB::ResultSet)
+            new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first?
+            changeset = new_instance.class.changeset(new_instance) if new_instance
+          else
+            changeset = queryable_instance.class.changeset(queryable_instance)
+          end
         end
       rescue e
         raise e unless changeset.check_unique_constraint_from_exception!(e, queryable_instance)
@@ -238,6 +257,31 @@ module Crecto
     # ```
     def insert(changeset : Crecto::Changeset::Changeset)
       insert(changeset.instance)
+    end
+
+    # Insert a schema instance into the data store or raise if the resulting
+    # changeset is invalid.
+    #
+    # ```
+    # user = User.new
+    # Repo.insert!(user)
+    # ```
+    def insert!(queryable_instance, tx : DB::Transaction? = nil)
+      insert(queryable_instance, tx).tap do |changeset|
+        raise InvalidChangeset.new(changeset) unless changeset.valid?
+      end
+    end
+
+    # Insert a changeset instance into the data store or raise if the
+    # resulting changest is invalid.
+    #
+    # ```
+    # user = User.new
+    # changeset = User.changeset(user)
+    # Repo.insert!(changeset)
+    # ```
+    def insert!(changeset : Crecto::Changeset::Changeset)
+      insert!(changeset.instance)
     end
 
     # Update a shema instance in the data store.
@@ -279,6 +323,28 @@ module Crecto
     # ```
     def update(changeset : Crecto::Changeset::Changeset)
       update(changeset.instance)
+    end
+
+    # Update a schema instance in the data store or raise if the resulting
+    # changeset is invalid
+    #
+    # ```
+    # Repo.update!(user)
+    # ```
+    def update!(queryable_instance, tx : DB::Transaction? = nil)
+      update(queryable_instance, tx).tap do |changeset|
+        raise InvalidChangeset.new(changeset) unless changeset.valid?
+      end
+    end
+
+    # Update a changeset instance in the data store or raise if the resulting
+    # changeset is invalid
+    #
+    # ```
+    # Repo.update(changeset)
+    # ```
+    def update!(changeset : Crecto::Changeset::Changeset)
+      update!(changeset.instance)
     end
 
     # Update multipile records with a single query
@@ -338,6 +404,29 @@ module Crecto
       delete(changeset.instance)
     end
 
+
+    # Delete a schema instance from the data store or raise if the resulting
+    # changeset is invalid
+    #
+    # ```
+    # Repo.delete!(user)
+    # ```
+    def delete!(queryable_instance, tx : DB::Transaction? = nil)
+      delete(queryable_instance, tx).tap do |changeset|
+        raise InvalidChangeset.new(changeset) unless changeset.valid?
+      end
+    end
+
+    # Delete a changeset instance from the data store or raise if the
+    # resulting changeset is invalid
+    #
+    # ```
+    # Repo.delete!(changeset)
+    # ```
+    def delete!(changeset : Crecto::Changeset::Changeset)
+      delete!(changeset.instance)
+    end
+
     # Delete multipile records with a single query
     #
     # ```
@@ -386,53 +475,63 @@ module Crecto
     end
 
     def transaction(multi : Crecto::Multi)
-      if multi.changesets_valid?
-        total_size = multi.inserts.size + multi.deletes.size + multi.delete_alls.size + multi.updates.size + multi.update_alls.size
-        config.get_connection.transaction do |tx|
-          (1..total_size).each do |x|
-            inserts = multi.inserts.select { |i| i[:sortorder] == x }
-            begin
-              insert(inserts[0][:instance], tx) && next if inserts.any?
-            rescue ex : Exception
-              multi.errors = [{:message => "#{ex.message}", :queryable => "#{inserts[0][:instance].class}", :failed_operation => "insert"}]
-              tx.rollback && break
-            end
+      return multi unless multi.changesets_valid?
 
-            deletes = multi.deletes.select { |i| i[:sortorder] == x }
-            begin
-              delete(deletes[0][:instance], tx) && next if deletes.any?
-            rescue ex : Exception
-              multi.errors = [{:message => "#{ex.message}", :queryable => "#{deletes[0][:instance].class}", :failed_operation => "delete"}]
-              tx.rollback && break
-            end
-
-            delete_alls = multi.delete_alls.select { |i| i[:sortorder] == x }
-            begin
-              delete_all(delete_alls[0][:queryable], delete_alls[0][:query], tx) && next if delete_alls.any?
-            rescue ex : Exception
-              multi.errors = [{:message => "#{ex.message}", :queryable => "#{delete_alls[0][:queryable]}", :failed_operation => "delete_all"}]
-              tx.rollback && break
-            end
-
-            updates = multi.updates.select { |i| i[:sortorder] == x }
-            begin
-              update(updates[0][:instance], tx) && next if updates.any?
-            rescue ex : Exception
-              multi.errors = [{:message => "#{ex.message}", :queryable => "#{updates[0][:instance].class}", :failed_operation => "update"}]
-              tx.rollback && break
-            end
-
-            update_alls = multi.update_alls.select { |i| i[:sortorder] == x }
-            begin
-              update_all(update_alls[0][:queryable], update_alls[0][:query], update_alls[0][:update_hash], tx) if update_alls.any?
-            rescue ex : Exception
-              multi.errors = [{:message => "#{ex.message}", :queryable => "#{update_alls[0][:queryable]}", :failed_operation => "update_all"}]
-              tx.rollback && break
-            end
+      config.get_connection.transaction do |tx|
+        begin
+          multi.operations.each do |operation|
+            run_operation(operation, tx)
           end
+        rescue error : OperationError
+          multi.errors = [error.to_h]
+          tx.rollback
         end
       end
+
       multi
+    end
+
+    # Run a live transaction. As opposed to transactions using `Multi` every
+    # operation on the yielded `LiveTransaction` object is executed immediately.
+    # This allows checking for results of previous operations. Any raise inside
+    # the block will roll back the transaction.
+    #
+    # ```
+    # Crecto::Repo.transaction! do |tx|
+    #   tx.insert!(user)
+    #   post = Post.new.tap { |p| p.user = user }
+    #   tx.insert!(post)
+    # end
+    # ```
+    def transaction!
+      config.get_connection.transaction do |tx|
+        begin
+          yield LiveTransaction.new(tx, self)
+        rescue error : Exception
+          tx.rollback
+          raise error
+        end
+      end
+    end
+
+    {% for operation in %w[insert update delete] %}
+      private def run_operation(operation : Multi::{{operation.camelcase.id}}, tx)
+        {{operation.id}}(operation.instance, tx)
+      rescue ex : Exception
+        raise OperationError.new(ex, operation.instance.class, {{operation}})
+      end
+    {% end %}
+
+    private def run_operation(operation : Multi::UpdateAll, tx)
+      update_all(operation.queryable, operation.query, operation.update_hash, tx)
+    rescue ex : Exception
+      raise OperationError.new(ex, operation.queryable, "update_all")
+    end
+
+    private def run_operation(operation : Multi::DeleteAll, tx)
+      delete_all(operation.queryable, operation.query, tx)
+    rescue ex : Exception
+      raise OperationError.new(ex, operation.queryable, "delete_all")
     end
 
     # Calculate the given aggregate `aggregate_function` over the given `field`
@@ -507,7 +606,7 @@ module Crecto
 
     private def add_preloads(results, queryable, preloads)
       preloads.each do |preload|
-        case queryable.association_type_for_association(preload)
+        case queryable.association_type_for_association(preload[:symbol])
         when :has_many
           has_many_preload(results, queryable, preload)
         when :has_one
@@ -519,80 +618,92 @@ module Crecto
     end
 
     private def has_one_preload(results, queryable, preload)
-      query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(preload), results[0].pkey_value)
-      relation_item = all(queryable.klass_for_association(preload), query)
+      query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(preload[:symbol]), results[0].pkey_value)
+      if preload_query = preload[:query]
+        query = query.combine(preload_query)
+      end
+      relation_item = all(queryable.klass_for_association(preload[:symbol]), query)
       if relation_item.first?
-        queryable.set_value_for_association(preload, results[0], relation_item.first)
+        queryable.set_value_for_association(preload[:symbol], results[0], relation_item.first)
       end
     end
 
     private def has_many_preload(results, queryable, preload)
-      if queryable.through_key_for_association(preload)
+      if queryable.through_key_for_association(preload[:symbol])
         join_through(results, queryable, preload)
       else
-        join_single(results, queryable, preload)
+        join_direct(results, queryable, preload)
       end
     end
 
-    private def join_single(results, queryable, preload)
+    private def join_direct(results, queryable, preload)
       ids = results.map(&.pkey_value.as(PkeyValue))
-      query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(preload), ids)
-      relation_items = all(queryable.klass_for_association(preload), query)
-      relation_items = relation_items.group_by { |t| queryable.foreign_key_value_for_association(preload, t) }
+      query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(preload[:symbol]), ids)
+      if preload_query = preload[:query]
+        query = query.combine(preload_query)
+      end
+      relation_items = all(queryable.klass_for_association(preload[:symbol]), query)
+      relation_items = relation_items.group_by { |t| queryable.foreign_key_value_for_association(preload[:symbol], t) }
 
       results.each do |result|
         items = relation_items[result.pkey_value]? || [] of Crecto::Model
-        queryable.set_value_for_association(preload, result, items.map { |i| i.as(Crecto::Model) })
+        queryable.set_value_for_association(preload[:symbol], result, items.map { |i| i.as(Crecto::Model) })
       end
     end
 
     private def join_through(results, queryable, preload)
       ids = results.map(&.pkey_value.as(PkeyValue))
-      join_query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(preload), ids)
+      join_query = Crecto::Repo::Query.where(queryable.foreign_key_for_association(preload[:symbol]), ids)
       # UserProjects
-      join_table_items = all(queryable.klass_for_association(queryable.through_key_for_association(preload).as(Symbol)), join_query)
+      join_table_items = all(queryable.klass_for_association(queryable.through_key_for_association(preload[:symbol]).as(Symbol)), join_query)
 
       # array of Project id's
       if join_table_items.empty?
         # Set default association values as empty arrays to avoid confusion
         # between empty results and non-loaded associations.
         results.each do |result|
-          queryable.set_value_for_association(queryable.through_key_for_association(preload).as(Symbol), result, [] of Crecto::Model)
-          queryable.set_value_for_association(preload, result, [] of Crecto::Model)
+          queryable.set_value_for_association(queryable.through_key_for_association(preload[:symbol]).as(Symbol), result, [] of Crecto::Model)
+          queryable.set_value_for_association(preload[:symbol], result, [] of Crecto::Model)
         end
       else
-        join_ids = join_table_items.map { |i| queryable.klass_for_association(preload).foreign_key_value_for_association(queryable.through_key_for_association(preload).as(Symbol), i) }
-        association_query = Crecto::Repo::Query.where(queryable.klass_for_association(preload).primary_key_field_symbol, join_ids)
+        join_ids = join_table_items.map { |i| queryable.klass_for_association(preload[:symbol]).foreign_key_value_for_association(queryable.through_key_for_association(preload[:symbol]).as(Symbol), i) }
+        association_query = Crecto::Repo::Query.where(queryable.klass_for_association(preload[:symbol]).primary_key_field_symbol, join_ids)
+        if preload_query = preload[:query]
+          association_query = association_query.combine(preload_query)
+        end
         # Projects
-        relation_items = all(queryable.klass_for_association(preload), association_query)
+        relation_items = all(queryable.klass_for_association(preload[:symbol]), association_query)
         # UserProject grouped by user_id
-        join_table_items = join_table_items.group_by { |t| queryable.foreign_key_value_for_association(queryable.through_key_for_association(preload).as(Symbol), t) }
+        join_table_items = join_table_items.group_by { |t| queryable.foreign_key_value_for_association(queryable.through_key_for_association(preload[:symbol]).as(Symbol), t) }
 
         results.each do |result|
           join_items = join_table_items[result.pkey_value]? || [] of Crecto::Model
           # set join table has_many assocation i.e. user.user_projects
-          queryable.set_value_for_association(queryable.through_key_for_association(preload).as(Symbol), result, join_items.map { |i| i.as(Crecto::Model) })
+          queryable.set_value_for_association(queryable.through_key_for_association(preload[:symbol]).as(Symbol), result, join_items.map { |i| i.as(Crecto::Model) })
           queryable_relation_items = relation_items.select { |i| join_ids.includes?(i.pkey_value) }
           # set association i.e. user.projects
-          queryable.set_value_for_association(preload, result, queryable_relation_items.map { |i| i.as(Crecto::Model) })
+          queryable.set_value_for_association(preload[:symbol], result, queryable_relation_items.map { |i| i.as(Crecto::Model) })
         end
       end
     end
 
     private def belongs_to_preload(results, queryable, preload)
-      ids = results.map { |r| queryable.foreign_key_value_for_association(preload, r) }
+      ids = results.map { |r| queryable.foreign_key_value_for_association(preload[:symbol], r) }
       return if ids.empty?
       query = Crecto::Repo::Query.where(id: ids)
-      relation_items = all(queryable.klass_for_association(preload), query)
+      if preload_query = preload[:query]
+        query = query.combine(preload_query)
+      end
+      relation_items = all(queryable.klass_for_association(preload[:symbol]), query)
 
       unless relation_items.nil?
         relation_items = relation_items.group_by { |t| t.pkey_value.as(PkeyValue) }
 
         results.each do |result|
-          fkey = queryable.foreign_key_value_for_association(preload, result)
+          fkey = queryable.foreign_key_value_for_association(preload[:symbol], result)
           if relation_items.has_key?(fkey)
             items = relation_items[fkey]
-            queryable.set_value_for_association(preload, result, items.map { |i| i.as(Crecto::Model) })
+            queryable.set_value_for_association(preload[:symbol], result, items.map { |i| i.as(Crecto::Model) })
           end
         end
       end

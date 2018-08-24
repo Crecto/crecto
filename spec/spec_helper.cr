@@ -8,6 +8,7 @@ end
 require "pg"
 require "mysql"
 require "sqlite3"
+require "uuid"
 require "spec"
 require "../src/crecto"
 require "./repo"
@@ -57,6 +58,9 @@ class Project < Crecto::Model
 end
 
 class UserProject < Crecto::Model
+  set_created_at_field nil
+  set_updated_at_field nil
+
   schema "user_projects", primary_key: false do
     belongs_to :user, User
     belongs_to :project, Project
@@ -210,6 +214,21 @@ class UserUUID < Crecto::Model
   end
 end
 
+class UserUUIDCustom < Crecto::Model
+  schema "users_uuid_custom" do
+    field :id, String, primary_key: true
+    field :name, String
+  end
+end
+
+class ThingThatBelongsToUserUUIDCustom < Crecto::Model
+  schema "things_that_belong_to_user_uuid_custom" do
+    field :id, String, primary_key: true
+    field :name, String
+    belongs_to :user_uuid_custom, UserUUIDCustom
+  end
+end
+
 class Vehicle < Crecto::Model
   enum State
     OFF
@@ -227,6 +246,11 @@ class Vehicle < Crecto::Model
   schema "vehicles" do
     enum_field :state, State
     enum_field :make, Make, column_name: "vehicle_type", column_type: Int32
+  end
+end
+
+class ThingWithoutFields < Crecto::Model
+  schema "things_without_fields" do
   end
 end
 

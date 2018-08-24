@@ -59,6 +59,7 @@ module Crecto
       end
 
       def check_unique_constraint_from_exception!(e : Exception, queryable_instance)
+        return false unless UNIQUE_FIELDS[@class_key]?
         message = e.message.to_s
 
         # Postgres
@@ -69,6 +70,8 @@ module Crecto
               return true
             end
           end
+          self.add_error("_base", message)
+          return true
         end
 
         # Mysql
@@ -79,6 +82,8 @@ module Crecto
               return true
             end
           end
+          self.add_error("_base", message)
+          return true
         end
 
         # Sqlite
@@ -89,6 +94,8 @@ module Crecto
               return true
             end
           end
+          self.add_error("_base", message)
+          return true
         end
 
         false
@@ -97,7 +104,7 @@ module Crecto
       private def check_required!
         return unless REQUIRED_FIELDS.has_key?(@class_key)
         REQUIRED_FIELDS[@class_key].each do |field|
-          add_error(field.to_s, "is required") unless @instance_hash[field]?
+          add_error(field.to_s, "is required") if @instance_hash[field].nil?
         end
       end
 

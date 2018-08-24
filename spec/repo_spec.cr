@@ -91,6 +91,50 @@ describe Crecto do
         changeset = Repo.insert(u)
         changeset.instance.id.should_not eq(nil)
       end
+
+      it "should insert records with no primary key or date fields" do
+        project = Project.new
+        project = Repo.insert(project).instance
+
+        up = UserProject.new
+        up.user_id = 123
+        up.project_id = project.id
+
+        changeset = Repo.insert(up)
+        changeset.errors.empty?.should be_true
+      end
+    end
+
+    describe "#insert!" do
+      it "should insert the user" do
+        u = User.new
+        u.name = "fridge"
+        u.things = 123
+        u.nope = 12.45432
+        u.yep = false
+        u.stuff = 9993
+        u.pageviews = 10000
+        u.some_date = Time.now.at_beginning_of_hour
+
+        changeset = Repo.insert!(u)
+        changeset.instance.id.should_not eq(nil)
+        changeset.instance.created_at.should_not eq(nil)
+        changeset.instance.updated_at.should_not eq(nil)
+      end
+
+      it "should raise if changeset is invalid (name is nil)" do
+        u = User.new
+        u.things = 123
+        u.nope = 12.45432
+        u.yep = false
+        u.stuff = 9993
+        u.pageviews = 10000
+        u.some_date = Time.now.at_beginning_of_hour
+
+        expect_raises Crecto::InvalidChangeset(User) do
+          Repo.insert!(u)
+        end
+      end
     end
 
     describe "#all" do
@@ -182,6 +226,34 @@ describe Crecto do
 
           query = Query
             .or_where(name: "dlkjf9f9ddf", things: 123)
+
+          users = Repo.all(User, query)
+          users.size.should be > 0
+        end
+
+        it "should work with query strings" do
+          user = User.new
+          user.name = "or_where_user"
+          user.things = 123
+          Repo.insert(user)
+
+          query = Query
+            .or_where("name LIKE ?", "%#{user.name}foo%")
+            .or_where("name LIKE '%or_where%'")
+
+          users = Repo.all(User, query)
+          users.size.should be > 0
+        end
+
+        it "should work with symbols and arrays" do
+          user = User.new
+          user.name = "or_where_user"
+          user.things = 123
+          Repo.insert(user)
+
+          query = Query
+            .or_where(:name, ["or_where_user", "foobar"])
+            .or_where(:name, "foobar")
 
           users = Repo.all(User, query)
           users.size.should be > 0
@@ -610,6 +682,52 @@ describe Crecto do
       end
     end
 
+    describe "#update!" do
+      it "should update the model" do
+        now = Time.now.at_beginning_of_hour
+        u = User.new
+        u.name = "fridge"
+        u.things = 123
+        u.nope = 12.45432
+        u.yep = false
+        u.stuff = 9993
+        u.pageviews = 123245667788
+        u.some_date = now
+        changeset = Repo.insert(u)
+        u = changeset.instance
+        u.some_date.as(Time).to_local.should eq(now)
+        created_at = u.created_at
+        u.name = "new name"
+        changeset = Repo.update!(u)
+        u = changeset.instance
+        u.some_date.as(Time).to_local.should eq(now)
+        u.created_at.should eq(created_at)
+        changeset.instance.name.should eq("new name")
+        changeset.valid?.should eq(true)
+        changeset.instance.updated_at.as(Time).to_local.epoch_ms.should be_close(Time.now.epoch_ms, 2000)
+      end
+
+      it "should raise if changeset is invalid (name is nil)" do
+        now = Time.now.at_beginning_of_hour
+        u = User.new
+        u.name = "fridge"
+        u.things = 123
+        u.nope = 12.45432
+        u.yep = false
+        u.stuff = 9993
+        u.pageviews = 123245667788
+        u.some_date = now
+        changeset = Repo.insert(u)
+        u = changeset.instance
+        u.some_date.as(Time).to_local.should eq(now)
+        created_at = u.created_at
+        u.name = nil
+        expect_raises Crecto::InvalidChangeset(User) do
+          Repo.update!(u)
+        end
+      end
+    end
+
     describe "#delete" do
       it "should delete the model" do
         u = User.new
@@ -679,6 +797,39 @@ describe Crecto do
         Repo.all(UserProject, Query.where(user_id: user.id)).size.should eq 0
       end
     end
+
+    describe "#delete!" do
+      it "should delete the model" do
+        u = User.new
+        u.name = "fridge"
+        u.things = 123
+        u.nope = 12.45432
+        u.yep = false
+        u.stuff = 9993
+        u.pageviews = 1234512341234
+        changeset = Repo.insert(u)
+        u = changeset.instance
+        changeset = Repo.delete!(u)
+        changeset.valid?.should be_true
+      end
+
+      it "should raise an error if the changeset is invalid (dangling dependents)" do
+        next unless Repo.config.adapter == Crecto::Adapters::Postgres
+        u = User.new
+        u.name = "fridge"
+        u = Repo.insert(u).instance
+        p = Post.new
+        p.user = u
+        p = Repo.insert(p).instance
+
+        # This actually raises a PQ error (also on #delete)
+        # TODO: Wrap this in a changeset error
+        expect_raises(PQ::PQError) do
+          Repo.delete!(u)
+        end
+      end
+    end
+
 
     describe "#update_all" do
       it "should update multiple records" do
@@ -817,6 +968,36 @@ describe Crecto do
         user = users[0]
         user.user_projects.size.should eq 1
         user.projects.size.should eq 1
+      end
+      
+      it "should preload the has_many through association with a query" do
+        user = User.new
+        user.name = "tester"
+        user = Repo.insert(user).instance
+
+        project = Project.new
+        project.name = "project 1"
+        project = Repo.insert(project).instance
+
+        user_project = UserProject.new
+        user_project.project = project
+        user_project.user = user
+        Repo.insert(user_project).instance
+
+        project = Project.new
+        project.name = "project 2"
+        project = Repo.insert(project).instance
+
+        user_project = UserProject.new
+        user_project.project = project
+        user_project.user = user
+        Repo.insert(user_project).instance
+
+        preload_query = Query.where(name: "project 2")
+        users = Repo.all(User, Query.where(id: user.id).preload(:projects, preload_query))
+        user = users[0]
+        user.projects.size.should eq 1
+        user.projects.first.name.should eq "project 2"
       end
 
       it "should preload the has_many through association with get!" do
@@ -1056,6 +1237,8 @@ describe Crecto do
       end
 
       it "should delete THROUGH destroy dependents" do
+        Repo.delete_all(UserProject)
+        Repo.delete_all(Project)
         Repo.delete_all(Post)
         other_p = Project.new; other_p = Repo.insert(other_p).instance
         other_up = UserProject.new; other_up.user_id = 999999; other_up.project_id = other_p.id; other_up = Repo.insert(other_up).instance
