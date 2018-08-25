@@ -1301,6 +1301,34 @@ describe Crecto do
       end
     end
 
+    describe "#lock" do
+      it "should return rows" do
+        unless Repo.config.adapter == Crecto::Adapters::SQLite3
+          users = [] of User
+          Repo.config.get_connection.transaction do |tx|
+            users = Repo.lock(tx, User)
+          end
+          users.size.should be > 0
+        end
+      end
+
+      it "should return rows with Query" do
+        unless Repo.config.adapter == Crecto::Adapters::SQLite3
+          query = Query
+            .where(name: "fridge")
+            .where("users.things < ?", [124])
+            .order_by("users.name ASC")
+            .order_by("users.things DESC")
+            .limit(1)
+          users = [] of User
+          Repo.config.get_connection.transaction do |tx|
+            users = Repo.lock(tx, User, query)
+          end
+          users.size.should be > 0
+        end
+      end
+    end
+
     # keep this at the end
     describe "#delete_all" do
       it "should delete destroy dependents" do

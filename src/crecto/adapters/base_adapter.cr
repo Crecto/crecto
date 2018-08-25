@@ -13,6 +13,8 @@ module Crecto
           all(conn, queryable, query)
         when :delete_all
           delete(conn, queryable, query)
+        when :lock
+          all(conn, queryable, query, true)
         end
       end
 
@@ -153,8 +155,7 @@ module Crecto
         builder << " SELECT " << ag << '(' << queryable.table_name << '.' << field << ") FROM " << queryable.table_name
       end
 
-
-      private def all(conn, queryable, query)
+      private def all(conn, queryable, query, for_update = false)
         params = [] of DbValue | Array(DbValue)
 
         q = String.build do |builder|
@@ -177,6 +178,7 @@ module Crecto
           limit(builder, query)
           offset(builder, query)
           group_by(builder, query)
+          builder << " FOR UPDATE" if for_update
         end
 
         execute(conn, position_args(q), params)

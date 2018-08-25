@@ -114,5 +114,20 @@ if Repo.config.adapter == Crecto::Adapters::Mysql
         sql.should eq(["SELECT posts.* FROM posts INNER JOIN users ON users.id = posts.user_id"])
       end
     end
+
+    it "should generate sql for query syntax with lock" do
+      query = Query
+        .where(name: "fridge")
+        .where("users.things < ?", [124])
+        .order_by("users.name ASC")
+        .order_by("users.things DESC")
+        .limit(1)
+      Repo.config.get_connection.transaction do |tx|
+        Repo.lock(tx, User, query)
+      end
+      check_sql do |sql|
+        sql.should eq(["SELECT users.* FROM users WHERE  (users.name=?) AND (users.things < ?) ORDER BY users.name ASC, users.things DESC LIMIT 1 FOR UPDATE"])
+      end
+    end
   end
 end
