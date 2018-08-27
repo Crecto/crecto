@@ -167,8 +167,7 @@ module Crecto
     # user = Repo.get_by(User, Query.where(name: "fred", age: 21))
     # ```
     def get_by(queryable, query)
-      q = config.adapter.run(config.get_connection, :all, queryable, query.limit(1)).as(DB::ResultSet)
-      results = queryable.from_rs(q)
+      results = all(queryable, query.limit(1))
       results.first if results.any?
     end
 
