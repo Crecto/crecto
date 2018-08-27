@@ -183,8 +183,8 @@ describe Crecto do
         user = User.new
 
         expect_raises Crecto::InvalidChangeset do
-          Repo.transaction! do
-            Repo.insert!(user)
+          Repo.transaction! do |tx|
+            tx.insert!(user)
           end
         end
       end
@@ -193,8 +193,8 @@ describe Crecto do
         user = User.new
         user.name = "this should insert in the transaction"
 
-        Repo.transaction! do
-          Repo.insert(user)
+        Repo.transaction! do |tx|
+          tx.insert(user)
         end
 
         users = Repo.all(User, Query.where(name: "this should insert in the transaction"))
@@ -207,8 +207,8 @@ describe Crecto do
 
         user = quick_create_user("this should delete")
 
-        Repo.transaction! do
-          Repo.delete!(user)
+        Repo.transaction! do |tx|
+          tx.delete!(user)
         end
 
         users = Repo.all(User, Query.where(id: user.id))
@@ -222,8 +222,8 @@ describe Crecto do
 
         Repo.delete_all(Post)
 
-        Repo.transaction! do
-          Repo.delete_all(User)
+        Repo.transaction! do |tx|
+          tx.delete_all(User)
         end
 
         users = Repo.all(User)
@@ -235,8 +235,8 @@ describe Crecto do
 
         user.name = "this should have changed 89ffsf"
 
-        Repo.transaction! do
-          Repo.update(user)
+        Repo.transaction! do |tx|
+          tx.update(user)
         end
 
         user = Repo.get!(User, user.id)
@@ -248,8 +248,8 @@ describe Crecto do
         quick_create_user_with_things("testing_update_all", 123)
         quick_create_user_with_things("testing_update_all", 123)
 
-        Repo.transaction! do
-          Repo.update_all(User, Query.where(name: "testing_update_all"), {things: 9494})
+        Repo.transaction! do |tx|
+          tx.update_all(User, Query.where(name: "testing_update_all"), {things: 9494})
         end
 
         Repo.all(User, Query.where(things: 123)).size.should eq 0
@@ -268,12 +268,12 @@ describe Crecto do
         insert_user = User.new
         insert_user.name = "all_transactions_insert_user"
 
-        Repo.transaction! do
-          Repo.insert!(insert_user)
-          Repo.delete!(delete_user)
-          Repo.delete_all(Post)
-          Repo.update!(update_user)
-          Repo.update_all(User, Query.where(name: "perform_all"), {name: "perform_all_io2oj999"})
+        Repo.transaction! do |tx|
+          tx.insert!(insert_user)
+          tx.delete!(delete_user)
+          tx.delete_all(Post)
+          tx.update!(update_user)
+          tx.update_all(User, Query.where(name: "perform_all"), {name: "perform_all_io2oj999"})
         end
 
         # check insert happened
