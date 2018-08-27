@@ -26,7 +26,7 @@ module Crecto
       #
       # Query data store using an *id*, returning a single record.
       #
-      def run(conn : DB::Database | DB::Transaction, operation : Symbol, queryable, id : Int32 | Int64 | String | Nil)
+      def run(conn : DB::Database | DB::Transaction, operation : Symbol, queryable, id : PkeyValue)
         case operation
         when :get
           get(conn, queryable, id)
