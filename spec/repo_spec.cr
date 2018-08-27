@@ -1136,6 +1136,14 @@ describe Crecto do
         posts[0].user.id.should eq(user.id)
       end
 
+      it "should set the association to nil if foreign key is missing for belongs_to" do
+        post = Post.new
+        post = Repo.insert(post).instance
+
+        posts = Repo.all(Post, Query.where(id: post.id).preload(:user))
+        posts[0].user?.should eq(nil)
+      end
+
       it "should set the foreign key when setting the object" do
         user = User.new
         user.name = "tester"
