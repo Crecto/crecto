@@ -532,6 +532,17 @@ describe Crecto do
             user = Repo.get_by!(User, id: 99999)
           end
         end
+
+        it "should support preloads" do
+          user = User.new
+          user.name = "jokke"
+          user = Repo.insert!(user).instance
+          post = Post.new
+          post.user = user
+          id = Repo.insert!(post).instance.id
+          post = Repo.get_by!(Post, Query.where(id: id).preload(:user))
+          post.user.id.should eq(user.id)
+        end
       end
 
       context "with query" do
