@@ -336,6 +336,54 @@ describe Crecto do
         Repo.all(User, Query.where(name: "perform_all")).size.should eq 2
         Repo.all(User, Query.where(name: "perform_all_io2oj999")).size.should eq 0
       end
+
+      it "allows reading records inserted inside the transaction" do
+        insert_user = User.new
+        insert_user.name = "insert_user"
+
+        Repo.transaction! do |tx|
+          id = tx.insert!(insert_user).instance.id
+          tx.get(User, id).should_not eq(nil)
+          tx.get!(User, id).should_not eq(nil)
+          tx.get(User, id, Query.new).should_not eq(nil)
+          tx.get!(User, id, Query.new).should_not eq(nil)
+          tx.get_by(User, id: id).should_not eq(nil)
+          tx.get_by!(User, id: id).should_not eq(nil)
+          tx.get_by(User, id: id).should_not eq(nil)
+          tx.get_by!(User, id: id).should_not eq(nil)
+          tx.get_by(User, Query.where(id: id)).should_not eq(nil)
+          tx.get_by!(User, Query.where(id: id)).should_not eq(nil)
+          tx.all(User, Query.where(id: id)).first.should_not eq(nil)
+          tx.all(User, Query.where(id: id), preloads: [] of Symbol).first.should_not eq(nil)
+        end
+      end
+
+      it "allows nesting transactions" do
+        Repo.delete_all(Post)
+        Repo.delete_all(User)
+
+        insert_user = User.new
+        insert_user.name = "nested_transactions_insert_user"
+        invalid_user = User.new
+        delete_user = quick_create_user("nested_transactions_delete_user")
+
+        Repo.transaction! do |tx|
+          tx.insert!(insert_user)
+
+          expect_raises Crecto::InvalidChangeset do
+            Repo.transaction! do |inner_tx|
+              inner_tx.delete!(delete_user)
+              inner_tx.insert!(invalid_user)
+            end
+          end
+        end
+
+        # check insert happened
+        Repo.all(User, Query.where(name: "nested_transactions_insert_user")).size.should eq 1
+
+        # check delete didn't happen
+        Repo.all(User, Query.where(name: "nested_transactions_delete_user")).size.should eq 1
+      end
     end
   end
 end
