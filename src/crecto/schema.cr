@@ -42,15 +42,6 @@ module Crecto
     CRECTO_PRIMARY_KEY_FIELD_SYMBOL = :id
     # :nodoc:
     CRECTO_PRIMARY_KEY_FIELD_TYPE = "PkeyValue"
-    # :nodoc:
-    CRECTO_ASSOCIATIONS = Array(NamedTuple(association_type: Symbol,
-      key: Symbol,
-      this_klass: Model.class,
-      klass: Model.class,
-      foreign_key: Symbol,
-      foreign_key_value: Proc(Model, PkeyValue),
-      set_association: Proc(Model, (Array(Crecto::Model) | Model), Nil),
-      through: Symbol?)).new
 
     # schema block macro
     macro schema(table_name, **opts, &block)

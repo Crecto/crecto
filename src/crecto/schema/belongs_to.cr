@@ -5,6 +5,10 @@ module Crecto
       CRECTO_VALID_BELONGS_TO_OPTIONS = [:foreign_key]
 
       macro belongs_to(association_name, klass, **opts)
+        {% unless @type.has_constant? "CRECTO_ASSOCIATIONS" %}
+          Crecto::Schema::Associations.setup_associations
+        {% end %}
+
         @{{association_name.id}} : {{klass}}?
 
         def {{association_name.id}}? : {{klass}}?

@@ -29,24 +29,32 @@ module Crecto
       end
 
       private def self.get(conn, queryable, id)
-        q = ["SELECT *"]
-        q.push "FROM #{queryable.table_name}"
-        q.push "WHERE (#{queryable.primary_key_field}=?)"
-        q.push "LIMIT 1"
+        q = String.build do |builder|
+          builder << "SELECT * FROM " << queryable.table_name
+          builder << " WHERE (" << queryable.primary_key_field << "=?)"
+          builder << " LIMIT 1"
+        end
 
-        execute(conn, q.join(" "), [id])
+        execute(conn, q, [id])
       end
 
       private def self.insert(conn, changeset)
         fields_values = instance_fields_and_values(changeset.instance)
 
-        q = ["INSERT INTO"]
-        q.push "#{changeset.instance.class.table_name}"
-        q.push "(#{fields_values[:fields].join(", ")})"
-        q.push "VALUES"
-        q.push "(#{(1..fields_values[:values].size).map { "?" }.join(", ")})"
+        q = String.build do |builder|
+          builder << "INSERT INTO " << changeset.instance.class.table_name
+          builder << " ("
+          fields_values[:fields].each do |field|
+            builder << field << ", "
+          end
+          builder.back(2)
+          builder << ") VALUES ("
+          builder << fields_values[:values].size.times { builder << "?, " }
+          builder.back(2)
+          builder << ')'
+        end
 
-        query = exec_execute(conn, q.join(" "), fields_values[:values])
+        query = exec_execute(conn, q, fields_values[:values])
         return query if conn.is_a?(DB::TopLevelTransaction)
 
         if changeset.instance.class.use_primary_key?
@@ -57,35 +65,37 @@ module Crecto
         end
       end
 
-      private def self.update_begin(table_name, fields_values)
-        q = ["UPDATE"]
-        q.push "#{table_name}"
-        q.push "SET"
-        q.push fields_values[:fields].map { |field_value| "#{field_value}=?" }.join(", ")
-        q
+      private def self.update_begin(builder, table_name, fields_values)
+        builder << "UPDATE " << table_name << " SET "
+        fields_values[:fields].each do |field_value|
+          builder << field_value << "=?, "
+        end
+        builder.back(2)
       end
 
       private def self.update(conn, changeset)
         fields_values = instance_fields_and_values(changeset.instance)
 
-        q = update_begin(changeset.instance.class.table_name, fields_values)
-        q.push "WHERE"
-        q.push "(#{changeset.instance.class.primary_key_field}=?)"
+        q = String.build do |builder|
+          update_begin(builder, changeset.instance.class.table_name, fields_values)
+          builder << " WHERE (" << changeset.instance.class.primary_key_field << "=?)"
+        end
 
-        exec_execute(conn, q.join(" "), fields_values[:values] + [changeset.instance.pkey_value])
+        exec_execute(conn, q, fields_values[:values] + [changeset.instance.pkey_value])
         execute(conn, "SELECT * FROM #{changeset.instance.class.table_name} WHERE (#{changeset.instance.class.primary_key_field}=?)", [changeset.instance.pkey_value])
       end
 
       private def self.delete(conn, changeset)
-        q = delete_begin(changeset.instance.class.table_name)
-        q.push "WHERE"
-        q.push "(#{changeset.instance.class.primary_key_field}=?)"
+        q = String.build do |builder|
+          delete_begin(builder, changeset.instance.class.table_name)
+          builder << " WHERE (" << changeset.instance.class.primary_key_field << "=?)"
+        end
 
         if conn.is_a?(DB::TopLevelTransaction)
-          exec_execute(conn, q.join(" "), [changeset.instance.pkey_value])
+          exec_execute(conn, q, [changeset.instance.pkey_value])
         else
           sel = execute(conn, "SELECT * FROM #{changeset.instance.class.table_name} WHERE (#{changeset.instance.class.primary_key_field}=?)", [changeset.instance.pkey_value])
-          exec_execute(conn, q.join(" "), [changeset.instance.pkey_value])
+          exec_execute(conn, q, [changeset.instance.pkey_value])
           sel
         end
       end
@@ -93,11 +103,13 @@ module Crecto
       private def self.delete(conn, queryable, query)
         params = [] of DbValue | Array(DbValue)
 
-        q = delete_begin(queryable.table_name)
-        q.push wheres(queryable, query, params) if query.wheres.any?
-        q.push or_wheres(queryable, query, params) if query.or_wheres.any?
+        q = String.build do |builder|
+          delete_begin(builder, queryable.table_name)
+          wheres(builder, queryable, query, params)
+          or_wheres(builder, queryable, query, params)
+        end
 
-        exec_execute(conn, q.join(" "), params)
+        exec_execute(conn, q, params)
       end
 
       private def self.instance_fields_and_values(query_hash : Hash)
