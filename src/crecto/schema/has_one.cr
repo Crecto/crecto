@@ -5,6 +5,10 @@ module Crecto
       VALID_HAS_ONE_OPTIONS = [:foreign_key]
 
       macro has_one(association_name, klass, **opts)
+        {% unless @type.has_constant? "CRECTO_ASSOCIATIONS" %}
+          Crecto::Schema::Associations.setup_associations
+        {% end %}
+
         @{{association_name.id}} : {{klass}}?
 
         def {{association_name.id}}? : {{klass}}?

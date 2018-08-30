@@ -2,6 +2,10 @@ module Crecto
   module Schema
     module HasMany
       macro has_many(association_name, klass, **opts)
+        {% unless @type.has_constant? "CRECTO_ASSOCIATIONS" %}
+          Crecto::Schema::Associations.setup_associations
+        {% end %}
+
         @{{association_name.id}} : Array({{klass}})?
 
         def {{association_name.id}}? : Array({{klass}})?
