@@ -588,6 +588,22 @@ describe Crecto do
           user_from_post = Repo.get_association(post, :user)
           user_from_post.should eq(nil)
         end
+
+        it "should fetch preloads if given in a query" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert!(user).instance
+          address = Address.new
+          address.user = user
+          address = Repo.insert!(address).instance
+          post = Post.new
+          post.user = user
+          post = Repo.insert!(post).instance
+
+          query = Crecto::Repo::Query.preload(:addresses)
+          user_from_post = Repo.get_association(post, :user, query)
+          user_from_post.as(User).addresses.size.should eq(1)
+        end
       end
 
       describe "with has_many" do
@@ -614,6 +630,20 @@ describe Crecto do
           posts_for_user.should be_a(Array(Post))
           posts_for_user.as(Array(Post)).size.should eq(0)
         end
+
+        it "should narrow down results if given in a query" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+          post = Post.new
+          post.user = user
+          post_id = Repo.insert!(post).instance.id
+          Repo.insert(post)
+
+          query = Crecto::Repo::Query.where(:id, post_id)
+          posts_for_user = Repo.get_association(user, :posts, query)
+          posts_for_user.as(Array(Post)).size.should eq(1)
+        end
       end
 
       describe "with has_one" do
@@ -635,6 +665,19 @@ describe Crecto do
           user = Repo.insert(user).instance
 
           post_for_user = Repo.get_association(user, :post)
+          post_for_user.should eq(nil)
+        end
+
+        it "should narrow down results if given a query" do
+          user = User.new
+          user.name = "test"
+          user = Repo.insert(user).instance
+          post = Post.new
+          post.user = user
+          Repo.insert(post)
+
+          query = Crecto::Repo::Query.where("1 = 0")
+          post_for_user = Repo.get_association(user, :post, query)
           post_for_user.should eq(nil)
         end
       end
