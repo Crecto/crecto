@@ -201,14 +201,14 @@ module Crecto
     # user = Crecto::Repo.get(User, 1)
     # post = Repo.get_association(user, :post)
     # ```
-    def get_association(queryable_instance, association_name : Symbol)
+    def get_association(queryable_instance, association_name : Symbol, query : Query = Query.new)
       case queryable_instance.class.association_type_for_association(association_name)
       when :has_many
-        get_has_many_association(queryable_instance, association_name)
+        get_has_many_association(queryable_instance, association_name, query)
       when :has_one
-        get_has_one_association(queryable_instance, association_name)
+        get_has_one_association(queryable_instance, association_name, query)
       when :belongs_to
-        get_belongs_to_association(queryable_instance, association_name)
+        get_belongs_to_association(queryable_instance, association_name, query)
       end
     end
 
@@ -220,8 +220,8 @@ module Crecto
     # user = Crecto::Repo.get(User, 1)
     # post = Repo.get_association!(user, :post)
     # ```
-    def get_association!(queryable_instance, association_name : Symbol)
-      if result = get_association(queryable_instance, association_name)
+    def get_association!(queryable_instance, association_name : Symbol, query : Query = Query.new)
+      if result = get_association(queryable_instance, association_name, query)
         result
       else
         raise NoResults.new("No Results")
@@ -754,28 +754,28 @@ module Crecto
       end
     end
 
-    private def get_has_many_association(instance, association : Symbol)
+    private def get_has_many_association(instance, association : Symbol, query : Query)
       queryable = instance.class
       foreign_key = queryable.foreign_key_for_association(association)
       return if foreign_key.nil?
-      query = Crecto::Repo::Query.where(foreign_key, instance.pkey_value)
+      query = query.where(foreign_key, instance.pkey_value)
       association_klass = queryable.klass_for_association(association)
       return if association_klass.nil?
       all(association_klass, query)
     end
 
-    private def get_has_one_association(instance, association : Symbol)
-      many = get_has_many_association(instance, association)
+    private def get_has_one_association(instance, association : Symbol, query : Query)
+      many = get_has_many_association(instance, association, query)
       return if many.nil?
       many.first?
     end
 
-    private def get_belongs_to_association(instance, association : Symbol)
+    private def get_belongs_to_association(instance, association : Symbol, query : Query)
       queryable = instance.class
       klass_for_association = queryable.klass_for_association(association)
       return if klass_for_association.nil?
       key_for_association = queryable.foreign_key_value_for_association(association, instance)
-      get(klass_for_association, key_for_association)
+      get(klass_for_association, key_for_association, query)
     end
   end
 end
