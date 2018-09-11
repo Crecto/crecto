@@ -111,6 +111,57 @@ module Crecto
 
       def self.through_key_for_association(association : Symbol) : Symbol?
       end
+
+      # Class methods for mass assignment
+      def self.cast(**attributes)
+        new.tap { |m| m.cast(**attributes) }
+      end
+
+      def self.cast(attributes : NamedTuple, whitelist : Tuple = attributes.keys)
+        new.tap { |m| m.cast(attributes, whitelist) }
+      end
+
+      def self.cast(attributes : Hash(Symbol, T), whitelist : Array(Symbol) = attributes.keys) forall T
+        new.tap { |m| m.cast(attributes, whitelist) }
+      end
+
+      def self.cast(attributes : Hash(String, T), whitelist : Array(String) = attributes.keys) forall T
+        new.tap { |m| m.cast(attributes, whitelist) }
+      end
+
+      # Class methods for compile-time type safe mass assignment
+      def self.cast!(**attributes : **T) forall T
+        new.tap { |m| m.cast!(**attributes) }
+      end
+
+      def self.cast!(attributes : NamedTuple)
+        cast!(**attributes)
+      end
+
+      # Empty instance methods for mass assignment
+      # Implementations are in the Schema.setup macro
+      def cast(**attributes : **T) forall T
+      end
+
+      def cast(attributes : NamedTuple, whitelist : Tuple = attributes.keys)
+      end
+
+      def cast(attributes : Hash(Symbol, T), whitelist : Array(Symbol) = attributes.keys) forall T
+      end
+
+      def cast(attributes : Hash(String, T), whitelist : Array(String) = attributes.keys) forall T
+      end
+
+      # Instance method for compile-time type safe mass assignment
+      def cast!(**attributes : **T) forall T
+        \{% for key in T.keys %}
+           self.\{{ key }} = attributes[\{{ key.symbolize }}]
+        \{% end %}
+      end
+
+      def cast!(attributes : NamedTuple)
+        cast!(**attributes)
+      end
     end
   end
 end
