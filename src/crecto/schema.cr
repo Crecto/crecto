@@ -271,7 +271,7 @@ module Crecto
                   @{{field[:name].id}} = JSON.parse(value)
                 {% elsif field[:type].id.stringify == "Time" %}
                   begin
-                    @{{field[:name].id}} = Time.parse(value, "%F %T %z", Time::Location.local)
+                    @{{field[:name].id}} = Time.parse!(value, "%F %T %z")
                   end
                 {% end %}
               end
