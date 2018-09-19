@@ -114,10 +114,10 @@ module Crecto
     end
 
     macro init_with(**args)
-      {{@type}}.new.tap do |item|
+      {{@type}}.new.tap do |%item|
         {% for setter, value in args %}
           {% raise "#{@type} doesn't have a setter called '#{setter}'" unless @type.methods.map(&.name.stringify).includes?("#{setter}=") %}
-          item.{{setter.id}} = {{value}}
+          %item.{{setter.id}} = {{value}}
         {% end %}
       end
     end
