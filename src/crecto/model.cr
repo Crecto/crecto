@@ -112,5 +112,14 @@ module Crecto
       def self.through_key_for_association(association : Symbol) : Symbol?
       end
     end
+
+    macro init_with(**args)
+      {{@type}}.new.tap do |%item|
+        {% for setter, value in args %}
+          {% raise "#{@type} doesn't have a setter called '#{setter}'" unless @type.methods.map(&.name.stringify).includes?("#{setter}=") %}
+          %item.{{setter.id}} = {{value}}
+        {% end %}
+      end
+    end
   end
 end

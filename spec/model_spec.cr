@@ -7,6 +7,11 @@ describe Crecto::Model do
       user.name.should eq("test")
     end
 
+    it "can be instatiated with values" do
+      user = User.init_with(name: "test")
+      user.name.should eq("test")
+    end
+
     it "sets default values" do
       model = DefaultValue.from_json(%|{"default_string":"overridden"}|)
       model.default_string.should eq("overridden")
