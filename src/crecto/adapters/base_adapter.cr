@@ -108,7 +108,7 @@ module Crecto
         q = String.build do |builder|
           builder <<
             "INSERT INTO " << changeset.instance.class.table_name <<
-            " (" << fields_values[:fields] << ')' <<
+            " (" << fields_values[:fields].join(", ") << ')' <<
             " VALUES" <<
             " ("
           fields_values[:values].size.times do
@@ -173,7 +173,7 @@ module Crecto
           joins(builder, queryable, query, params)
           wheres(builder, queryable, query, params)
           or_wheres(builder, queryable, query, params)
-          order_bys(builder, query) 
+          order_bys(builder, query)
           limit(builder, query)
           offset(builder, query)
           group_by(builder, query)
@@ -216,7 +216,7 @@ module Crecto
         q = String.build do |builder|
           delete_begin(builder, queryable.table_name)
 
-          wheres(builder, queryable, query, params) 
+          wheres(builder, queryable, query, params)
           or_wheres(builder, queryable, query, params)
         end
 

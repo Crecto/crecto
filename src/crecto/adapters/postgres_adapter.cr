@@ -7,14 +7,11 @@ module Crecto
       extend BaseAdapter
 
       private def self.update_begin(builder, table_name, fields_values)
-        builder << "UPDATE " << table_name << " SET ("
-        builder << fields_values[:fields] << ')'
-        builder << " = ("
-        fields_values[:values].size.times do
-          builder << "?, "
+        builder << "UPDATE " << table_name << " SET "
+        fields_values[:fields].each do |field_value|
+          builder << field_value << "=?, "
         end
         builder.back(2)
-        builder << ')'
       end
 
       private def self.update(conn, changeset)
@@ -41,7 +38,7 @@ module Crecto
             x.as(DbValue)
           end
         end
-        {fields: query_hash.keys.join(", "), values: values}
+        {fields: query_hash.keys, values: values}
       end
     end
   end
