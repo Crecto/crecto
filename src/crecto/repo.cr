@@ -646,18 +646,7 @@ module Crecto
     end
 
     private def has_one_preload(results, queryable, preload)
-      foreign_key = queryable.foreign_key_for_association(preload[:symbol])
-      return if foreign_key.nil?
-      query = Crecto::Repo::Query.where(foreign_key, results[0].pkey_value)
-      if preload_query = preload[:query]
-        query = query.combine(preload_query)
-      end
-      association_klass = queryable.klass_for_association(preload[:symbol])
-      return if association_klass.nil?
-      relation_item = all(association_klass, query)
-      if relation_item.first?
-        queryable.set_value_for_association(preload[:symbol], results[0], relation_item.first)
-      end
+      join_direct(results, queryable, preload, singular: true)
     end
 
     private def has_many_preload(results, queryable, preload)
@@ -668,7 +657,7 @@ module Crecto
       end
     end
 
-    private def join_direct(results, queryable, preload)
+    private def join_direct(results, queryable, preload, singular = false)
       ids = results.map(&.pkey_value.as(PkeyValue))
       foreign_key = queryable.foreign_key_for_association(preload[:symbol])
       return if foreign_key.nil?
@@ -683,7 +672,9 @@ module Crecto
 
       results.each do |result|
         items = relation_items[result.pkey_value]? || [] of Crecto::Model
-        queryable.set_value_for_association(preload[:symbol], result, items.map { |i| i.as(Crecto::Model) })
+        next if singular && items.empty?
+        value = singular ? items.first.as(Crecto::Model) : items.map { |i| i.as(Crecto::Model) }
+        queryable.set_value_for_association(preload[:symbol], result, value)
       end
     end
 
