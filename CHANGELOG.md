@@ -3,7 +3,24 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.8.7] 2018-06-18
+## [0.10.0] 2018-10-35
+* Updated to crystal 0.26.1
+* Allow defining models without any fields - [@jreinert](https://github.com/jreinert)
+* Queries in preloads
+* Live transactions with `Repo#transaction!` - [@jreinert](https://github.com/jreinert)
+* Changed model to use `JSON::Serializable` - [@jreinert](https://github.com/jreinert)
+* Fields now correctly compare `nil` - [@shiba-hiro](https://github.com/shiba-hiro)
+* Added `Repo#join` method override with string argument - [@shiba-hiro](https://github.com/shiba-hiro)
+* Added more `where` and `or_where` method signatures - [@jreinert](https://github.com/jreinert)
+* Added `int8` and `int16` suppoert - [@jianghengle](https://github.com/jianghengle)
+* Improved performance using `String::Builder` to build query strings - [@jreinert](https://github.com/jreinert)
+* Added `Repo#get_by` method overloads to use Query objects - [@jreinert](https://github.com/jreinert)
+* Compiler improvements by only including associations when used - [@jianghengle](https://github.com/jianghengle)
+* Updated to use new crystal time / timezone format - [@wontruefree](https://github.com/wontruefree)
+* Handle single-column updates for postgres 10.x - [@faultyserver](https://github.com/faultyserver)
+* Added `Schema#cast` and `Schema#cast!` mass assignment methods - [@jreinert](https://github.com/jreinert)
+
+## [0.9.0] 2018-06-18
 * Added Crecto logo thanks to [@faustinoaq](https://github.com/faustinoaq)
 * Updated for crystal 0.25.0
 
@@ -165,7 +182,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Query
 * Postgres Adapter
 
-[0.8.7]: https://github.com/fridgerator/crecto/compare/v0.8.6...v0.8.7
+[0.9.0]: https://github.com/fridgerator/crecto/compare/v0.8.6...v0.9.0
 [0.8.6]: https://github.com/fridgerator/crecto/compare/v0.8.5...v0.8.6
 [0.8.5]: https://github.com/fridgerator/crecto/compare/v0.8.4...v0.8.5
 [0.8.4]: https://github.com/fridgerator/crecto/compare/v0.8.3...v0.8.4
