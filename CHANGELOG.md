@@ -3,7 +3,7 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.10.0] 2018-10-35
+## [0.10.0] 2018-10-25
 * Updated to crystal 0.26.1
 * Allow defining models without any fields - [@jreinert](https://github.com/jreinert)
 * Queries in preloads
