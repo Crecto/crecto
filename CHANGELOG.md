@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Updated to use new crystal time / timezone format - [@wontruefree](https://github.com/wontruefree)
 * Handle single-column updates for postgres 10.x - [@faultyserver](https://github.com/faultyserver)
 * Added `Schema#cast` and `Schema#cast!` mass assignment methods - [@jreinert](https://github.com/jreinert)
+* Fixed has_one preloads - [@jreinert](https://github.com/jreinert)
 
 ## [0.9.0] 2018-06-18
 * Added Crecto logo thanks to [@faustinoaq](https://github.com/faustinoaq)
