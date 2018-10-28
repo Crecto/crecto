@@ -282,6 +282,83 @@ describe Crecto do
           end
         end
       end
+
+      context "#and" do
+        it "should return the correct set" do
+          user = User.new
+          user.name = "or_where_user"
+          user.things = 123
+          user.nope = 7.0
+          Repo.insert(user)
+
+          query = Query.where(name: "or_where_user").and do |e|
+            e.where(things: 999)
+             .or_where("nope > 5")
+          end
+
+          users = Repo.all(User, query)
+          users.size.should be > 0
+
+          query = Query.where(things: 123).and do |e|
+            e.where(things: 999)
+             .or_where("nope > 5").where(name: "or_where_user")
+          end
+
+          users = Repo.all(User, query)
+          users.size.should be > 0
+        end
+
+        it "supports nesting" do
+          user = User.new
+          user.name = "or_where_user"
+          user.things = 123
+          user.nope = 7.0
+          Repo.insert(user)
+
+          query = Query.where(name: "or_where_user").and do |e|
+            e.where("nope > 5").and do |nested|
+              nested.where(things: 123)
+            end
+          end
+
+          users = Repo.all(User, query)
+          users.size.should be > 0
+        end
+      end
+
+      context "#or" do
+        it "should return the correct set" do
+          user = User.new
+          user.name = "or_where_user"
+          user.things = 123
+          user.nope = 7.0
+          Repo.insert(user)
+
+          query = Query.where(name: "skjskjdhsafsa").or do |e|
+            e.where(things: 123).where("nope > 5")
+          end
+
+          users = Repo.all(User, query)
+          users.size.should be > 0
+        end
+
+        it "supports nesting" do
+          user = User.new
+          user.name = "or_where_user"
+          user.things = 123
+          user.nope = 7.0
+          Repo.insert(user)
+
+          query = Query.where(name: "sksakjhdafsk").or do |e|
+            e.where("nope < 3.5").or do |nested|
+              nested.where(things: 123)
+            end
+          end
+
+          users = Repo.all(User, query)
+          users.size.should be > 0
+        end
+      end
     end
 
     describe "#query" do

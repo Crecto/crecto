@@ -5,10 +5,172 @@ module Crecto
     # `Query.select('id').where(name: "fred").join(:posts).order_by("users.name").limit(1).offset(4)`
     #
     class Query
+      abstract class WhereExpression 
+        abstract def and(other : WhereExpression) : WhereExpression
+        abstract def or(other : WhereExpression) : WhereExpression
+        getter? empty = false
+
+        def and(other : WhereType)
+          and(AtomExpression.new(other))
+        end
+
+        def or(other : WhereType)
+          or(AtomExpression.new(other))
+        end
+
+        def and
+          and(yield InitialExpression.new)
+        end
+
+        def or
+          or(yield InitialExpression.new)
+        end
+
+        {% for method in %i[where or_where] %}
+          {% op = method == :where ? :and : :or %}
+
+          # Query#{{ method.id }} with Key => Value pair(s)
+          #
+          # ```
+          # query.{{ method.id }}(name: "Thor", age: 60)
+          # ```
+          def {{ method.id }}(**wheres)
+            wheres = wheres.to_h
+            {{op.id}}(Hash.zip(wheres.keys, wheres.values))
+          end
+
+          # Query#{{ method.id }} with a String and Array(DbValue)
+          #
+          # ```
+          # query.{{ method.id }}("users.id > ?", [10])
+          # ```
+          def {{ method.id }}(where_string : String, params : Array(DbValue))
+            {{op.id}}({ clause: where_string, params: params.map { |p| p.as(DbValue) }})
+          end
+
+          # Query#{{ method.id }} with a Symbol and DbValue
+          #
+          # ```
+          # query.{{ method.id }}(:name, "Conan")
+          # ```
+          def {{ method.id }}(where_sym : Symbol, param : DbValue)
+            {{op.id}}({where_sym => param.as(DbValue)})
+          end
+
+          # Query#{{ method.id }} with a Symbol and Array(DbValue)
+          #
+          # ```
+          # query.{{ method.id }}(:name, ["Conan", "Zeus"])
+          # ```
+          def {{ method.id }}(where_sym : Symbol, params : Array(DbValue))
+            w = {} of Symbol => Array(DbValue)
+            w[where_sym] = params.map { |x| x.as(DbValue) }
+            {{op.id}}(w)
+          end
+
+          # Query#{{ method.id }} with a String
+          #
+          # ```
+          # query.{{ method.id }}("name IS NOT NULL")
+          # ```
+          def {{ method.id }}(where_string : String)
+            {{ method.id }}(where_string, Array(String).new)
+          end
+
+          # Query.{{ method.id }} with a String and String parameter
+          #
+          # ```
+          # query.{{ method.id }}("name LIKE ?", "%phyllis%")
+          # ```
+          def {{ method.id }}(where_string : String, param : DbValue | PkeyValue)
+            {{ method.id }}(where_string, [param])
+          end
+        {% end %}
+      end
+
+      class AndExpression < WhereExpression
+        getter expressions : Array(WhereExpression)
+
+        def initialize(*expressions)
+          @expressions = expressions.map(&.as(WhereExpression)).to_a
+        end
+
+        def ==(other : self)
+          expressions == other.expressions
+        end
+
+        def and(other : WhereExpression)
+          @expressions << other
+          self
+        end
+
+        def or(other : WhereExpression)
+          OrExpression.new(self, other)
+        end
+      end
+
+      class OrExpression < WhereExpression
+        getter expressions : Array(WhereExpression)
+
+        def initialize(*expressions)
+          @expressions = expressions.map(&.as(WhereExpression)).to_a
+        end
+
+        def ==(other : self)
+          expressions == other.expressions
+        end
+
+        def and(other : WhereExpression)
+          last = @expressions.pop
+          last = AndExpression.new(self.class.new(last)) if last.is_a?(AtomExpression)
+          @expressions << last.and(other)
+          self
+        end
+
+        def or(other : WhereExpression)
+          @expressions << other
+          self
+        end
+      end
+
+      class AtomExpression < WhereExpression
+        getter atom : WhereType
+
+        def initialize(@atom)
+        end
+
+        def ==(other : self)
+          atom == other.atom
+        end
+
+        def and(other : WhereExpression)
+          AndExpression.new(self, other)
+        end
+
+        def or(other : WhereExpression)
+          OrExpression.new(self, other)
+        end
+      end
+
+      class InitialExpression < WhereExpression
+        @empty = true
+
+        def and(other : WhereExpression)
+          AndExpression.new(other)
+        end
+
+        def or(other : WhereExpression)
+          OrExpression.new(other)
+        end
+
+        def and(other : WhereType)
+          AtomExpression.new(other)
+        end
+      end
+
       property distincts : String?
       property selects : Array(String)
-      property wheres = [] of WhereType
-      property or_wheres = [] of WhereType
+      property where_expression : WhereExpression = InitialExpression.new
       property joins = [] of Symbol | String
       property preloads = [] of NamedTuple(symbol: Symbol, query: Query?)
       property order_bys = [] of String
@@ -50,8 +212,7 @@ module Crecto
         # query.{{ method.id }}(name: "Thor", age: 60)
         # ```
         def {{ method.id }}(**wheres)
-          wheres = wheres.to_h
-          @{{ method.id }}s.push(Hash.zip(wheres.keys, wheres.values))
+          @where_expression = @where_expression.{{ method.id }}(**wheres)
           self
         end
 
@@ -70,7 +231,7 @@ module Crecto
         # query.{{ method.id }}("users.id > ?", [10])
         # ```
         def {{ method.id }}(where_string : String, params : Array(DbValue))
-          @{{ method.id }}s.push({ clause: where_string, params: params.map { |p| p.as(DbValue) }})
+          @where_expression = @where_expression.{{ method.id }}(where_string, params)
           self
         end
 
@@ -89,7 +250,7 @@ module Crecto
         # query.{{ method.id }}(:name, "Conan")
         # ```
         def {{ method.id }}(where_sym : Symbol, param : DbValue)
-          @{{ method.id }}s.push({where_sym => param.as(DbValue)})
+          @where_expression = @where_expression.{{ method.id }}(where_sym, param)
           self
         end
 
@@ -108,9 +269,7 @@ module Crecto
         # query.{{ method.id }}(:name, ["Conan", "Zeus"])
         # ```
         def {{ method.id }}(where_sym : Symbol, params : Array(DbValue))
-          w = {} of Symbol => Array(DbValue)
-          w[where_sym] = params.map { |x| x.as(DbValue) }
-          @{{ method.id }}s.push(w)
+          @where_expression = @where_expression.{{ method.id }}(where_sym, params)
           self
         end
 
@@ -265,9 +424,11 @@ module Crecto
       def combine(query : Query)
         new_query = self.dup
 
-        {% for prop in ["selects", "wheres", "or_wheres", "joins", "preloads", "order_bys"] %}
+        {% for prop in ["selects", "joins", "preloads", "order_bys"] %}
           new_query.{{prop.id}} = (new_query.{{prop.id}} + query.{{prop.id}}).uniq
         {% end %}
+
+        new_query.where_expression = AndExpression.new(where_expression, query.where_expression)
 
         {% for prop in ["distincts", "limit", "offset", "group_bys"] %}
           new_query.{{prop.id}} = query.{{prop.id}}
@@ -404,6 +565,100 @@ module Crecto
       # ```
       def group_by(gb : String)
         @group_bys = gb
+        self
+      end
+
+      # Query instance AND
+      #
+      # Yields a where expression to group wheres or or_wheres together.
+      # The block return value must be a where expression which will
+      # form an AND expression with the current expression
+      #
+      # ```
+      # Query.where(city: "Los Angeles").and do |e|
+      #   e.where(name: "Bill")
+      #    .where("age > 20")
+      #    .or_where(name: "Wendy")
+      # end
+      #
+      # # => SELECT * FROM users WHERE
+      # #    (city = 'Los Angeles') AND (
+      # #      (name = 'Bill') AND
+      # #      (age  > 20) OR
+      # #      (name = 'Wendy')
+      # #    )
+      # ```
+      def and
+        @where_expression = @where_expression.and do |expression|
+          yield expression
+        end
+        self
+      end
+
+      # Query instance AND with other Query/Queries
+      #
+      # Combine the where_expression with the one of one or more other Queries using AND
+      #
+      # ```
+      # Query.where(city: "Los Angeles").and(
+      #   Query.or_where(name: "Bill", age: 20)
+      #   Query.or_where(name: "Wendy", age: 50)
+      # )
+      #
+      # # => SELECT * FROM users WHERE
+      # #    (city = 'Los Angeles')
+      # #    AND ((name = 'Bill') OR (age = 20))
+      # #    AND ((name = 'Wendy') OR (age = 50))
+      # ```
+      def and(*queries : self)
+        @where_expression = queries.reduce(@where_expression) do |result, query|
+          result.and(query.where_expression)
+        end
+        self
+      end
+
+      # Query instance OR
+      # Yields a where expression to group wheres or or_wheres together.
+      # The block return value must be a where expression which will
+      # form an OR expression with the current expression
+      #
+      # ```
+      # Query.where(city: "Los Angeles", name: "Bill").or do |e|
+      #    e.where("age > 20").or_where(name: "Wendy")
+      # end
+      #
+      # # => SELECT * FROM users WHERE
+      # #    (city = 'Los Angeles') AND (name = 'Bill') OR (
+      # #      (age  > 20) OR
+      # #      (name = 'Wendy')
+      # #    )
+      # ```
+      def or
+        @where_expression = @where_expression.or do |expression|
+          yield expression
+        end
+        self
+      end
+
+      # Query instance OR with other Query/Queries
+      #
+      # Combine the where_expression with the one of one or more other Queries using OR
+      #
+      # ```
+      # Query.where(city: "Los Angeles").or(
+      #   Query.where(name: "Bill", age: 20)
+      #   Query.where(name: "Wendy", age: 50)
+      # )
+      #
+      # # => SELECT * FROM users WHERE
+      # #    (city = 'Los Angeles')
+      # #    OR ((name = 'Bill') AND (age = 20))
+      # #    OR ((name = 'Wendy') AND (age = 50))
+      # ```
+      def or(*queries : self)
+        @where_expression = queries.reduce(@where_expression) do |result, query|
+          result.or(query.where_expression)
+        end
         self
       end
     end

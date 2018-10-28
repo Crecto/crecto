@@ -25,8 +25,16 @@ describe Crecto do
         new_query = query.combine(query2)
 
         new_query.selects.should eq ["user.name", "user.name2"]
-        new_query.wheres.should eq [{:name => "user_name"}, {:name => "user_name2"}]
-        new_query.or_wheres.should eq [{:name => "name_user"}, {:name => "name_user2"}]
+        new_query.where_expression.should eq Crecto::Repo::Query::AndExpression.new(
+          Crecto::Repo::Query::OrExpression.new(
+            Crecto::Repo::Query::AtomExpression.new({:name => "user_name"}),
+            Crecto::Repo::Query::AtomExpression.new({:name => "name_user"})
+          ),
+          Crecto::Repo::Query::OrExpression.new(
+            Crecto::Repo::Query::AtomExpression.new({:name => "user_name2"}),
+            Crecto::Repo::Query::AtomExpression.new({:name => "name_user2"})
+          )
+        )
         new_query.joins.should eq [:posts, :comments]
         new_query.preloads.should eq [{symbol: :posts, query: nil}, {symbol: :comments, query: nil}]
         new_query.order_bys.should eq ["last_name ASC", "first_name ASC"]
@@ -50,6 +58,102 @@ describe Crecto do
 
         query.joins.size.should eq 1
         query.joins[0].should eq "INNER JOIN users ON users.id = posts.user_id"
+      end
+    end
+
+    describe "#and" do
+      it "combines the where expressions with an AndExpression" do
+        query = Crecto::Repo::Query.where(foo: "bar").and do |e|
+          e.or_where(name: "jokke", age: 99)
+        end
+
+        query.where_expression.should eq Crecto::Repo::Query::AndExpression.new(
+          Crecto::Repo::Query::AtomExpression.new({ :foo => "bar" }),
+          Crecto::Repo::Query::OrExpression.new(
+            Crecto::Repo::Query::AtomExpression.new({ :name => "jokke", :age => 99 }),
+          )
+        )
+      end
+
+      it "supports nesting" do
+        query = Crecto::Repo::Query.where(foo: "bar").and do |e|
+          e.or_where(name: "jokke", age: 99).and do |nested|
+            nested.where(bar: "baz")
+          end
+        end
+
+        query.where_expression.should eq Crecto::Repo::Query::AndExpression.new(
+          Crecto::Repo::Query::AtomExpression.new({ :foo => "bar" }),
+          Crecto::Repo::Query::OrExpression.new(
+            Crecto::Repo::Query::AndExpression.new(
+              Crecto::Repo::Query::OrExpression.new(
+                Crecto::Repo::Query::AtomExpression.new({ :name => "jokke", :age => 99 }),
+              ),
+              Crecto::Repo::Query::AtomExpression.new({ :bar => "baz" })
+            )
+          )
+        )
+      end
+
+      context "with other query" do
+        it "combines the where expressions with an AndExpression" do
+          query = Crecto::Repo::Query.where(foo: "bar").and(
+            Crecto::Repo::Query.where(name: "fridge"),
+            Crecto::Repo::Query.where(age: "99")
+          )
+
+          query.where_expression.should eq Crecto::Repo::Query::AndExpression.new(
+            Crecto::Repo::Query::AtomExpression.new({:foo => "bar"}),
+            Crecto::Repo::Query::AtomExpression.new({:name => "fridge"}),
+            Crecto::Repo::Query::AtomExpression.new({:age => "99"}),
+          )
+        end
+      end
+    end
+
+    describe "#or" do
+      it "combines the where expressions with an OrExpression" do
+        query = Crecto::Repo::Query.where(foo: "bar").or do |e|
+          e.where(name: "jokke", age: 99)
+        end
+
+        query.where_expression.should eq Crecto::Repo::Query::OrExpression.new(
+          Crecto::Repo::Query::AtomExpression.new({ :foo => "bar" }),
+          Crecto::Repo::Query::AtomExpression.new({ :name => "jokke", :age => 99 }),
+        )
+      end
+
+      it "supports nesting" do
+        query = Crecto::Repo::Query.where(foo: "bar").or do |e|
+          e.where(bar: "baz").or do |nested|
+            nested.or_where(name: "jokke", age: 99)
+          end
+        end
+
+        query.where_expression.should eq Crecto::Repo::Query::OrExpression.new(
+          Crecto::Repo::Query::AtomExpression.new({ :foo => "bar" }),
+          Crecto::Repo::Query::OrExpression.new(
+            Crecto::Repo::Query::AtomExpression.new({ :bar => "baz" }),
+            Crecto::Repo::Query::OrExpression.new(
+              Crecto::Repo::Query::AtomExpression.new({ :name => "jokke", :age => 99 })
+            )
+          )
+        )
+      end
+
+      context "with other query" do
+        it "combines the where expressions with an OrExpression" do
+          query = Crecto::Repo::Query.where(foo: "bar").or(
+            Crecto::Repo::Query.where(name: "fridge"),
+            Crecto::Repo::Query.where(name: "jokke")
+          )
+
+          query.where_expression.should eq Crecto::Repo::Query::OrExpression.new(
+            Crecto::Repo::Query::AtomExpression.new({:foo => "bar"}),
+            Crecto::Repo::Query::AtomExpression.new({:name => "fridge"}),
+            Crecto::Repo::Query::AtomExpression.new({:name => "jokke"}),
+          )
+        end
       end
     end
   end

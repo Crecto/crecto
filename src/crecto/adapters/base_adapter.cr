@@ -135,8 +135,7 @@ module Crecto
         q = String.build do |builder|
           build_aggregate_query(builder, queryable, ag, field)
           joins(builder, queryable, query, params)
-          wheres(builder, queryable, query, params)
-          or_wheres(builder, queryable, query, params)
+          where_expression(builder, queryable, query, params)
           order_bys(builder, query)
           limit(builder, query)
           offset(builder, query)
@@ -171,8 +170,7 @@ module Crecto
 
           builder << " FROM " << queryable.table_name
           joins(builder, queryable, query, params)
-          wheres(builder, queryable, query, params)
-          or_wheres(builder, queryable, query, params)
+          where_expression(builder, queryable, query, params)
           order_bys(builder, query)
           limit(builder, query)
           offset(builder, query)
@@ -188,8 +186,7 @@ module Crecto
 
         q = String.build do |builder|
           update_begin(builder, queryable.table_name, fields_values)
-          wheres(builder, queryable, query, params)
-          or_wheres(builder, queryable, query, params)
+          where_expression(builder, queryable, query, params)
         end
 
         exec_execute(conn, position_args(q), fields_values[:values] + params)
@@ -216,49 +213,60 @@ module Crecto
         q = String.build do |builder|
           delete_begin(builder, queryable.table_name)
 
-          wheres(builder, queryable, query, params)
-          or_wheres(builder, queryable, query, params)
+          where_expression(builder, queryable, query, params)
         end
 
         exec_execute(conn, position_args(q), params)
       end
 
-      private def wheres(builder, queryable, query, params)
-        return if query.wheres.empty?
+      private def where_expression(builder, queryable, query, params)
+        return if query.where_expression.empty?
 
         builder << " WHERE "
-        add_where_clauses(builder, queryable, query.wheres, params, " AND ")
+        add_where_clauses(builder, queryable, query.where_expression, params)
       end
 
-      private def or_wheres(builder, queryable, query, params)
-        return if query.or_wheres.empty?
-
-        builder << " WHERE "
-        add_where_clauses(builder, queryable, query.or_wheres, params, " OR ")
+      private def add_where_clauses(builder, queryable, where_expression : Crecto::Repo::Query::InitialExpression, params, join_string = nil)
+        builder << "1=1 "
+        builder << join_string unless join_string.nil?
       end
 
-      private def add_where_clauses(builder, queryable, wheres, params, join_string)
-        wheres.each do |where|
-          if where.is_a?(NamedTuple)
-            add_where(builder, where, params)
-          elsif where.is_a?(Hash)
-            add_where(builder, where, queryable, params, join_string)
-          end
+      private def add_where_clauses(builder, queryable, where_expression : Crecto::Repo::Query::AtomExpression, params, join_string = nil)
+        add_where_clause(builder, queryable, where_expression.atom, params, join_string || " AND ")
+        builder << join_string unless join_string.nil?
+      end
 
-          builder << join_string
+      private def add_where_clauses(builder, queryable, where_expression : Crecto::Repo::Query::AndExpression, params, join_string = nil)
+        builder << '('
+        add_where_expressions(builder, queryable, where_expression.expressions, params, " AND ")
+        builder << ')'
+        builder << join_string unless join_string.nil?
+      end
+
+      private def add_where_clauses(builder, queryable, where_expression : Crecto::Repo::Query::OrExpression, params, join_string = nil)
+        builder << '('
+        add_where_expressions(builder, queryable, where_expression.expressions, params, " OR ")
+        builder << ')'
+        builder << join_string unless join_string.nil?
+      end
+
+      private def add_where_expressions(builder, queryable, where_expressions, params, join_string)
+        where_expressions.each do |expression|
+          add_where_clauses(builder, queryable, expression, params, join_string)
         end
 
         builder.back(join_string.bytesize)
       end
 
-      private def or_wheres(builder, queryable, query, params)
-        return if query.or_wheres.empty?
-
-        builder << (query.wheres.empty? ? " WHERE " : " OR ")
-        add_where_clauses(builder, queryable, query.or_wheres, params, " OR ")
+      private def add_where_clause(builder, queryable, where, params, join_string)
+        if where.is_a?(NamedTuple)
+          add_where(builder, where, params, join_string)
+        elsif where.is_a?(Hash)
+          add_where(builder, where, queryable, params, join_string)
+        end
       end
 
-      private def add_where(builder, where : NamedTuple, params)
+      private def add_where(builder, where : NamedTuple, params, join_string)
         where[:params].each { |param| params.push(param) }
         builder << '(' << where[:clause] << ')'
       end
@@ -268,11 +276,12 @@ module Crecto
           [where[key]].flatten.uniq.each { |param| params.push(param) unless param.is_a?(Nil) }
 
           if where[key].is_a?(Array) && where[key].as(Array).size === 0
-            builder << " 1=0" << join_string
+            builder << "1=0" << join_string
             next
           end
 
-          builder << " (" << queryable.table_name << '.' << key.to_s
+          builder << '(' << queryable.table_name << '.' << key.to_s
+
           if where[key].is_a?(Array)
             builder << " IN ("
             where[key].as(Array).uniq.size.times do

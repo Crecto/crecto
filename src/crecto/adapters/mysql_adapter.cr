@@ -105,8 +105,7 @@ module Crecto
 
         q = String.build do |builder|
           delete_begin(builder, queryable.table_name)
-          wheres(builder, queryable, query, params)
-          or_wheres(builder, queryable, query, params)
+          where_expression(builder, queryable, query, params)
         end
 
         exec_execute(conn, q, params)

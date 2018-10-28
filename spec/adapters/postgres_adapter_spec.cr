@@ -59,7 +59,7 @@ if Repo.config.adapter == Crecto::Adapters::Postgres
         .limit(1)
       Repo.all(User, query)
       check_sql do |sql|
-        sql.should eq(["SELECT users.* FROM users WHERE  (users.name=$1) AND (users.things < $2) ORDER BY users.name ASC, users.things DESC LIMIT 1"])
+        sql.should eq(["SELECT users.* FROM users WHERE ((users.name=$1) AND (users.things < $2)) ORDER BY users.name ASC, users.things DESC LIMIT 1"])
       end
     end
 
@@ -79,8 +79,8 @@ if Repo.config.adapter == Crecto::Adapters::Postgres
       Repo.delete(changeset.instance)
       check_sql do |sql|
         sql.should eq(
-          ["DELETE FROM addresses WHERE  (addresses.user_id=$1)",
-           "SELECT user_projects.project_id FROM user_projects WHERE  (user_projects.user_id=$1)",
+          ["DELETE FROM addresses WHERE (addresses.user_id=$1)",
+           "SELECT user_projects.project_id FROM user_projects WHERE (user_projects.user_id=$1)",
            "DELETE FROM users WHERE (id=$1) RETURNING *"])
       end
     end
@@ -91,7 +91,7 @@ if Repo.config.adapter == Crecto::Adapters::Postgres
       query = Query.where(things: nil)
       Repo.all(User, query)
       check_sql do |sql|
-        sql.should eq(["SELECT users.* FROM users WHERE  (users.things IS NULL)"])
+        sql.should eq(["SELECT users.* FROM users WHERE (users.things IS NULL)"])
       end
     end
 

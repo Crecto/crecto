@@ -66,7 +66,7 @@ if Repo.config.adapter == Crecto::Adapters::SQLite3
         .limit(1)
       Repo.all(User, query)
       check_sql do |sql|
-        sql.should eq(["SELECT users.* FROM users WHERE  (users.name=?) AND (users.things < ?) ORDER BY users.name ASC, users.things DESC LIMIT 1"])
+        sql.should eq(["SELECT users.* FROM users WHERE ((users.name=?) AND (users.things < ?)) ORDER BY users.name ASC, users.things DESC LIMIT 1"])
       end
     end
 
@@ -90,8 +90,8 @@ if Repo.config.adapter == Crecto::Adapters::SQLite3
       Repo.delete(changeset.instance)
       check_sql do |sql|
         sql.should eq(
-          ["DELETE FROM addresses WHERE  (addresses.user_id=?)",
-           "SELECT user_projects.project_id FROM user_projects WHERE  (user_projects.user_id=?)",
+          ["DELETE FROM addresses WHERE (addresses.user_id=?)",
+           "SELECT user_projects.project_id FROM user_projects WHERE (user_projects.user_id=?)",
            "SELECT * FROM users WHERE (id=?)",
            "DELETE FROM users WHERE (id=?)"])
       end
@@ -103,7 +103,7 @@ if Repo.config.adapter == Crecto::Adapters::SQLite3
       query = Query.where(things: nil)
       Repo.all(User, query)
       check_sql do |sql|
-        sql.should eq(["SELECT users.* FROM users WHERE  (users.things IS NULL)"])
+        sql.should eq(["SELECT users.* FROM users WHERE (users.things IS NULL)"])
       end
     end
 
