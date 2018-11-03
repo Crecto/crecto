@@ -208,7 +208,7 @@ describe Crecto do
       end
       it "allows the primary key to be a string" do
         user = UserUUIDCustom.new
-        user.name = "whatever" 
+        user.name = "whatever"
         # Need to set this because of MySQL and SQLite
         # MySQL actually inserts the uuid because of the trigger,
         # but the `instance` method below seems to return the object before the trigger is fired.
@@ -255,7 +255,7 @@ describe Crecto do
       it "should set the updated at value to now" do
         u = User.new
         u.updated_at_to_now
-        u.updated_at.as(Time).epoch_ms.should be_close(Time.now.epoch_ms, 100)
+        u.updated_at.as(Time).to_unix_ms.should be_close(Time.now.to_unix_ms, 100)
       end
     end
 
@@ -263,7 +263,7 @@ describe Crecto do
       it "should set the created at value to now" do
         u = UserDifferentDefaults.new
         u.created_at_to_now
-        u.xyz.as(Time).epoch_ms.should be_close(Time.now.epoch_ms, 2000)
+        u.xyz.as(Time).to_unix_ms.should be_close(Time.now.to_unix_ms, 2000)
       end
     end
 
