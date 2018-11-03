@@ -447,7 +447,7 @@ describe Crecto do
         user = Repo.get(User, id)
         user.is_a?(User).should eq(true)
         user.not_nil!.id.should eq(id)
-        user.not_nil!.some_date.as(Time).to_local.epoch_ms.should be_close(now.epoch_ms, 2000)
+        user.not_nil!.some_date.as(Time).to_local.to_unix_ms.should be_close(now.to_unix_ms, 2000)
       end
 
       it "should return nil if not in db" do
@@ -782,7 +782,7 @@ describe Crecto do
         u.created_at.should eq(created_at)
         changeset.instance.name.should eq("new name")
         changeset.valid?.should eq(true)
-        changeset.instance.updated_at.as(Time).to_local.epoch_ms.should be_close(Time.now.epoch_ms, 2000)
+        changeset.instance.updated_at.as(Time).to_local.to_unix_ms.should be_close(Time.now.to_unix_ms, 2000)
       end
 
       it "should return a changeset and set the changeset action" do
@@ -822,7 +822,7 @@ describe Crecto do
         u.created_at.should eq(created_at)
         changeset.instance.name.should eq("new name")
         changeset.valid?.should eq(true)
-        changeset.instance.updated_at.as(Time).to_local.epoch_ms.should be_close(Time.now.epoch_ms, 2000)
+        changeset.instance.updated_at.as(Time).to_local.to_unix_ms.should be_close(Time.now.to_unix_ms, 2000)
       end
 
       it "should raise if changeset is invalid (name is nil)" do
@@ -1087,7 +1087,7 @@ describe Crecto do
         user.user_projects.size.should eq 1
         user.projects.size.should eq 1
       end
-      
+
       it "should preload the has_many through association with a query" do
         user = User.new
         user.name = "tester"
