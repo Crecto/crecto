@@ -616,8 +616,10 @@ module Crecto
         query = query.where(join_key, ids)
         join_associations = all(join_klass, query)
         outer_klass_ids = join_associations.map { |ja| outer_klass.foreign_key_value_for_association(through_key, ja) }
-        delete_all(join_klass, Query.where(join_key, ids), tx) unless join_associations.empty?
-        delete_all(outer_klass, Query.where(:id, outer_klass_ids), tx) unless join_associations.empty?
+        return if join_associations.empty?
+        delete_all(join_klass, Query.where(join_key, ids), tx)
+        outer_klass_pk_field = outer_klass.primary_key_field_symbol
+        delete_all(outer_klass, Query.where(outer_klass_pk_field, outer_klass_ids), tx)
       end
     end
 
@@ -724,7 +726,12 @@ module Crecto
       ids = results.map { |r| queryable.foreign_key_value_for_association(preload[:symbol], r).as(PkeyValue) }
       ids.compact!
       return if ids.empty?
-      query = Crecto::Repo::Query.where(id: ids)
+
+      association_klass = queryable.klass_for_association(preload[:symbol])
+      association_pk_field = association_klass.try(&.primary_key_field_symbol)
+      return if association_pk_field.nil?
+
+      query = Crecto::Repo::Query.where(association_pk_field, ids)
       if preload_query = preload[:query]
         query = query.combine(preload_query)
       end
