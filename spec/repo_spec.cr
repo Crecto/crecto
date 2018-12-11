@@ -1051,6 +1051,19 @@ describe Crecto do
 
         post.user.should eq(user)
       end
+
+      it "should preload the association" do
+        user = UserDifferentDefaults.new
+        user.name = "fridge"
+        user = Repo.insert(user).instance
+
+        thing = Thing.new
+        thing.user = user
+        thing = Repo.insert(thing).instance
+
+        thing = Repo.get!(Thing, thing.id, Query.preload(:user))
+        thing.user.should_not be_nil
+      end
     end
 
     describe "preload" do
