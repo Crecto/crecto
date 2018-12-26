@@ -14,6 +14,7 @@ DROP TABLE IF EXISTS users_uuid CASCADE;
 DROP TABLE IF EXISTS users_uuid_custom CASCADE;
 DROP TABLE IF EXISTS things_that_belong_to_user_uuid_custom CASCADE;
 DROP TABLE IF EXISTS vehicles CASCADE;
+DROP TABLE IF EXISTS things_without_fields CASCADE;
 
 CREATE TABLE users(
   id BIGSERIAL PRIMARY KEY,

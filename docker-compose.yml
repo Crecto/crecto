@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres:latest
+  
+  mysql:
+    image: mysql:5
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+
+  crecto:
+    build: .
+    image: crecto
+    working_dir: /crecto
+    links:
+      - postgres
+      - mysql
+    volumes:
+      - ./spec:/crecto/spec
+      - ./src:/crecto/src
+      - ./bin:/crecto/bin
+    command: bin/specs
