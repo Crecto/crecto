@@ -155,7 +155,7 @@ module Crecto
 
       {% mapping = CRECTO_FIELDS.map do |field|
            json_fields.push(field[:name]) if field[:type].id.stringify == "Json"
-           field_type = field[:type].id == "Int64" || field[:type].id == "Int32" ? "PkeyValue" : field[:type].id.stringify
+           field_type = field[:type].id.stringify
            "#{field[:name].id.stringify}: {type: #{field_type.id}, nilable: true}"
          end %}
 
