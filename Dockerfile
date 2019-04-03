@@ -5,7 +5,7 @@ RUN apt-get -q update && \
   apt-get -qy install --no-install-recommends build-essential git wget libssl-dev libxml2-dev libyaml-0-2 libreadline-dev netcat libsqlite3-dev
 
 WORKDIR /crecto
-COPY shard.yml shard.lock /crecto/
+COPY shard.yml /crecto/
 RUN shards install
 ENTRYPOINT ["/crecto/bin/specs"]
 
