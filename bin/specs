@@ -1,76 +1,106 @@
 #!/usr/bin/env bash
 
-# wait for database connections
-while ! nc -q 1 postgres 5432 </dev/null; do sleep 1; done
-while ! nc -q 1 mysql 3306 </dev/null; do sleep 1; done
+set -e
+sqlite_specs() {
+    [ -f crecto_test.db ] && rm -rf crecto_test.db
+    sqlite3 ./crecto_test.db < spec/migrations/sqlite3_migrations.sql
+    echo
+    echo "* * * * * * * * * * *"
+    echo Running SQLITE3 specs
+    echo "* * * * * * * * * * *"
+    echo
+    (
+    cat <<-REPO
+    module Repo
+      extend Crecto::Repo
 
-# sqlite migrations
-rm -rf crecto_test.db
-sqlite3 ./crecto_test.db < spec/migrations/sqlite3_migrations.sql
+      config do |conf|
+        conf.adapter = Crecto::Adapters::SQLite3
+        conf.database = "./crecto_test.db"
+      end
+    end
+REPO
+    ) > spec/repo.cr
+    crystal spec
+}
 
-# mysql migrations
-mysql -h mysql -e 'create database if not exists crecto_test'
-mysql -h mysql -Dcrecto_test < spec/migrations/mysql_migrations.sql
+postgres_specs() {
+    echo "Waiting for postgres db connection..."
+    while ! psql -h postgres -c 'select 1;' -U postgres; do sleep 1; done
+    psql -h postgres -c 'create database crecto_test;' -U postgres || true
+    psql -h postgres -U postgres crecto_test < spec/migrations/pg_migrations.sql
 
-# psql migrations
-psql -h postgres -c 'create database crecto_test;' -U postgres
-psql -h postgres -U postgres crecto_test < spec/migrations/pg_migrations.sql
+    echo
+    echo "* * * * * * * * * * * *"
+    echo Running Postgresql specs
+    echo "* * * * * * * * * * * *"
+    echo
+    (
+    cat <<-REPO
+    module Repo
+      extend Crecto::Repo
 
-echo
-echo "* * * * * * * * * * *"
-echo Running SQLITE3 specs
-echo "* * * * * * * * * * *"
-echo
-echo "
-module Repo
-  extend Crecto::Repo
+      config do |conf|
+        conf.adapter = Crecto::Adapters::Postgres
+        conf.database = "crecto_test"
+        conf.hostname = "postgres"
+        conf.username = "postgres"
+        conf.port = 5432
+      end
+    end
+REPO
+    ) > spec/repo.cr
+    crystal spec
+}
 
-  config do |conf|
-    conf.adapter = Crecto::Adapters::SQLite3
-    conf.database = \"./crecto_test.db\"
-  end
-end
-" > spec/repo.cr
-crystal spec
+mysql_specs() {
+    echo "Waiting for mysql db connection..."
+    while ! mysql -h mysql -e 'select 1'; do sleep 1; done
+    mysql -h mysql -e 'create database if not exists crecto_test'
+    mysql -h mysql -Dcrecto_test < spec/migrations/mysql_migrations.sql
 
-echo
-echo "* * * * * * * * * *"
-echo Running Mysql specs
-echo "* * * * * * * * * * *"
-echo
-echo "
-module Repo
-  extend Crecto::Repo
+    echo
+    echo "* * * * * * * * * *"
+    echo Running Mysql specs
+    echo "* * * * * * * * * * *"
+    echo
+    (
+    cat <<-REPO
+    module Repo
+      extend Crecto::Repo
 
-  config do |conf|
-    config.adapter = Crecto::Adapters::Mysql
-    config.database = \"crecto_test\"
-    config.hostname = \"mysql\"
-    config.username = \"root\"
-    config.port = 3306
-  end
-end
-" > spec/repo.cr
-crystal spec
+      config do |conf|
+        config.adapter = Crecto::Adapters::Mysql
+        config.database = "crecto_test"
+        config.hostname = "mysql"
+        config.username = "root"
+        config.port = 3306
+      end
+    end
+REPO
+    ) > spec/repo.cr
+    crystal spec
+}
 
-echo
-echo "* * * * * * * * * * * *"
-echo Running Postgresql specs
-echo "* * * * * * * * * * * *"
-echo
-echo "
-module Repo
-  extend Crecto::Repo
 
-  config do |conf|
-    conf.adapter = Crecto::Adapters::Postgres
-    conf.database = \"crecto_test\"
-    conf.hostname = \"postgres\"
-    conf.username = \"postgres\"
-    conf.port = 5432
-  end
-end
-" > spec/repo.cr
-crystal spec
+case "$1" in
+    sqlite)
+        sqlite_specs
+        ;;
+    postgres)
+        postgres_specs
+        ;;
+    mysql)
+        mysql_specs
+        ;;
+    '')
+        sqlite_specs
+        postgres_specs
+        mysql_specs
+        ;;
+    *)
+        echo "Unsupported argument '$1'" >&2
+        exit 1
+esac
 
 exit 0
