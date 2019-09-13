@@ -3,6 +3,11 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.11.0] 2019-09-13
+* Fixed breaking bug
+* Updated all dependencies to latest versions
+* Update to crystal 0.30.1
+
 ## [0.10.0] 2018-10-25
 * Updated to crystal 0.26.1
 * Allow defining models without any fields - [@jreinert](https://github.com/jreinert)
@@ -183,6 +188,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Query
 * Postgres Adapter
 
+[0.11.0]: https://github.com/fridgerator/crecto/compare/v0.10.1...v0.11.0
 [0.10.0]: https://github.com/fridgerator/crecto/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/fridgerator/crecto/compare/v0.8.6...v0.9.0
 [0.8.6]: https://github.com/fridgerator/crecto/compare/v0.8.5...v0.8.6

@@ -1,4 +1,3 @@
-# Crecto is no longer actively maintained and does not work with the latest Crystal version.
 # Crecto
 
 ![crecto](crecto.png)
