@@ -28,13 +28,13 @@ describe Crecto::Model do
       end
 
       it "can be created from a named tuple" do
-        user = User.cast!({ name: "test" })
+        user = User.cast!({name: "test"})
         user.name.should eq("test")
       end
 
       it "can be updated from a named tuple" do
         user = User.new
-        user.cast!({ name: "new name" })
+        user.cast!({name: "new name"})
         user.name.should eq("new name")
       end
     end
@@ -46,40 +46,40 @@ describe Crecto::Model do
       end
 
       it "can be created from a named tuple" do
-        user = User.cast({ name: "test" })
+        user = User.cast({name: "test"})
         user.name.should eq("test")
       end
 
       it "can be created from a named tuple and a whitelist of allowed attributes" do
-        user = User.cast({ name: "test", things: 3 }, { :name })
+        user = User.cast({name: "test", things: 3}, {:name})
         user.name.should eq("test")
         user.things.should eq(nil)
       end
 
       it "ignores unknown attributes" do
-        user = User.cast({ name: "test", some_nonexisting_thing: 3 })
-        user.cast({ some_other_nonexisting_thing: 3 }, { :some_other_nonexisting_thing })
+        user = User.cast({name: "test", some_nonexisting_thing: 3})
+        user.cast({some_other_nonexisting_thing: 3}, {:some_other_nonexisting_thing})
         user.name.should eq("test")
       end
 
       it "supports hashes with symbol keys" do
-        user = User.cast({ :name => "test" })
+        user = User.cast({:name => "test"})
         user.name.should eq("test")
       end
 
       it "supports hashes with string keys" do
-        user = User.cast({ "name" => "test" })
+        user = User.cast({"name" => "test"})
         user.name.should eq("test")
       end
 
       it "raises on runtime if a type doesn't match" do
         expect_raises(TypeCastError) do
-          User.cast({ name: 1 })
+          User.cast({name: 1})
         end
       end
 
       it "can be restricted with a whitelist" do
-        user = User.cast({ :name => "test", :things => 3 }, [:name])
+        user = User.cast({:name => "test", :things => 3}, [:name])
         user.name.should eq("test")
         user.things.should eq(nil)
       end

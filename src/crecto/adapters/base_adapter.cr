@@ -95,7 +95,7 @@ module Crecto
         q = String.build do |builder|
           builder <<
             "SELECT * FROM " << queryable.table_name <<
-            " WHERE (" << queryable.primary_key_field << "=$1)"  <<
+            " WHERE (" << queryable.primary_key_field << "=$1)" <<
             " LIMIT 1"
         end
 
@@ -117,7 +117,6 @@ module Crecto
           builder.back(2)
           builder << ") RETURNING *"
         end
-
 
         execute(conn, position_args(q), fields_values[:values])
       end
@@ -151,7 +150,6 @@ module Crecto
       private def build_aggregate_query(builder, queryable, ag, field)
         builder << " SELECT " << ag << '(' << queryable.table_name << '.' << field << ") FROM " << queryable.table_name
       end
-
 
       private def all(conn, queryable, query)
         params = [] of DbValue | Array(DbValue)

@@ -8,6 +8,7 @@ module Crecto
       abstract class WhereExpression
         abstract def and(other : WhereExpression) : WhereExpression
         abstract def or(other : WhereExpression) : WhereExpression
+
         getter? empty = false
 
         def and(other : WhereType)
@@ -183,7 +184,7 @@ module Crecto
       # ```
       # Query.distinct("users.name")
       # ```
-      def self.distinct(dist : String)2
+      def self.distinct(dist : String)
         self.new.distinct(dist)
       end
 
@@ -494,7 +495,7 @@ module Crecto
       # Query.preload([:posts, :projects])
       # ```
       def preload(preload_associations : Array(Symbol))
-        @preloads += preload_associations.map{|a| {symbol: a, query: nil}}
+        @preloads += preload_associations.map { |a| {symbol: a, query: nil} }
         self
       end
 
@@ -504,7 +505,7 @@ module Crecto
       # Query.preload([:posts, :projects], Query.where(name: "name"))
       # ```
       def preload(preload_associations : Array(Symbol), query : Query)
-        @preloads += preload_associations.map{|a| {symbol: a, query: query}}
+        @preloads += preload_associations.map { |a| {symbol: a, query: query} }
         self
       end
 
@@ -577,8 +578,8 @@ module Crecto
       # ```
       # Query.where(city: "Los Angeles").and do |e|
       #   e.where(name: "Bill")
-      #    .where("age > 20")
-      #    .or_where(name: "Wendy")
+      #     .where("age > 20")
+      #     .or_where(name: "Wendy")
       # end
       #
       # # => SELECT * FROM users WHERE
@@ -624,7 +625,7 @@ module Crecto
       #
       # ```
       # Query.where(city: "Los Angeles", name: "Bill").or do |e|
-      #    e.where("age > 20").or_where(name: "Wendy")
+      #   e.where("age > 20").or_where(name: "Wendy")
       # end
       #
       # # => SELECT * FROM users WHERE

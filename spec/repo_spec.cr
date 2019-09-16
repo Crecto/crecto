@@ -293,7 +293,7 @@ describe Crecto do
 
           query = Query.where(name: "or_where_user").and do |e|
             e.where(things: 999)
-             .or_where("nope > 5")
+              .or_where("nope > 5")
           end
 
           users = Repo.all(User, query)
@@ -301,7 +301,7 @@ describe Crecto do
 
           query = Query.where(things: 123).and do |e|
             e.where(things: 999)
-             .or_where("nope > 5").where(name: "or_where_user")
+              .or_where("nope > 5").where(name: "or_where_user")
           end
 
           users = Repo.all(User, query)
