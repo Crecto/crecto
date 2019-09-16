@@ -53,7 +53,7 @@ describe Crecto do
         it "should set properties for the values" do
           u = UserDifferentDefaults.new
 
-          now = Time.now
+          now = Time.local
           u.xyz = now
           u.to_query_hash.should eq({:name => nil, :xyz => now})
           UserDifferentDefaults.primary_key_field.should eq("user_id")
@@ -235,7 +235,7 @@ describe Crecto do
 
     describe "#updated_at_value" do
       it "should return the updated at value" do
-        now = Time.now
+        now = Time.local
         u = User.new
         u.updated_at = now
         u.updated_at_value.should eq(now)
@@ -244,7 +244,7 @@ describe Crecto do
 
     describe "#created_at_value" do
       it "should return the created at value" do
-        now = Time.now
+        now = Time.local
         u = UserDifferentDefaults.new
         u.xyz = now
         u.created_at_value.should eq(now)
@@ -255,7 +255,7 @@ describe Crecto do
       it "should set the updated at value to now" do
         u = User.new
         u.updated_at_to_now
-        u.updated_at.as(Time).to_unix_ms.should be_close(Time.now.to_unix_ms, 100)
+        u.updated_at.as(Time).to_unix_ms.should be_close(Time.local.to_unix_ms, 100)
       end
     end
 
@@ -263,7 +263,7 @@ describe Crecto do
       it "should set the created at value to now" do
         u = UserDifferentDefaults.new
         u.created_at_to_now
-        u.xyz.as(Time).to_unix_ms.should be_close(Time.now.to_unix_ms, 2000)
+        u.xyz.as(Time).to_unix_ms.should be_close(Time.local.to_unix_ms, 2000)
       end
     end
 

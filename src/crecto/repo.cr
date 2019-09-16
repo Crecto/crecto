@@ -370,7 +370,7 @@ module Crecto
     #
     # ```
     # query = Crecto::Repo::Query.where(name: "Ted", count: 0)
-    # Repo.update_all(User, query, {count: 1, date: Time.now})
+    # Repo.update_all(User, query, {count: 1, date: Time.local})
     # ```
     def update_all(queryable, query, update_hash : Hash, tx : DB::Transaction?)
       config.adapter.run(tx || config.get_connection, :update_all, queryable, query, update_hash)

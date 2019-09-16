@@ -7,24 +7,24 @@ module Crecto
       extend BaseAdapter
 
       def self.exec_execute(conn, query_string, params : Array)
-        start = Time.now
+        start = Time.local
         results = if conn.is_a?(DB::Database)
                     conn.exec(query_string, params)
                   else
                     conn.connection.exec(query_string, params)
                   end
-        DbLogger.log(query_string, Time.new - start, params)
+        DbLogger.log(query_string, Time.local - start, params)
         results
       end
 
       def self.exec_execute(conn, query_string)
-        start = Time.now
+        start = Time.local
         results = if conn.is_a?(DB::Database)
                     conn.exec(query_string)
                   else
                     conn.connection.exec(query_string)
                   end
-        DbLogger.log(query_string, Time.new - start)
+        DbLogger.log(query_string, Time.local - start)
         results
       end
 
@@ -83,7 +83,7 @@ module Crecto
           update_begin(builder, changeset.instance.class.table_name, fields_values)
           builder << " WHERE (" << changeset.instance.class.primary_key_field << "=?)"
         end
- 
+
         exec_execute(conn, q, fields_values[:values] + [changeset.instance.pkey_value])
         execute(conn, "SELECT * FROM #{changeset.instance.class.table_name} WHERE (#{changeset.instance.class.primary_key_field}=?)", [changeset.instance.pkey_value])
       end

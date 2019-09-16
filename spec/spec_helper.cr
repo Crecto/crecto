@@ -23,7 +23,7 @@ class DefaultValue < Crecto::Model
     field :default_string, String, default: "should set default"
     field :default_int, Int32, default: 64
     field :default_float, Float64, default: 3.14
-    field :default_time, Time, default: Time.now
+    field :default_time, Time, default: Time.local
     field :default_bool, Bool, default: false
   end
 end
