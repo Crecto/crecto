@@ -56,7 +56,7 @@ describe Crecto do
         u.yep = false
         u.stuff = 9993
         u.pageviews = 10000
-        u.some_date = Time.now.at_beginning_of_hour
+        u.some_date = Time.local.at_beginning_of_hour
 
         changeset = Repo.insert(u)
         changeset.instance.id.should_not eq(nil)
@@ -114,7 +114,7 @@ describe Crecto do
         u.yep = false
         u.stuff = 9993
         u.pageviews = 10000
-        u.some_date = Time.now.at_beginning_of_hour
+        u.some_date = Time.local.at_beginning_of_hour
 
         changeset = Repo.insert!(u)
         changeset.instance.id.should_not eq(nil)
@@ -129,7 +129,7 @@ describe Crecto do
         u.yep = false
         u.stuff = 9993
         u.pageviews = 10000
-        u.some_date = Time.now.at_beginning_of_hour
+        u.some_date = Time.local.at_beginning_of_hour
 
         expect_raises Crecto::InvalidChangeset(User) do
           Repo.insert!(u)
@@ -293,7 +293,7 @@ describe Crecto do
 
           query = Query.where(name: "or_where_user").and do |e|
             e.where(things: 999)
-             .or_where("nope > 5")
+              .or_where("nope > 5")
           end
 
           users = Repo.all(User, query)
@@ -301,7 +301,7 @@ describe Crecto do
 
           query = Query.where(things: 123).and do |e|
             e.where(things: 999)
-             .or_where("nope > 5").where(name: "or_where_user")
+              .or_where("nope > 5").where(name: "or_where_user")
           end
 
           users = Repo.all(User, query)
@@ -514,7 +514,7 @@ describe Crecto do
 
     describe "#get" do
       it "should return a user" do
-        now = Time.now
+        now = Time.local
 
         user = User.new
         user.name = "test"
@@ -839,7 +839,7 @@ describe Crecto do
 
     describe "#update" do
       it "should update the model" do
-        now = Time.now.at_beginning_of_hour
+        now = Time.local.at_beginning_of_hour
         u = User.new
         u.name = "fridge"
         u.things = 123
@@ -859,7 +859,7 @@ describe Crecto do
         u.created_at.should eq(created_at)
         changeset.instance.name.should eq("new name")
         changeset.valid?.should eq(true)
-        changeset.instance.updated_at.as(Time).to_local.to_unix_ms.should be_close(Time.now.to_unix_ms, 2000)
+        changeset.instance.updated_at.as(Time).to_local.to_unix_ms.should be_close(Time.local.to_unix_ms, 2000)
       end
 
       it "should return a changeset and set the changeset action" do
@@ -879,7 +879,7 @@ describe Crecto do
 
     describe "#update!" do
       it "should update the model" do
-        now = Time.now.at_beginning_of_hour
+        now = Time.local.at_beginning_of_hour
         u = User.new
         u.name = "fridge"
         u.things = 123
@@ -899,11 +899,11 @@ describe Crecto do
         u.created_at.should eq(created_at)
         changeset.instance.name.should eq("new name")
         changeset.valid?.should eq(true)
-        changeset.instance.updated_at.as(Time).to_local.to_unix_ms.should be_close(Time.now.to_unix_ms, 2000)
+        changeset.instance.updated_at.as(Time).to_local.to_unix_ms.should be_close(Time.local.to_unix_ms, 2000)
       end
 
       it "should raise if changeset is invalid (name is nil)" do
-        now = Time.now.at_beginning_of_hour
+        now = Time.local.at_beginning_of_hour
         u = User.new
         u.name = "fridge"
         u.things = 123

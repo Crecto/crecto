@@ -302,13 +302,13 @@ module Crecto
 
       def updated_at_to_now
         {% unless CRECTO_UPDATED_AT_FIELD == nil %}
-          self.{{CRECTO_UPDATED_AT_FIELD.id}} = Time.utc_now
+          self.{{CRECTO_UPDATED_AT_FIELD.id}} = Time.utc
         {% end %}
       end
 
       def created_at_to_now
         {% unless CRECTO_CREATED_AT_FIELD == nil %}
-          self.{{CRECTO_CREATED_AT_FIELD.id}} = Time.utc_now
+          self.{{CRECTO_CREATED_AT_FIELD.id}} = Time.utc
         {% end %}
       end
 

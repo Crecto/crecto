@@ -12,7 +12,7 @@ describe Crecto do
           .preload(:posts)
           .order_by("last_name ASC")
           .limit(1)
-        
+
         query2 = Crecto::Repo::Query
           .select(["user.name2"])
           .where(name: "user_name2")
@@ -21,7 +21,7 @@ describe Crecto do
           .preload(:comments)
           .order_by("first_name ASC")
           .limit(2)
-        
+
         new_query = query.combine(query2)
 
         new_query.selects.should eq ["user.name", "user.name2"]
@@ -68,9 +68,9 @@ describe Crecto do
         end
 
         query.where_expression.should eq Crecto::Repo::Query::AndExpression.new(
-          Crecto::Repo::Query::AtomExpression.new({ :foo => "bar" }),
+          Crecto::Repo::Query::AtomExpression.new({:foo => "bar"}),
           Crecto::Repo::Query::OrExpression.new(
-            Crecto::Repo::Query::AtomExpression.new({ :name => "jokke", :age => 99 }),
+            Crecto::Repo::Query::AtomExpression.new({:name => "jokke", :age => 99}),
           )
         )
       end
@@ -83,13 +83,13 @@ describe Crecto do
         end
 
         query.where_expression.should eq Crecto::Repo::Query::AndExpression.new(
-          Crecto::Repo::Query::AtomExpression.new({ :foo => "bar" }),
+          Crecto::Repo::Query::AtomExpression.new({:foo => "bar"}),
           Crecto::Repo::Query::OrExpression.new(
             Crecto::Repo::Query::AndExpression.new(
               Crecto::Repo::Query::OrExpression.new(
-                Crecto::Repo::Query::AtomExpression.new({ :name => "jokke", :age => 99 }),
+                Crecto::Repo::Query::AtomExpression.new({:name => "jokke", :age => 99}),
               ),
-              Crecto::Repo::Query::AtomExpression.new({ :bar => "baz" })
+              Crecto::Repo::Query::AtomExpression.new({:bar => "baz"})
             )
           )
         )
@@ -118,8 +118,8 @@ describe Crecto do
         end
 
         query.where_expression.should eq Crecto::Repo::Query::OrExpression.new(
-          Crecto::Repo::Query::AtomExpression.new({ :foo => "bar" }),
-          Crecto::Repo::Query::AtomExpression.new({ :name => "jokke", :age => 99 }),
+          Crecto::Repo::Query::AtomExpression.new({:foo => "bar"}),
+          Crecto::Repo::Query::AtomExpression.new({:name => "jokke", :age => 99}),
         )
       end
 
@@ -131,11 +131,11 @@ describe Crecto do
         end
 
         query.where_expression.should eq Crecto::Repo::Query::OrExpression.new(
-          Crecto::Repo::Query::AtomExpression.new({ :foo => "bar" }),
+          Crecto::Repo::Query::AtomExpression.new({:foo => "bar"}),
           Crecto::Repo::Query::OrExpression.new(
-            Crecto::Repo::Query::AtomExpression.new({ :bar => "baz" }),
+            Crecto::Repo::Query::AtomExpression.new({:bar => "baz"}),
             Crecto::Repo::Query::OrExpression.new(
-              Crecto::Repo::Query::AtomExpression.new({ :name => "jokke", :age => 99 })
+              Crecto::Repo::Query::AtomExpression.new({:name => "jokke", :age => 99})
             )
           )
         )

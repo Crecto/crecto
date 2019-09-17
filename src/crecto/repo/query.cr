@@ -5,9 +5,10 @@ module Crecto
     # `Query.select('id').where(name: "fred").join(:posts).order_by("users.name").limit(1).offset(4)`
     #
     class Query
-      abstract class WhereExpression 
+      abstract class WhereExpression
         abstract def and(other : WhereExpression) : WhereExpression
         abstract def or(other : WhereExpression) : WhereExpression
+
         getter? empty = false
 
         def and(other : WhereType)
@@ -99,12 +100,12 @@ module Crecto
           expressions == other.expressions
         end
 
-        def and(other : WhereExpression)
+        def and(other : WhereExpression) : WhereExpression
           @expressions << other
           self
         end
 
-        def or(other : WhereExpression)
+        def or(other : WhereExpression) : WhereExpression
           OrExpression.new(self, other)
         end
       end
@@ -120,14 +121,14 @@ module Crecto
           expressions == other.expressions
         end
 
-        def and(other : WhereExpression)
+        def and(other : WhereExpression) : WhereExpression
           last = @expressions.pop
           last = AndExpression.new(self.class.new(last)) if last.is_a?(AtomExpression)
           @expressions << last.and(other)
           self
         end
 
-        def or(other : WhereExpression)
+        def or(other : WhereExpression) : WhereExpression
           @expressions << other
           self
         end
@@ -143,11 +144,11 @@ module Crecto
           atom == other.atom
         end
 
-        def and(other : WhereExpression)
+        def and(other : WhereExpression) : WhereExpression
           AndExpression.new(self, other)
         end
 
-        def or(other : WhereExpression)
+        def or(other : WhereExpression) : WhereExpression
           OrExpression.new(self, other)
         end
       end
@@ -155,11 +156,11 @@ module Crecto
       class InitialExpression < WhereExpression
         @empty = true
 
-        def and(other : WhereExpression)
+        def and(other : WhereExpression) : WhereExpression
           AndExpression.new(other)
         end
 
-        def or(other : WhereExpression)
+        def or(other : WhereExpression) : WhereExpression
           OrExpression.new(other)
         end
 
@@ -183,7 +184,7 @@ module Crecto
       # ```
       # Query.distinct("users.name")
       # ```
-      def self.distinct(dist : String)2
+      def self.distinct(dist : String)
         self.new.distinct(dist)
       end
 
@@ -494,7 +495,7 @@ module Crecto
       # Query.preload([:posts, :projects])
       # ```
       def preload(preload_associations : Array(Symbol))
-        @preloads += preload_associations.map{|a| {symbol: a, query: nil}}
+        @preloads += preload_associations.map { |a| {symbol: a, query: nil} }
         self
       end
 
@@ -504,7 +505,7 @@ module Crecto
       # Query.preload([:posts, :projects], Query.where(name: "name"))
       # ```
       def preload(preload_associations : Array(Symbol), query : Query)
-        @preloads += preload_associations.map{|a| {symbol: a, query: query}}
+        @preloads += preload_associations.map { |a| {symbol: a, query: query} }
         self
       end
 
@@ -577,8 +578,8 @@ module Crecto
       # ```
       # Query.where(city: "Los Angeles").and do |e|
       #   e.where(name: "Bill")
-      #    .where("age > 20")
-      #    .or_where(name: "Wendy")
+      #     .where("age > 20")
+      #     .or_where(name: "Wendy")
       # end
       #
       # # => SELECT * FROM users WHERE
@@ -624,7 +625,7 @@ module Crecto
       #
       # ```
       # Query.where(city: "Los Angeles", name: "Bill").or do |e|
-      #    e.where("age > 20").or_where(name: "Wendy")
+      #   e.where("age > 20").or_where(name: "Wendy")
       # end
       #
       # # => SELECT * FROM users WHERE

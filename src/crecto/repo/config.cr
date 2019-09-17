@@ -68,8 +68,8 @@ module Crecto
 
       private def set_url_creds(io)
         return if adapter == Crecto::Adapters::SQLite3
-        io << URI.escape(username) unless username.empty?
-        io << ":#{URI.escape(password)}" unless password.empty?
+        io << URI.encode(username) unless username.empty?
+        io << ":#{URI.encode(password)}" unless password.empty?
         io << "@" unless username.empty?
       end
 

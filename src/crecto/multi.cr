@@ -19,19 +19,18 @@ module Crecto
     record Update, instance : Crecto::Model
 
     # :nodoc:
-    alias UpdateHash =
-      Hash(Symbol, PkeyValue) |
-      Hash(Symbol, DbValue) |
-      Hash(Symbol, Array(DbValue)) |
-      Hash(Symbol, Array(PkeyValue)) |
-      Hash(Symbol, Array(Int32)) |
-      Hash(Symbol, Array(Int64)) |
-      Hash(Symbol, Array(String)) |
-      Hash(Symbol, Int32 | String) |
-      Hash(Symbol, Int32) |
-      Hash(Symbol, Int64) |
-      Hash(Symbol, String) |
-      Hash(Symbol, Int32 | Int64 | String | Nil)
+    alias UpdateHash = Hash(Symbol, PkeyValue) |
+                       Hash(Symbol, DbValue) |
+                       Hash(Symbol, Array(DbValue)) |
+                       Hash(Symbol, Array(PkeyValue)) |
+                       Hash(Symbol, Array(Int32)) |
+                       Hash(Symbol, Array(Int64)) |
+                       Hash(Symbol, Array(String)) |
+                       Hash(Symbol, Int32 | String) |
+                       Hash(Symbol, Int32) |
+                       Hash(Symbol, Int64) |
+                       Hash(Symbol, String) |
+                       Hash(Symbol, Int32 | Int64 | String | Nil)
 
     # :nodoc:
     record UpdateAll, queryable : Crecto::Model.class, query : Crecto::Repo::Query, update_hash : UpdateHash
