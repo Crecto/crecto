@@ -83,7 +83,7 @@ module Crecto
 
       def exec_execute(conn, query_string, params)
         return execute(conn, query_string, params) if conn.is_a?(DB::Database)
-        conn.connection.exec(query_string, params)
+        conn.connection.exec(query_string, args: params)
       end
 
       def exec_execute(conn, query_string)
