@@ -59,9 +59,9 @@ module Crecto
         start = Time.local
         begin
           if conn.is_a?(DB::Database)
-            conn.query(query_string, params)
+            conn.query(query_string, args: params)
           else
-            conn.connection.query(query_string, params)
+            conn.connection.query(query_string, args: params)
           end
         ensure
           DbLogger.log(query_string, Time.local - start, params)
@@ -142,7 +142,7 @@ module Crecto
 
         start = Time.local
         query_string = position_args(q)
-        results = conn.scalar(query_string, params)
+        results = conn.scalar(query_string, args: params)
         DbLogger.log(query_string, Time.local - start, params)
         results
       end
