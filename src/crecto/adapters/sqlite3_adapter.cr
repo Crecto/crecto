@@ -9,9 +9,9 @@ module Crecto
       def self.exec_execute(conn, query_string, params : Array)
         start = Time.local
         results = if conn.is_a?(DB::Database)
-                    conn.exec(query_string, args: params)
+                    conn.exec(query_string, params)
                   else
-                    conn.connection.exec(query_string, args: params)
+                    conn.connection.exec(query_string, params)
                   end
         DbLogger.log(query_string, Time.local - start, params)
         results
