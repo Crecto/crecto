@@ -3,6 +3,9 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.11.1] 2019-10-18
+* Fixed args issue
+
 ## [0.11.0] 2019-09-13
 * Fixed breaking bug
 * Updated all dependencies to latest versions
@@ -188,6 +191,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Query
 * Postgres Adapter
 
+[0.11.1]: https://github.com/fridgerator/crecto/compare/v0.11.0...v0.11.1
 [0.11.0]: https://github.com/fridgerator/crecto/compare/v0.10.1...v0.11.0
 [0.10.0]: https://github.com/fridgerator/crecto/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/fridgerator/crecto/compare/v0.8.6...v0.9.0
