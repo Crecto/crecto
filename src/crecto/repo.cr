@@ -206,6 +206,7 @@ module Crecto
     # ```
     # user = Crecto::Repo.get(User, 1)
     # post = Repo.get_association(user, :post)
+    # ```
     def get_association(queryable_instance, association_name : Symbol, query : Query = Query.new, tx : DB::Transaction? = nil)
       case queryable_instance.class.association_type_for_association(association_name)
       when :has_many
