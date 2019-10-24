@@ -516,21 +516,21 @@ module Crecto
     end
 
     {% for operation in %w[insert update delete] %}
-      private def run_operation(operation : Multi::{{operation.camelcase.id}}, tx)
-        cs = {{operation.id}}(operation.instance, tx)
+      private def run_operation(operation : Multi::{{operation.camelcase.id}}, tx : DB::Transaction?)
+        {{operation.id}}(operation.instance, tx)
         raise cs.errors.first[:message] if !cs.valid?
       rescue ex : Exception
         raise OperationError.new(ex, operation.instance.class, {{operation}})
       end
     {% end %}
 
-    private def run_operation(operation : Multi::UpdateAll, tx)
+    private def run_operation(operation : Multi::UpdateAll, tx : DB::Transaction?)
       update_all(operation.queryable, operation.query, operation.update_hash, tx)
     rescue ex : Exception
       raise OperationError.new(ex, operation.queryable, "update_all")
     end
 
-    private def run_operation(operation : Multi::DeleteAll, tx)
+    private def run_operation(operation : Multi::DeleteAll, tx : DB::Transaction?)
       delete_all(operation.queryable, operation.query, tx)
     rescue ex : Exception
       raise OperationError.new(ex, operation.queryable, "delete_all")
@@ -579,7 +579,7 @@ module Crecto
       end
     end
 
-    private def delete_dependents(queryable, destroy_assoc, ids, tx)
+    private def delete_dependents(queryable, destroy_assoc, ids, tx : DB::Transaction?)
       through_key = queryable.through_key_for_association(destroy_assoc)
       if through_key.nil?
         foreign_key = queryable.foreign_key_for_association(destroy_assoc)
@@ -607,7 +607,7 @@ module Crecto
       end
     end
 
-    private def nullify_dependents(queryable, nullify_assoc, ids, tx)
+    private def nullify_dependents(queryable, nullify_assoc, ids, tx : DB::Transaction?)
       through_key = queryable.through_key_for_association(nullify_assoc)
       if through_key.nil?
         foreign_key = queryable.foreign_key_for_association(nullify_assoc)
@@ -618,7 +618,7 @@ module Crecto
       end
     end
 
-    private def add_preloads(results, queryable, preloads, tx)
+    private def add_preloads(results, queryable, preloads, tx : DB::Transaction?)
       preloads.each do |preload|
         case queryable.association_type_for_association(preload[:symbol])
         when :has_many
@@ -637,7 +637,7 @@ module Crecto
       join_direct(results, queryable, preload, tx, singular: true)
     end
 
-    private def has_many_preload(results, queryable, preload, tx)
+    private def has_many_preload(results, queryable, preload, tx : DB::Transaction?)
       if queryable.through_key_for_association(preload[:symbol])
         join_through(results, queryable, preload, tx)
       else
@@ -645,7 +645,7 @@ module Crecto
       end
     end
 
-    private def join_direct(results, queryable, preload, tx, singular = false)
+    private def join_direct(results, queryable, preload, tx : DB::Transaction?, singular = false)
       ids = results.map(&.pkey_value.as(PkeyValue))
       foreign_key = queryable.foreign_key_for_association(preload[:symbol])
       return if foreign_key.nil?
@@ -666,7 +666,7 @@ module Crecto
       end
     end
 
-    private def join_through(results, queryable, preload, tx)
+    private def join_through(results, queryable, preload, tx : DB::Transaction?)
       ids = results.map(&.pkey_value.as(PkeyValue))
       foreign_key = queryable.foreign_key_for_association(preload[:symbol])
       return if foreign_key.nil?
@@ -708,7 +708,7 @@ module Crecto
       end
     end
 
-    private def belongs_to_preload(results, queryable, preload, tx)
+    private def belongs_to_preload(results, queryable, preload, tx : DB::Transaction?)
       ids = results.map { |r| queryable.foreign_key_value_for_association(preload[:symbol], r).as(PkeyValue) }
       ids.compact!
       return if ids.empty?
@@ -738,7 +738,7 @@ module Crecto
       end
     end
 
-    private def get_has_many_association(instance, association : Symbol, query : Query, tx)
+    private def get_has_many_association(instance, association : Symbol, query : Query, tx : DB::Transaction?)
       queryable = instance.class
       foreign_key = queryable.foreign_key_for_association(association)
       return if foreign_key.nil?
@@ -748,13 +748,13 @@ module Crecto
       all(association_klass, query, tx)
     end
 
-    private def get_has_one_association(instance, association : Symbol, query : Query, tx)
+    private def get_has_one_association(instance, association : Symbol, query : Query, tx : DB::Transaction?)
       many = get_has_many_association(instance, association, query, tx)
       return if many.nil?
       many.first?
     end
 
-    private def get_belongs_to_association(instance, association : Symbol, query : Query, tx)
+    private def get_belongs_to_association(instance, association : Symbol, query : Query, tx : DB::Transaction?)
       queryable = instance.class
       klass_for_association = queryable.klass_for_association(association)
       return if klass_for_association.nil?
