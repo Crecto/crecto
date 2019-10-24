@@ -8,21 +8,21 @@ module Crecto
     end
 
     def raw_exec(args : Array)
-      @repo.raw_exec(args, @tx)
+      @repo.raw_exec(args, tx: @tx)
     end
 
     def raw_exec(*args)
-      @repo.raw_exec(*args, @tx)
+      @repo.raw_exec(*args, tx: @tx)
     end
 
     def raw_query(query, *args)
-      @repo.raw_query(query, *args, @tx) do |rs|
+      @repo.raw_query(query, *args, tx: @tx) do |rs|
         yield rs
       end
     end
 
     def raw_query(query, args : Array)
-      @repo.raw_query(query, args, @tx)
+      @repo.raw_query(query, args, tx: @tx)
     end
 
     def raw_query(query, *args)
@@ -30,31 +30,31 @@ module Crecto
     end
 
     def raw_scalar(*args)
-      @repo.raw_scalar(*args, @tx)
+      @repo.raw_scalar(*args, tx: @tx)
     end
 
-    def all(queryable, query : Query? = Query.new, **opts)
-      @repo.all(queryable, query, @tx, **opts)
+    def all(queryable, query : Query, *, preload = [] of Symbol)
+      @repo.all(queryable, query, tx: @tx, preload: preload)
     end
 
     def all(queryable, query = Query.new)
-      @repo.all(queryable, query, @tx)
+      @repo.all(queryable, query, tx: @tx)
     end
 
     def get(queryable, id)
-      @repo.get(queryable, id, @tx)
+      @repo.get(queryable, id, tx: @tx)
     end
 
     def get!(queryable, id)
-      @repo.get!(queryable, id, @tx)
+      @repo.get!(queryable, id, tx: @tx)
     end
 
     def get(queryable, id, query : Query)
-      @repo.get(queryable, id, query, @tx)
+      @repo.get(queryable, id, query, tx: @tx)
     end
 
     def get!(queryable, id, query : Query)
-      @repo.get!(queryable, id, query, @tx)
+      @repo.get!(queryable, id, query, tx: @tx)
     end
 
     def get_by(queryable, **opts)
@@ -62,7 +62,7 @@ module Crecto
     end
 
     def get_by(queryable, query)
-      @repo.get_by(queryable, query, @tx)
+      @repo.get_by(queryable, query, tx: @tx)
     end
 
     def get_by!(queryable, **opts)
@@ -70,20 +70,20 @@ module Crecto
     end
 
     def get_by!(queryable, query)
-      @repo.get_by!(queryable, query, @tx)
+      @repo.get_by!(queryable, query, tx: @tx)
     end
 
     def get_association(queryable_instance, association_name : Symbol)
-      @repo.get_association(queryable_instance, association_name, @tx)
+      @repo.get_association(queryable_instance, association_name, tx: @tx)
     end
 
     def get_association!(queryable_instance, association_name : Symbol)
-      @repo.get_association!(queryable_instance, association_name, @tx)
+      @repo.get_association!(queryable_instance, association_name, tx: @tx)
     end
 
     {% for type in %w[insert insert! delete delete! update update!] %}
       def {{type.id}}(queryable : Crecto::Model)
-        @repo.{{type.id}}(queryable, @tx)
+        @repo.{{type.id}}(queryable, tx: @tx)
       end
 
       def {{type.id}}(changeset : Crecto::Changeset::Changeset)
@@ -92,11 +92,11 @@ module Crecto
     {% end %}
 
     def delete_all(queryable, query = Crecto::Repo::Query.new)
-      @repo.delete_all(queryable, query, @tx)
+      @repo.delete_all(queryable, query, tx: @tx)
     end
 
     def update_all(queryable, query, update_hash : Multi::UpdateHash)
-      @repo.update_all(queryable, query, update_hash, @tx)
+      @repo.update_all(queryable, query, update_hash, tx: @tx)
     end
 
     def update_all(queryable, query, update_tuple : NamedTuple)
@@ -104,11 +104,11 @@ module Crecto
     end
 
     def aggregate(queryable, aggregate_function : Symbol, field : Symbol)
-      @repo.aggregate(queryable, aggregate_function, field, @tx)
+      @repo.aggregate(queryable, aggregate_function, field, tx: @tx)
     end
 
     def aggregate(queryable, aggregate_function : Symbol, field : Symbol, query : Crecto::Repo::Query)
-      @repo.aggregate(queryable, aggregate_function, field, query, @tx)
+      @repo.aggregate(queryable, aggregate_function, field, query, tx: @tx)
     end
 
     def transaction!

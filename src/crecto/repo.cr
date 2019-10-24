@@ -59,49 +59,37 @@ module Crecto
       (tx || config.get_connection).scalar(*args)
     end
 
-    # Return a list of *queryable* instances using *query*
+    # Return a list of *queryable* instances (optionally) using *query*
     #
     # ```
     # query = Query.where(name: "fred")
     # users = Repo.all(User, query)
     # ```
-    def all(queryable, query : Query? = Query.new, tx : DB::Transaction? = nil, **opts) : Array
+    #
+    # ```
+    # users = Repo.all(User)
+    # ```
+    def all(queryable, query : Query? = nil, *, tx : DB::Transaction? = nil, preload = [] of Symbol)
       q = config.adapter.run(tx || config.get_connection, :all, queryable, query).as(DB::ResultSet)
 
       results = queryable.from_rs(q.as(DB::ResultSet))
 
-      opt_preloads = opts.fetch(:preload, [] of Symbol)
-      preloads = query.preloads + opt_preloads.map { |a| {symbol: a, query: nil} }
-      if preloads.any?
-        add_preloads(results, queryable, preloads, tx)
+      query_preloads = query.try(&.preloads) || [] of NamedTuple(symbol: Symbol, query: Query?)
+      combined_preloads = query_preloads + preload.map { |a| {symbol: a, query: nil} }
+
+      if combined_preloads.any?
+        add_preloads(results, queryable, combined_preloads, tx)
       end
 
-      results
-    end
-
-    # Returns a list of *queryable* instances.  Accepts an optional `query`
-    #
-    # ```
-    # users = Crecto::Repo.all(User)
-    # ```
-    def all(queryable, query = Query.new, tx : DB::Transaction? = nil) : Array
-      q = config.adapter.run(tx || config.get_connection, :all, queryable, query).as(DB::ResultSet)
-      results = queryable.from_rs(q)
-
-      preloads = query.preloads
-      if preloads.any?
-        add_preloads(results, queryable, preloads)
-      end
-
-      results
-    end
+	  results
+	end
 
     # Return a single nilable insance of *queryable* by primary key with *id*.
     #
     # ```
     # user = Repo.get(User, 1)
     # ```
-    def get(queryable, id, tx : DB::Transaction? = nil)
+    def get(queryable, id, *, tx : DB::Transaction? = nil)
       q = config.adapter.run(tx || config.get_connection, :get, queryable, id).as(DB::ResultSet)
       results = queryable.from_rs(q)
       results.first if results.any?
@@ -113,8 +101,8 @@ module Crecto
     # ```
     # user = Repo.get(User, 1)
     # ```
-    def get!(queryable, id, tx : DB::Transaction? = nil)
-      if result = get(queryable, id, tx)
+    def get!(queryable, id, *, tx : DB::Transaction? = nil)
+      if result = get(queryable, id, tx: tx)
         result
       else
         raise NoResults.new("No Results")
@@ -128,7 +116,7 @@ module Crecto
     # query = Query.preload(:posts)
     # user = Repo.get(User, 1, query)
     # ```
-    def get(queryable, id, query : Query, tx : DB::Transaction? = nil)
+    def get(queryable, id, query : Query, *, tx : DB::Transaction? = nil)
       q = config.adapter.run(tx || config.get_connection, :get, queryable, id).as(DB::ResultSet)
       results = queryable.from_rs(q)
 
@@ -149,8 +137,8 @@ module Crecto
     # query = Query.preload(:posts)
     # user = Repo.get(User, 1, query)
     # ```
-    def get!(queryable, id, query : Query, tx : DB::Transaction? = nil)
-      if result = get(queryable, id, query, tx)
+    def get!(queryable, id, query : Query, *, tx : DB::Transaction? = nil)
+      if result = get(queryable, id, query, tx: tx)
         result
       else
         raise NoResults.new("No Results")
@@ -163,7 +151,7 @@ module Crecto
     # user = Repo.get_by(User, name: "fred", age: 21)
     # ```
     def get_by(queryable, tx : DB::Transaction? = nil, **opts)
-      get_by(queryable, Query.where(**opts), tx)
+      get_by(queryable, Query.where(**opts), tx: tx)
     end
 
     # Return a single nilable instance of *queryable* using the *query* param
@@ -172,8 +160,8 @@ module Crecto
     # ```
     # user = Repo.get_by(User, Query.where(name: "fred", age: 21))
     # ```
-    def get_by(queryable, query, tx : DB::Transaction? = nil)
-      results = all(queryable, query.limit(1), tx)
+    def get_by(queryable, query, *, tx : DB::Transaction? = nil)
+      results = all(queryable, query.limit(1), tx: tx)
       results.first if results.any?
     end
 
@@ -184,7 +172,7 @@ module Crecto
     # user = Repo.get_by(User, name: "fred", age: 21)
     # ```
     def get_by!(queryable, tx : DB::Transaction? = nil, **opts)
-      get_by!(queryable, Query.where(**opts), tx)
+      get_by!(queryable, Query.where(**opts), tx: tx)
     end
 
     # Return a single instance of *queryable* using the *query* param
@@ -193,8 +181,8 @@ module Crecto
     # ```
     # user = Repo.get_by(User, Query.where(name: "fred", age: 21))
     # ```
-    def get_by!(queryable, query, tx : DB::Transaction? = nil)
-      if result = get_by(queryable, query, tx)
+    def get_by!(queryable, query, *, tx : DB::Transaction? = nil)
+      if result = get_by(queryable, query, tx: tx)
         result
       else
         raise NoResults.new("No Results")
@@ -207,7 +195,7 @@ module Crecto
     # user = Crecto::Repo.get(User, 1)
     # post = Repo.get_association(user, :post)
     # ```
-    def get_association(queryable_instance, association_name : Symbol, query : Query = Query.new, tx : DB::Transaction? = nil)
+    def get_association(queryable_instance, association_name : Symbol, query : Query = Query.new, *, tx : DB::Transaction? = nil)
       case queryable_instance.class.association_type_for_association(association_name)
       when :has_many
         get_has_many_association(queryable_instance, association_name, query, tx)
@@ -228,8 +216,8 @@ module Crecto
     # user = Crecto::Repo.get(User, 1)
     # post = Repo.get_association!(user, :post)
     # ```
-    def get_association!(queryable_instance, association_name : Symbol, query : Query = Query.new, tx : DB::Transaction? = nil)
-      if result = get_association(queryable_instance, association_name, query, tx)
+    def get_association!(queryable_instance, association_name : Symbol, query : Query = Query.new, *, tx : DB::Transaction? = nil)
+      if result = get_association(queryable_instance, association_name, query, tx: tx)
         result
       else
         raise NoResults.new("No Results")
@@ -242,7 +230,7 @@ module Crecto
     # user = User.new
     # Repo.insert(user)
     # ```
-    def insert(queryable_instance, tx : DB::Transaction? = nil)
+    def insert(queryable_instance, *, tx : DB::Transaction? = nil)
       changeset = queryable_instance.class.changeset(queryable_instance)
       return changeset unless changeset.valid?
 
@@ -278,8 +266,8 @@ module Crecto
     # changeset = User.changeset(user)
     # Repo.insert(changeset)
     # ```
-    def insert(changeset : Crecto::Changeset::Changeset, tx : DB::Transaction? = nil)
-      insert(changeset.instance, tx)
+    def insert(changeset : Crecto::Changeset::Changeset, *, tx : DB::Transaction? = nil)
+      insert(changeset.instance, tx: tx)
     end
 
     # Insert a schema instance into the data store or raise if the resulting
@@ -289,8 +277,8 @@ module Crecto
     # user = User.new
     # Repo.insert!(user)
     # ```
-    def insert!(queryable_instance, tx : DB::Transaction? = nil)
-      insert(queryable_instance, tx).tap do |changeset|
+    def insert!(queryable_instance, *, tx : DB::Transaction? = nil)
+      insert(queryable_instance, tx: tx).tap do |changeset|
         raise InvalidChangeset.new(changeset) unless changeset.valid?
       end
     end
@@ -303,8 +291,8 @@ module Crecto
     # changeset = User.changeset(user)
     # Repo.insert!(changeset)
     # ```
-    def insert!(changeset : Crecto::Changeset::Changeset, tx : DB::Transaction? = nil)
-      insert!(changeset.instance, tx)
+    def insert!(changeset : Crecto::Changeset::Changeset, *, tx : DB::Transaction? = nil)
+      insert!(changeset.instance, tx: tx)
     end
 
     # Update a shema instance in the data store.
@@ -312,7 +300,7 @@ module Crecto
     # ```
     # Repo.update(user)
     # ```
-    def update(queryable_instance, tx : DB::Transaction? = nil)
+    def update(queryable_instance, *, tx : DB::Transaction? = nil)
       changeset = queryable_instance.class.changeset(queryable_instance)
       return changeset unless changeset.valid?
 
@@ -340,8 +328,8 @@ module Crecto
     # ```
     # Repo.update(changeset)
     # ```
-    def update(changeset : Crecto::Changeset::Changeset, tx : DB::Transaction? = nil)
-      update(changeset.instance, tx)
+    def update(changeset : Crecto::Changeset::Changeset, *, tx : DB::Transaction? = nil)
+      update(changeset.instance, tx: tx)
     end
 
     # Update a schema instance in the data store or raise if the resulting
@@ -350,8 +338,8 @@ module Crecto
     # ```
     # Repo.update!(user)
     # ```
-    def update!(queryable_instance, tx : DB::Transaction? = nil)
-      update(queryable_instance, tx).tap do |changeset|
+    def update!(queryable_instance, *, tx : DB::Transaction? = nil)
+      update(queryable_instance, tx: tx).tap do |changeset|
         raise InvalidChangeset.new(changeset) unless changeset.valid?
       end
     end
@@ -362,8 +350,8 @@ module Crecto
     # ```
     # Repo.update(changeset)
     # ```
-    def update!(changeset : Crecto::Changeset::Changeset, tx : DB::Transaction? = nil)
-      update!(changeset.instance, tx)
+    def update!(changeset : Crecto::Changeset::Changeset, *, tx : DB::Transaction? = nil)
+      update!(changeset.instance, tx: tx)
     end
 
     # Update multipile records with a single query
@@ -372,12 +360,12 @@ module Crecto
     # query = Crecto::Repo::Query.where(name: "Ted", count: 0)
     # Repo.update_all(User, query, {count: 1, date: Time.local})
     # ```
-    def update_all(queryable, query, update_hash : Hash, tx : DB::Transaction? = nil)
+    def update_all(queryable, query, update_hash : Hash, *, tx : DB::Transaction? = nil)
       config.adapter.run(tx || config.get_connection, :update_all, queryable, query, update_hash)
     end
 
-    def update_all(queryable, query, update_hash : NamedTuple, tx : DB::Transaction? = nil)
-      update_all(queryable, query, update_hash.to_h, tx)
+    def update_all(queryable, query, update_hash : NamedTuple, *, tx : DB::Transaction? = nil)
+      update_all(queryable, query, update_hash.to_h, tx: tx)
     end
 
     # Delete a shema instance from the data store.
@@ -385,7 +373,7 @@ module Crecto
     # ```
     # Repo.delete(user)
     # ```
-    def delete(queryable_instance, tx : DB::Transaction? = nil)
+    def delete(queryable_instance, *, tx : DB::Transaction? = nil)
       changeset = queryable_instance.class.changeset(queryable_instance)
       return changeset unless changeset.valid?
 
@@ -407,8 +395,8 @@ module Crecto
     # ```
     # Repo.delete(changeset)
     # ```
-    def delete(changeset : Crecto::Changeset::Changeset, tx : DB::Transaction? = nil)
-      delete(changeset.instance, tx)
+    def delete(changeset : Crecto::Changeset::Changeset, *, tx : DB::Transaction? = nil)
+      delete(changeset.instance, tx: tx)
     end
 
     # Delete a schema instance from the data store or raise if the resulting
@@ -417,8 +405,8 @@ module Crecto
     # ```
     # Repo.delete!(user)
     # ```
-    def delete!(queryable_instance, tx : DB::Transaction? = nil)
-      delete(queryable_instance, tx).tap do |changeset|
+    def delete!(queryable_instance, *, tx : DB::Transaction? = nil)
+      delete(queryable_instance, tx: tx).tap do |changeset|
         raise InvalidChangeset.new(changeset) unless changeset.valid?
       end
     end
@@ -439,8 +427,8 @@ module Crecto
     # query = Crecto::Repo::Query.where(name: "Fred")
     # Repo.delete_all(User, query)
     # ```
-    def delete_all(queryable, query : Query = Query.new, tx : DB::Transaction? = nil)
-      check_dependents(queryable, query, tx)
+    def delete_all(queryable, query : Query = Query.new, *, tx : DB::Transaction? = nil)
+      check_dependents(queryable, query, tx: tx)
       result = config.adapter.run(tx || config.get_connection, :delete_all, queryable, query)
       if tx.nil? && config.adapter == Crecto::Adapters::Postgres
         result.as(DB::ResultSet).close if result.is_a?(DB::ResultSet)
@@ -455,7 +443,7 @@ module Crecto
     # ```
     # Repo.query(User, "select * from users where id > ?", [30])
     # ```
-    def query(queryable, sql : String, params = [] of DbValue, tx : DB::Transaction? = nil) : Array
+    def query(queryable, sql : String, params = [] of DbValue, *, tx : DB::Transaction? = nil) : Array
       q = config.adapter.run(tx || config.get_connection, :sql, sql, params).as(DB::ResultSet)
       results = queryable.from_rs(q)
       results
@@ -471,7 +459,7 @@ module Crecto
     # ```
     # query = Crecto::Repo.query("select * from users where id = ?", [30])
     # ```
-    def query(sql : String, params = [] of DbValue, tx : DB::Transaction? = nil) : DB::ResultSet
+    def query(sql : String, params = [] of DbValue, *, tx : DB::Transaction? = nil) : DB::ResultSet
       config.adapter.run(tx || config.get_connection, :sql, sql, params).as(DB::ResultSet)
     end
 
@@ -517,7 +505,7 @@ module Crecto
 
     {% for operation in %w[insert update delete] %}
       private def run_operation(operation : Multi::{{operation.camelcase.id}}, tx : DB::Transaction?)
-        {{operation.id}}(operation.instance, tx)
+        {{operation.id}}(operation.instance, tx: tx)
         raise cs.errors.first[:message] if !cs.valid?
       rescue ex : Exception
         raise OperationError.new(ex, operation.instance.class, {{operation}})
@@ -525,26 +513,26 @@ module Crecto
     {% end %}
 
     private def run_operation(operation : Multi::UpdateAll, tx : DB::Transaction?)
-      update_all(operation.queryable, operation.query, operation.update_hash, tx)
+      update_all(operation.queryable, operation.query, operation.update_hash, tx: tx)
     rescue ex : Exception
       raise OperationError.new(ex, operation.queryable, "update_all")
     end
 
     private def run_operation(operation : Multi::DeleteAll, tx : DB::Transaction?)
-      delete_all(operation.queryable, operation.query, tx)
+      delete_all(operation.queryable, operation.query, tx: tx)
     rescue ex : Exception
       raise OperationError.new(ex, operation.queryable, "delete_all")
     end
 
     # Calculate the given aggregate `aggregate_function` over the given `field`
     # Aggregate `aggregate_function` must be one of (:avg, :count, :max, :min:, :sum)
-    def aggregate(queryable, aggregate_function : Symbol, field : Symbol, tx : DB::Transaction? = nil)
+    def aggregate(queryable, aggregate_function : Symbol, field : Symbol, *, tx : DB::Transaction? = nil)
       raise InvalidOption.new("Aggregate must be one of :avg, :count, :max, :min:, :sum") unless [:avg, :count, :max, :min, :sum].includes?(aggregate_function)
 
       config.adapter.aggregate(tx || config.get_connection, queryable, aggregate_function, field)
     end
 
-    def aggregate(queryable, aggregate_function : Symbol, field : Symbol, query : Crecto::Repo::Query, tx : DB::Transaction? = nil)
+    def aggregate(queryable, aggregate_function : Symbol, field : Symbol, query : Crecto::Repo::Query, *, tx : DB::Transaction? = nil)
       raise InvalidOption.new("Aggregate must be one of :avg, :count, :max, :min:, :sum") unless [:avg, :count, :max, :min, :sum].includes?(aggregate_function)
 
       config.adapter.aggregate(tx || config.get_connection, queryable, aggregate_function, field, query)
@@ -587,7 +575,7 @@ module Crecto
         association_klass = queryable.klass_for_association(destroy_assoc)
         return if association_klass.nil?
         q = Crecto::Repo::Query.where(foreign_key, ids)
-        delete_all(association_klass, q, tx)
+        delete_all(association_klass, q, tx: tx)
       else
         outer_klass = queryable.klass_for_association(destroy_assoc) # Project
         join_klass = queryable.klass_for_association(through_key)    # UserProject
@@ -598,12 +586,12 @@ module Crecto
         return if join_key.nil?
         query = Query.select([outer_key.to_s])
         query = query.where(join_key, ids)
-        join_associations = all(join_klass, query)
+        join_associations = all(join_klass, query, tx: tx)
         outer_klass_ids = join_associations.map { |ja| outer_klass.foreign_key_value_for_association(through_key, ja) }
         return if join_associations.empty?
-        delete_all(join_klass, Query.where(join_key, ids), tx)
+        delete_all(join_klass, Query.where(join_key, ids), tx: tx)
         outer_klass_pk_field = outer_klass.primary_key_field_symbol
-        delete_all(outer_klass, Query.where(outer_klass_pk_field, outer_klass_ids), tx)
+        delete_all(outer_klass, Query.where(outer_klass_pk_field, outer_klass_ids), tx: tx)
       end
     end
 
@@ -614,7 +602,7 @@ module Crecto
         association_klass = queryable.klass_for_association(nullify_assoc)
         return if foreign_key.nil? || association_klass.nil?
         q = Crecto::Repo::Query.where(foreign_key, ids)
-        update_all(association_klass, q, {foreign_key => nil}, tx)
+        update_all(association_klass, q, {foreign_key => nil}, tx: tx)
       end
     end
 
@@ -655,7 +643,7 @@ module Crecto
       end
       association_klass = queryable.klass_for_association(preload[:symbol])
       return if association_klass.nil?
-      relation_items = all(association_klass, query, tx)
+      relation_items = all(association_klass, query, tx: tx)
       relation_items = relation_items.group_by { |t| queryable.foreign_key_value_for_association(preload[:symbol], t) }
 
       results.each do |result|
@@ -674,7 +662,7 @@ module Crecto
       # UserProjects
       association_klass = queryable.klass_for_association(queryable.through_key_for_association(preload[:symbol]).as(Symbol))
       return if association_klass.nil?
-      join_table_items = all(association_klass, join_query, tx)
+      join_table_items = all(association_klass, join_query, tx: tx)
 
       # array of Project id's
       if join_table_items.empty?
@@ -693,7 +681,7 @@ module Crecto
           association_query = association_query.combine(preload_query)
         end
         # Projects
-        relation_items = all(association_klass, association_query, tx)
+        relation_items = all(association_klass, association_query, tx: tx)
         # UserProject grouped by user_id
         join_table_items = join_table_items.group_by { |t| queryable.foreign_key_value_for_association(queryable.through_key_for_association(preload[:symbol]).as(Symbol), t) }
 
@@ -723,7 +711,7 @@ module Crecto
       end
       association_klass = queryable.klass_for_association(preload[:symbol])
       return if association_klass.nil?
-      relation_items = all(association_klass, query, tx)
+      relation_items = all(association_klass, query, tx: tx)
 
       unless relation_items.nil?
         relation_items = relation_items.group_by { |t| t.pkey_value.as(PkeyValue) }
@@ -745,7 +733,7 @@ module Crecto
       query = query.where(foreign_key, instance.pkey_value)
       association_klass = queryable.klass_for_association(association)
       return if association_klass.nil?
-      all(association_klass, query, tx)
+      all(association_klass, query, tx: tx)
     end
 
     private def get_has_one_association(instance, association : Symbol, query : Query, tx : DB::Transaction?)
@@ -759,7 +747,7 @@ module Crecto
       klass_for_association = queryable.klass_for_association(association)
       return if klass_for_association.nil?
       key_for_association = queryable.foreign_key_value_for_association(association, instance)
-      get(klass_for_association, key_for_association, query, tx)
+      get(klass_for_association, key_for_association, query, tx: tx)
     end
   end
 end

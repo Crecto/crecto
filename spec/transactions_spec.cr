@@ -354,7 +354,7 @@ describe Crecto do
           tx.get_by(User, Query.where(id: id)).should_not eq(nil)
           tx.get_by!(User, Query.where(id: id)).should_not eq(nil)
           tx.all(User, Query.where(id: id)).first.should_not eq(nil)
-          tx.all(User, Query.where(id: id), preloads: [] of Symbol).first.should_not eq(nil)
+          tx.all(User, Query.where(id: id), preload: [] of Symbol).first.should_not eq(nil)
         end
       end
 
