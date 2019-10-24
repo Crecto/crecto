@@ -69,7 +69,7 @@ module Crecto
     # ```
     # users = Repo.all(User)
     # ```
-    def all(queryable, query : Query? = nil, *, tx : DB::Transaction? = nil, preload = [] of Symbol)
+    def all(queryable, query : Query? = Query.new, *, tx : DB::Transaction? = nil, preload = [] of Symbol)
       q = config.adapter.run(tx || config.get_connection, :all, queryable, query).as(DB::ResultSet)
 
       results = queryable.from_rs(q.as(DB::ResultSet))
