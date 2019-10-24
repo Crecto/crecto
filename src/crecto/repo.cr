@@ -504,8 +504,8 @@ module Crecto
     #   tx.insert!(post)
     # end
     # ```
-    def transaction!(tx : DB::Transaction? = nil)
-      (tx || config.get_connection).transaction do |tx|
+    def transaction!(outer_tx : DB::Transaction? = nil)
+      (outer_tx || config.get_connection).transaction do |tx|
         begin
           yield LiveTransaction.new(tx, self)
         rescue error : Exception
