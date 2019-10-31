@@ -3,6 +3,9 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.11.2] 2019-10-31
+* Fix shard version/git tag version mismatch
+
 ## [0.11.0] 2019-09-13
 * Fixed breaking bug
 * Updated all dependencies to latest versions
