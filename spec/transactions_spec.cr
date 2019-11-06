@@ -337,26 +337,29 @@ describe Crecto do
         Repo.all(User, Query.where(name: "perform_all_io2oj999")).size.should eq 0
       end
 
-      it "allows reading records inserted inside the transaction" do
-        insert_user = User.new
-        insert_user.name = "insert_user"
+      # This only works for postgres for now
+      {% begin %}
+        {{ flag?(:pg) ? :it.id : :pending.id }} "allows reading records inserted inside the transaction" do
+          insert_user = User.new
+          insert_user.name = "insert_user"
 
-        Repo.transaction! do |tx|
-          id = tx.insert!(insert_user).instance.id
-          tx.get(User, id).should_not eq(nil)
-          tx.get!(User, id).should_not eq(nil)
-          tx.get(User, id, Query.new).should_not eq(nil)
-          tx.get!(User, id, Query.new).should_not eq(nil)
-          tx.get_by(User, id: id).should_not eq(nil)
-          tx.get_by!(User, id: id).should_not eq(nil)
-          tx.get_by(User, id: id).should_not eq(nil)
-          tx.get_by!(User, id: id).should_not eq(nil)
-          tx.get_by(User, Query.where(id: id)).should_not eq(nil)
-          tx.get_by!(User, Query.where(id: id)).should_not eq(nil)
-          tx.all(User, Query.where(id: id)).first.should_not eq(nil)
-          tx.all(User, Query.where(id: id), preload: [] of Symbol).first.should_not eq(nil)
+          Repo.transaction! do |tx|
+            id = tx.insert!(insert_user).instance.id
+            tx.get(User, id).should_not eq(nil)
+            tx.get!(User, id).should_not eq(nil)
+            tx.get(User, id, Query.new).should_not eq(nil)
+            tx.get!(User, id, Query.new).should_not eq(nil)
+            tx.get_by(User, id: id).should_not eq(nil)
+            tx.get_by!(User, id: id).should_not eq(nil)
+            tx.get_by(User, id: id).should_not eq(nil)
+            tx.get_by!(User, id: id).should_not eq(nil)
+            tx.get_by(User, Query.where(id: id)).should_not eq(nil)
+            tx.get_by!(User, Query.where(id: id)).should_not eq(nil)
+            tx.all(User, Query.where(id: id)).first.should_not eq(nil)
+            tx.all(User, Query.where(id: id), preload: [] of Symbol).first.should_not eq(nil)
+          end
         end
-      end
+      {% end %}
 
       it "allows nesting transactions" do
         Repo.delete_all(Post)
