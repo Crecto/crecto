@@ -361,32 +361,35 @@ describe Crecto do
         end
       {% end %}
 
-      it "allows nesting transactions" do
-        Repo.delete_all(Post)
-        Repo.delete_all(User)
+      # Sqlite doesn't support nesting transactions
+      {% unless flag?(:sqlite) %}
+        it "allows nesting transactions" do
+          Repo.delete_all(Post)
+          Repo.delete_all(User)
 
-        insert_user = User.new
-        insert_user.name = "nested_transactions_insert_user"
-        invalid_user = User.new
-        delete_user = quick_create_user("nested_transactions_delete_user")
+          insert_user = User.new
+          insert_user.name = "nested_transactions_insert_user"
+          invalid_user = User.new
+          delete_user = quick_create_user("nested_transactions_delete_user")
 
-        Repo.transaction! do |tx|
-          tx.insert!(insert_user)
+          Repo.transaction! do |tx|
+            tx.insert!(insert_user)
 
-          expect_raises Crecto::InvalidChangeset do
-            Repo.transaction! do |inner_tx|
-              inner_tx.delete!(delete_user)
-              inner_tx.insert!(invalid_user)
+            expect_raises Crecto::InvalidChangeset do
+              Repo.transaction! do |inner_tx|
+                inner_tx.delete!(delete_user)
+                inner_tx.insert!(invalid_user)
+              end
             end
           end
+
+          # check insert happened
+          Repo.all(User, Query.where(name: "nested_transactions_insert_user")).size.should eq 1
+
+          # check delete didn't happen
+          Repo.all(User, Query.where(name: "nested_transactions_delete_user")).size.should eq 1
         end
-
-        # check insert happened
-        Repo.all(User, Query.where(name: "nested_transactions_insert_user")).size.should eq 1
-
-        # check delete didn't happen
-        Repo.all(User, Query.where(name: "nested_transactions_delete_user")).size.should eq 1
-      end
+      {% end %}
     end
   end
 end
