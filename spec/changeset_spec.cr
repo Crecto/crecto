@@ -79,6 +79,13 @@ describe Crecto do
         changeset.errors.size.should be > 0
         changeset.errors[0].should eq({:field => "name", :message => "is required"})
       end
+
+      it "should have errors when symbol exists and is empty" do
+        u = UserRequired.new
+        u.name = ""
+        changeset = UserRequired.changeset(u)
+        changeset.errors.should contain({:field => "name", :message => "is required"})
+      end
     end
 
     describe "#validate_format" do
