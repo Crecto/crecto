@@ -9,7 +9,6 @@ license: MIT
 dependencies:
   db:
     github: crystal-lang/crystal-db
-    version: ~> 0.8.0
 
 development_dependencies:
   mysql:
