@@ -1,0 +1,44 @@
+version: '3.6'
+
+services:
+  postgres:
+    image: postgres:latest
+    networks:
+      - postgres
+
+  mysql:
+    image: mysql:5
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+    networks:
+      - mysql
+
+  sqlite_specs:
+    build:
+      context: .
+      target: sqlite
+    image: crecto/sqlite
+
+  postgres_specs:
+    build:
+      context: .
+      target: postgres
+    image: crecto/postgres
+    networks:
+      - postgres
+    depends_on:
+      - postgres
+
+  mysql_specs:
+    build:
+      context: .
+      target: mysql
+    image: crecto/mysql
+    networks:
+      - mysql
+    depends_on:
+      - mysql
+
+networks:
+  postgres:
+  mysql:

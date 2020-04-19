@@ -8,9 +8,11 @@ DROP TABLE IF EXISTS addresses;
 DROP TABLE IF EXISTS user_projects;
 DROP TABLE IF EXISTS projects;
 DROP TABLE IF EXISTS things;
+DROP TABLE IF EXISTS users_uuid;
 DROP TABLE IF EXISTS vehicles;
 DROP TABLE IF EXISTS users_uuid_custom;
 DROP TABLE IF EXISTS things_that_belong_to_user_uuid_custom;
+DROP TABLE IF EXISTS things_without_fields;
 
 CREATE TABLE users(
   id INTEGER NOT NULL AUTO_INCREMENT,

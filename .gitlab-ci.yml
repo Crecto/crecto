@@ -1,0 +1,56 @@
+stages:
+  - test
+
+before_script:
+  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+.test:
+  stage: test
+  image: docker:stable
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_DRIVER: overlay2
+    LINKED_SERVICE: "$TARGET:$TARGET"
+  script:
+    - docker pull "$CI_REGISTRY_IMAGE/base:$CI_COMMIT_BEFORE_SHA" || true
+    - docker pull "$CI_REGISTRY_IMAGE/$TARGET:$CI_COMMIT_BEFORE_SHA" || true
+    - docker build
+      --cache-from "$CI_REGISTRY_IMAGE/base:$CI_COMMIT_BEFORE_SHA"
+      --target base
+      --tag "$CI_REGISTRY_IMAGE/base:$CI_COMMIT_SHA"
+      .
+    - docker push "$CI_REGISTRY_IMAGE/base:$CI_COMMIT_SHA"
+    - docker build
+      --cache-from "$CI_REGISTRY_IMAGE/base:$CI_COMMIT_SHA"
+      --cache-from "$CI_REGISTRY_IMAGE/$TARGET:$CI_COMMIT_BEFORE_SHA"
+      --target "$TARGET"
+      --tag "$CI_REGISTRY_IMAGE/$TARGET:$CI_COMMIT_SHA"
+      .
+    - docker push "$CI_REGISTRY_IMAGE/$TARGET:$CI_COMMIT_SHA"
+    - docker run $([[ "$LINKED_SERVICE" != '' ]] && echo "--link=$LINKED_SERVICE") "$CI_REGISTRY_IMAGE/$TARGET:$CI_COMMIT_SHA"
+  tags:
+    - docker
+
+test-sqlite:
+  extends: .test
+  variables:
+    TARGET: sqlite
+    LINKED_SERVICE: ''
+
+test-mysql:
+  extends: .test
+  variables:
+    TARGET: mysql
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker run -d --name "$TARGET" -e MYSQL_ALLOW_EMPTY_PASSWORD=yes mysql:5
+
+test-postgres:
+  extends: .test
+  variables:
+    TARGET: postgres
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker run -d --name "$TARGET" postgres:latest
