@@ -209,6 +209,8 @@ module Crecto
         get_has_one_association(queryable_instance, association_name, query)
       when :belongs_to
         get_belongs_to_association(queryable_instance, association_name, query)
+      else
+        raise Exception.new("invalid operation passed to get_association")
       end
     end
 
@@ -643,6 +645,8 @@ module Crecto
           has_one_preload(results, queryable, preload)
         when :belongs_to
           belongs_to_preload(results, queryable, preload)
+        else
+          raise Exception.new("invalid operation passed to add_preloads")
         end
       end
     end

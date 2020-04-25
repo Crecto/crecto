@@ -13,6 +13,8 @@ module Crecto
           all(conn, queryable, query)
         when :delete_all
           delete(conn, queryable, query)
+        else
+          raise Exception.new("invalid operation passed to run")
         end
       end
 
@@ -20,6 +22,8 @@ module Crecto
         case operation
         when :update_all
           update(conn, queryable, query, query_hash)
+        else
+          raise Exception.new("invalid operation passed to run")
         end
       end
 
@@ -30,6 +34,8 @@ module Crecto
         case operation
         when :get
           get(conn, queryable, id)
+        else
+          raise Exception.new("invalid operation passed to run")
         end
       end
 
@@ -40,6 +46,8 @@ module Crecto
         case operation
         when :sql
           execute(conn, position_args(sql), params)
+        else
+          raise Exception.new("invalid operation passed to run")
         end
       end
 
@@ -52,6 +60,8 @@ module Crecto
           update(conn, changeset)
         when :delete
           delete(conn, changeset)
+        else
+          raise Exception.new("invalid operation passed to run_on_instance")
         end
       end
 
