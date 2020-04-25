@@ -1,4 +1,4 @@
-FROM crystallang/crystal:0.27.0 AS base
+FROM crystallang/crystal:0.34.0 AS base
 MAINTAINER Nick Franken <shnick@gmail.com>
 
 RUN apt-get -q update && \

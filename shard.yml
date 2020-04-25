@@ -13,12 +13,12 @@ dependencies:
 development_dependencies:
   mysql:
     github: crystal-lang/crystal-mysql
-    version: 0.10.0
+    version: 0.11.0
 
   pg:
     github: will/crystal-pg
-    version: 0.20.0
+    version: 0.21.0
 
   sqlite3:
     github: crystal-lang/crystal-sqlite3
-    version: 0.15.0
+    version: 0.16.0
