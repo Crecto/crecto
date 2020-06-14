@@ -46,7 +46,7 @@ module Crecto
           foreign_key: {{foreign_key.id.symbolize}},
           foreign_key_value: ->(item : Crecto::Model){
             {% if opts[:through] %}
-              item.as({{klass}}).id
+              item.as({{klass}}).id.as(PkeyValue)
             {% else %}
               item.as({{klass}}).{{foreign_key.id}}.as(PkeyValue)
             {% end %}
