@@ -66,38 +66,58 @@ module Crecto
       fields.each { |field| validate_format(field, pattern) }
     end
 
-    # Validate the inclusion of *field* value is in *in*
-    def validate_inclusion(field : Symbol, in : Array)
+    def validate_inclusion(field : Symbol, args : Hash(Symbol, (ArrayOfAny | RangeTypes)))
+      raise "Missing :in argument" unless args.has_key?(:in)
+      validate_inclusion(field, args[:in])
+    end
+
+    def validate_inclusion(fields : Array(Symbol), args : Hash(Symbol, (ArrayOfAny | RangeTypes)))
+      raise "Missing :in argument" unless args.has_key?(:in)
+      validate_inclusion(fields, args[:in])
+    end
+
+    # Validate the inclusion of *field* value is in *inside*
+    def validate_inclusion(field : Symbol, inside : Array)
       REQUIRED_ARRAY_INCLUSIONS[self.to_s] = [] of {field: Symbol, in: ArrayOfAny} unless REQUIRED_ARRAY_INCLUSIONS.has_key?(self.to_s)
-      REQUIRED_ARRAY_INCLUSIONS[self.to_s].push({field: field, in: in})
+      REQUIRED_ARRAY_INCLUSIONS[self.to_s].push({field: field, in: inside})
     end
 
-    # Validate the inclusion of *field* value is in *in*
-    def validate_inclusion(field : Symbol, in : RangeTypes)
+    # Validate the inclusion of *field* value is in *inside*
+    def validate_inclusion(field : Symbol, inside : RangeTypes)
       REQUIRED_RANGE_INCLUSIONS[self.to_s] = [] of {field: Symbol, in: RangeTypes} unless REQUIRED_RANGE_INCLUSIONS.has_key?(self.to_s)
-      REQUIRED_RANGE_INCLUSIONS[self.to_s].push({field: field, in: in})
+      REQUIRED_RANGE_INCLUSIONS[self.to_s].push({field: field, in: inside})
     end
 
-    # Validate the inclusion of *fields* values is in *in*
-    def validate_inclusion(fields : Array(Symbol), in : Array | Range)
-      fields.each { |field| validate_inclusion(field, in) }
+    # Validate the inclusion of *fields* values is in *inside*
+    def validate_inclusion(fields : Array(Symbol), inside : Array | Range)
+      fields.each { |field| validate_inclusion(field, inside) }
     end
 
-    # Validate the inclusion of *field* value is not in *in*
-    def validate_exclusion(field : Symbol, in : Array)
+    def validate_exclusion(field : Symbol, args : Hash(Symbol, (ArrayOfAny | RangeTypes)))
+      raise "Missing :in argument" unless args.has_key?(:in)
+      validate_exclusion(field, args[:in])
+    end
+
+    def validate_exclusion(fields : Array(Symbol), args : Hash(Symbol, (ArrayOfAny | RangeTypes)))
+      raise "Missing :in argument" unless args.has_key?(:in)
+      validate_exclusion(fields, args[:in])
+    end
+
+    # Validate the inclusion of *field* value is not in *inside*
+    def validate_exclusion(field : Symbol, inside : Array)
       REQUIRED_ARRAY_EXCLUSIONS[self.to_s] = [] of {field: Symbol, in: ArrayOfAny} unless REQUIRED_ARRAY_EXCLUSIONS.has_key?(self.to_s)
-      REQUIRED_ARRAY_EXCLUSIONS[self.to_s].push({field: field, in: in})
+      REQUIRED_ARRAY_EXCLUSIONS[self.to_s].push({field: field, in: inside})
     end
 
-    # Validate the inclusion of *field* value is not in *in*
-    def validate_exclusion(field : Symbol, in : RangeTypes)
+    # Validate the inclusion of *field* value is not in *inside*
+    def validate_exclusion(field : Symbol, inside : RangeTypes)
       REQUIRED_RANGE_EXCLUSIONS[self.to_s] = [] of {field: Symbol, in: RangeTypes} unless REQUIRED_RANGE_EXCLUSIONS.has_key?(self.to_s)
-      REQUIRED_RANGE_EXCLUSIONS[self.to_s].push({field: field, in: in})
+      REQUIRED_RANGE_EXCLUSIONS[self.to_s].push({field: field, in: inside})
     end
 
-    # Validate the inclusion of *fields* values is not *in*
-    def validate_exclusion(fields : Array(Symbol), in : Array | Range)
-      fields.each { |field| validate_exclusion(field, in) }
+    # Validate the inclusion of *fields* values is not *inside*
+    def validate_exclusion(fields : Array(Symbol), inside : Array | Range)
+      fields.each { |field| validate_exclusion(field, inside) }
     end
 
     # Validate the length of *field* value using the following opts:
@@ -184,11 +204,11 @@ module Crecto
       end
 
       if opts = constrains[:inclusion]?
-        validate_inclusion(field, **opts)
+        validate_inclusion(field, opts.to_h)
       end
 
       if opts = constrains[:exclusion]?
-        validate_exclusion(field, **opts)
+        validate_exclusion(field, opts.to_h)
       end
 
       if opts = constrains[:length]?
