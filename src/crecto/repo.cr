@@ -87,6 +87,12 @@ module Crecto
     def all(queryable, query = Query.new)
       q = config.adapter.run(config.get_connection, :all, queryable, query).as(DB::ResultSet)
       results = queryable.from_rs(q)
+
+      preloads = query.preloads
+      if preloads.any?
+        add_preloads(results, queryable, preloads)
+      end
+
       results
     end
 
