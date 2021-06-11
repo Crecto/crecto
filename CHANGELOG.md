@@ -5,7 +5,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [0.12.0] 2021-6-11
 
-- Fix shard version/git tag version mismatch
+- Update for crystal 1.0
 
 ## [0.11.2] 2019-10-31
 
