@@ -542,7 +542,8 @@ module Crecto
 
     {% for operation in %w[insert update delete] %}
       private def run_operation(operation : Multi::{{operation.camelcase.id}}, tx)
-        {{operation.id}}(operation.instance, tx)
+        cs = {{operation.id}}(operation.instance, tx)
+        raise cs.errors.first[:message] if !cs.valid?
       rescue ex : Exception
         raise OperationError.new(ex, operation.instance.class, {{operation}})
       end
