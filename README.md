@@ -1,3 +1,5 @@
+## This REPO is not actively maintained. Crecto is works with Crystal 1.0. Please contact me or create an issue if you would like to take over as maintainer of Crecto.
+
 # Crecto
 
 ![crecto](crecto.png)
@@ -6,7 +8,7 @@
 
 [![Build Status](https://travis-ci.org/Crecto/crecto.svg?branch=master)](https://travis-ci.org/Crecto/crecto) [![Join the chat at https://gitter.im/crecto/Lobby](https://badges.gitter.im/crecto/Lobby.svg)](https://gitter.im/crecto/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-Robust database wrapper for Crystal.  Inspired by [Ecto](https://github.com/elixir-ecto/ecto) for Elixir language.
+Robust database wrapper for Crystal. Inspired by [Ecto](https://github.com/elixir-ecto/ecto) for Elixir language.
 
 With built in query composer, associations, transactions, validations, constraints, and more.
 
@@ -40,7 +42,7 @@ Visit [www.crecto.com](https://www.crecto.com)
 
 #### Benchmarks
 
-* [VS raw crystal-pg](https://github.com/Crecto/crecto/wiki/Benchmarks)
+- [VS raw crystal-pg](https://github.com/Crecto/crecto/wiki/Benchmarks)
 
 ## Contributing
 
@@ -64,7 +66,7 @@ When submitting a pull request, please test against all 3 databases.
 
 ## Thanks / Inspiration
 
-* [Ecto](https://github.com/elixir-ecto/ecto)
-* [AciveRecord](https://github.com/rails/rails/tree/master/activerecord)
-* [active_record.cr](https://github.com/waterlink/active_record.cr)
-* [crystal-api-backend](https://github.com/dantebronto/crystal-api-backend)
+- [Ecto](https://github.com/elixir-ecto/ecto)
+- [AciveRecord](https://github.com/rails/rails/tree/master/activerecord)
+- [active_record.cr](https://github.com/waterlink/active_record.cr)
+- [crystal-api-backend](https://github.com/dantebronto/crystal-api-backend)
