@@ -1,4 +1,4 @@
-## This REPO is not actively maintained. Crecto is works with Crystal 1.0. Please contact me or create an issue if you would like to take over as maintainer of Crecto.
+## Crecto is working with Crystal 1.0, however this library is not actively maintained.  Please contact me or create an issue if you would like to take over as maintainer of Crecto.
 
 # Crecto
 
