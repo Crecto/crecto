@@ -18,9 +18,9 @@ module Crecto
       include Crecto::Schema::BelongsTo
       extend Crecto::Changeset({{@type}})
 
-      CRECTO_DESTROY_ASSOCIATIONS = Array(Symbol).new
-      CRECTO_NULLIFY_ASSOCIATIONS = Array(Symbol).new
-      CRECTO_MODEL_FIELDS = [] of NamedTuple(name: Symbol, type: String)
+      CRECTO_DESTROY_ASSOCIATIONS = Array(String).new
+      CRECTO_NULLIFY_ASSOCIATIONS = Array(String).new
+      CRECTO_MODEL_FIELDS = [] of NamedTuple(name: String, type: String)
 
       def self.use_primary_key?
         CRECTO_USE_PRIMARY_KEY
@@ -47,12 +47,12 @@ module Crecto
       end
 
       # Class variables
-      @@changeset_fields = [] of Symbol
-      @@initial_values = {} of Symbol => DbValue
+      @@changeset_fields = [] of String
+      @@initial_values = {} of String => DbValue
 
       # Instance properties
       @[JSON::Field(ignore: true)]
-      property initial_values : Hash(Symbol, DbValue)?
+      property initial_values : Hash(String, DbValue)?
 
       def initialize
       end
@@ -60,11 +60,6 @@ module Crecto
       # Return the primary key field as a String
       def self.primary_key_field
         CRECTO_PRIMARY_KEY_FIELD
-      end
-
-      # Return the primary key field as a Symbol
-      def self.primary_key_field_symbol
-        CRECTO_PRIMARY_KEY_FIELD_SYMBOL
       end
 
       def self.created_at_field
@@ -91,25 +86,25 @@ module Crecto
 
       # Empty association methods
       # Implementations are in the setup_association macro
-      def self.klass_for_association(association : Symbol)
+      def self.klass_for_association(association : String | Symbol)
       end
 
-      def self.foreign_key_for_association(association : Symbol) : Symbol?
+      def self.foreign_key_for_association(association : String | Symbol) : String?
       end
 
       def self.foreign_key_for_association(klass : Crecto::Model.class)
       end
 
-      def self.foreign_key_value_for_association(association : Symbol, item)
+      def self.foreign_key_value_for_association(association : String | Symbol, item)
       end
 
-      def self.set_value_for_association(association : Symbol, item, items)
+      def self.set_value_for_association(association : String | Symbol, item, items)
       end
 
-      def self.association_type_for_association(association : Symbol)
+      def self.association_type_for_association(association : String | Symbol)
       end
 
-      def self.through_key_for_association(association : Symbol) : Symbol?
+      def self.through_key_for_association(association : String | Symbol) : String?
       end
 
       # Class methods for mass assignment
@@ -121,11 +116,7 @@ module Crecto
         new.tap { |m| m.cast(attributes, whitelist) }
       end
 
-      def self.cast(attributes : Hash(Symbol, T), whitelist : Array(Symbol) = attributes.keys) forall T
-        new.tap { |m| m.cast(attributes, whitelist) }
-      end
-
-      def self.cast(attributes : Hash(String, T), whitelist : Array(String) = attributes.keys) forall T
+      def self.cast(attributes : Hash(String, T), whitelist : Array(String | Symbol) = attributes.keys) forall T
         new.tap { |m| m.cast(attributes, whitelist) }
       end
 
@@ -146,16 +137,13 @@ module Crecto
       def cast(attributes : NamedTuple, whitelist : Tuple = attributes.keys)
       end
 
-      def cast(attributes : Hash(Symbol, T), whitelist : Array(Symbol) = attributes.keys) forall T
-      end
-
-      def cast(attributes : Hash(String, T), whitelist : Array(String) = attributes.keys) forall T
+      def cast(attributes : Hash(String | Symbol, T), whitelist : Array(String | Symbol) = attributes.keys) forall T
       end
 
       # Instance method for compile-time type safe mass assignment
       def cast!(**attributes : **T) forall T
         \{% for key in T.keys %}
-           self.\{{ key }} = attributes[\{{ key.symbolize }}]
+           self.\{{ key }} = attributes[\{{ key.stringify }}]
         \{% end %}
       end
 

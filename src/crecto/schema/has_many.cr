@@ -1,23 +1,28 @@
 module Crecto
   module Schema
     module HasMany
-      macro has_many(association_name, klass, **opts)
+      macro has_many(association, **opts)
         {% unless @type.has_constant? "CRECTO_ASSOCIATIONS" %}
           Crecto::Schema::Associations.setup_associations
         {% end %}
 
-        @{{association_name.id}} : Array({{klass}})?
+        {%
+          field_name = association.var
+          field_type = association.type
+        %}
 
-        def {{association_name.id}}? : Array({{klass}})?
-          @{{association_name.id}}
+        @{{field_name.id}} : Array({{field_type}})?
+
+        def {{field_name.id}}? : Array({{field_type}})?
+          @{{field_name.id}}
         end
 
-        def {{association_name.id}} : Array({{klass}})
-          @{{association_name.id}} || raise Crecto::AssociationNotLoaded.new("Association `{{association_name.id}}' not loaded")
+        def {{field_name.id}} : Array({{field_type}})
+          @{{field_name.id}} || raise Crecto::AssociationNotLoaded.new("Association `{{field_name.id}}' not loaded")
         end
 
-        def {{association_name.id}}=(val : Array({{klass}}))
-          @{{association_name.id}} = val
+        def {{field_name.id}}=(val : Array({{field_type}}))
+          @{{field_name.id}} = val
         end
 
 
@@ -30,32 +35,32 @@ module Crecto
         {% on_replace = opts[:dependent] || opts[:on_replace] %}
 
         {% if on_replace && on_replace == :destroy %}
-          self.add_destroy_association({{association_name.id.symbolize}})
+          self.add_destroy_association({{field_name.id.symbolize}})
         {% end %}
 
 
         {% if on_replace && on_replace == :nullify %}
-          self.add_nullify_association({{association_name.id.symbolize}})
+          self.add_nullify_association({{field_name.id.symbolize}})
         {% end %}
 
         CRECTO_ASSOCIATIONS.push({
-          association_type: :has_many,
-          key: {{association_name}},
+          association_type: "has_many",
+          key: {{field_name.id.stringify}},
           this_klass: {{@type}},
-          klass: {{klass}},
-          foreign_key: {{foreign_key.id.symbolize}},
+          klass: {{field_type}},
+          foreign_key: {{foreign_key.id.stringify}},
           foreign_key_value: ->(item : Crecto::Model){
             {% if opts[:through] %}
-              item.as({{klass}}).id.as(PkeyValue)
+              item.as({{field_type}}).id.as(PkeyValue)
             {% else %}
-              item.as({{klass}}).{{foreign_key.id}}.as(PkeyValue)
+              item.as({{field_type}}).{{foreign_key.id}}.as(PkeyValue)
             {% end %}
           },
           set_association: ->(self_item : Crecto::Model, items : Array(Crecto::Model) | Crecto::Model){
-            self_item.as({{@type}}).{{association_name.id}} = items.as(Array(Crecto::Model)).map{|i| i.as({{klass}}) }
+            self_item.as({{@type}}).{{field_name.id}} = items.as(Array(Crecto::Model)).map{|i| i.as({{field_type}}) }
             nil
           },
-          through: {{through}}
+          through: {{through.id.stringify}}
         })
       end
     end

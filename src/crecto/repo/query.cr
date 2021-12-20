@@ -37,7 +37,7 @@ module Crecto
           # ```
           def {{ method.id }}(**wheres)
             wheres = wheres.to_h
-            {{op.id}}(Hash.zip(wheres.keys, wheres.values))
+            {{op.id}}(Hash.zip(wheres.keys.map(&.to_s), wheres.values))
           end
 
           # Query#{{ method.id }} with a String and Array(DbValue)
@@ -45,27 +45,27 @@ module Crecto
           # ```
           # query.{{ method.id }}("users.id > ?", [10])
           # ```
-          def {{ method.id }}(where_string : String, params : Array(DbValue))
-            {{op.id}}({ clause: where_string, params: params.map { |p| p.as(DbValue) }})
+          def {{ method.id }}(where_string : String | Symbol, params : Array(DbValue))
+            {{op.id}}({ clause: where_string.to_s, params: params.map { |p| p.as(DbValue) }})
           end
 
-          # Query#{{ method.id }} with a Symbol and DbValue
+          # Query#{{ method.id }} with a String and DbValue
           #
           # ```
           # query.{{ method.id }}(:name, "Conan")
           # ```
-          def {{ method.id }}(where_sym : Symbol, param : DbValue)
-            {{op.id}}({where_sym => param.as(DbValue)})
+          def {{ method.id }}(where_string : String | Symbol, param : DbValue)
+            {{op.id}}({where_string.to_s => param.as(DbValue)})
           end
 
-          # Query#{{ method.id }} with a Symbol and Array(DbValue)
+          # Query#{{ method.id }} with a String and Array(DbValue)
           #
           # ```
           # query.{{ method.id }}(:name, ["Conan", "Zeus"])
           # ```
-          def {{ method.id }}(where_sym : Symbol, params : Array(DbValue))
-            w = {} of Symbol => Array(DbValue)
-            w[where_sym] = params.map { |x| x.as(DbValue) }
+          def {{ method.id }}(where_string : String | Symbol, params : Array(DbValue))
+            w = {} of String => Array(DbValue)
+            w[where_string.to_s] = params.map { |x| x.as(DbValue) }
             {{op.id}}(w)
           end
 
@@ -173,7 +173,7 @@ module Crecto
       property selects : Array(String)
       property where_expression : WhereExpression = InitialExpression.new
       property joins = [] of Symbol | String
-      property preloads = [] of NamedTuple(symbol: Symbol, query: Query?)
+      property preloads = [] of NamedTuple(symbol: String, query: Query?)
       property order_bys = [] of String
       property limit : Int32?
       property offset : Int32?
@@ -236,32 +236,32 @@ module Crecto
           self
         end
 
-        # Query.{{ method.id }} with a Symbol and DbValue
+        # Query.{{ method.id }} with a String and DbValue
         #
         # ```
         # Query.{{ method.id }}(:name, "Conan")
         # ```
-        def self.{{ method.id }}(where_sym : Symbol, param : DbValue)
-          self.new.{{ method.id }}(where_sym, param)
+        def self.{{ method.id }}(where_string : String | Symbol, param : DbValue)
+          self.new.{{ method.id }}(where_string.to_s, param)
         end
 
-        # Query#{{ method.id }} with a Symbol and DbValue
+        # Query#{{ method.id }} with a String and DbValue
         #
         # ```
         # query.{{ method.id }}(:name, "Conan")
         # ```
-        def {{ method.id }}(where_sym : Symbol, param : DbValue)
-          @where_expression = @where_expression.{{ method.id }}(where_sym, param)
+        def {{ method.id }}(where_string : String | Symbol, param : DbValue)
+          @where_expression = @where_expression.{{ method.id }}(where_string.to_s, param)
           self
         end
 
-        # Query.{{ method.id }} with a Symbol and Array(DbValue)
+        # Query.{{ method.id }} with a String and Array(DbValue)
         #
         # ```
         # Query.{{ method.id }}(:name, ["Conan", "Zeus"])
         # ```
-        def self.{{ method.id }}(where_sym : Symbol, params : Array(DbValue | PkeyValue))
-          self.new.{{ method.id }}(where_sym, params)
+        def self.{{ method.id }}(where_string : String | Symbol, params : Array(DbValue | PkeyValue))
+          self.new.{{ method.id }}(where_string.to_s, params)
         end
 
         # Query#{{ method.id }} with a Symbol and Array(DbValue)
@@ -269,8 +269,8 @@ module Crecto
         # ```
         # query.{{ method.id }}(:name, ["Conan", "Zeus"])
         # ```
-        def {{ method.id }}(where_sym : Symbol, params : Array(DbValue))
-          @where_expression = @where_expression.{{ method.id }}(where_sym, params)
+        def {{ method.id }}(where_string : String | Symbol, params : Array(DbValue))
+          @where_expression = @where_expression.{{ method.id }}(where_string.to_s, params)
           self
         end
 
@@ -343,7 +343,7 @@ module Crecto
       # ```
       # Query.preload([:posts, :projects])
       # ```
-      def self.preload(preload_associations : Array(Symbol))
+      def self.preload(preload_associations : Array(String | Symbol))
         self.new.preload(preload_associations)
       end
 
@@ -352,7 +352,7 @@ module Crecto
       # ```
       # Query.preload([:posts, :projects], Query.where(name: "name"))
       # ```
-      def self.preload(preload_associations : Array(Symbol), query : Query)
+      def self.preload(preload_associations : Array(String | Symbol), query : Query)
         self.new.preload(preload_associations, query)
       end
 
@@ -361,7 +361,7 @@ module Crecto
       # ```
       # Query.preload(:posts)
       # ```
-      def self.preload(preload_association : Symbol)
+      def self.preload(preload_association : String | Symbol)
         self.new.preload(preload_association)
       end
 
@@ -370,7 +370,7 @@ module Crecto
       # ```
       # Query.preload(:posts, Query.where(name: "name"))
       # ```
-      def self.preload(preload_association : Symbol, query : Query)
+      def self.preload(preload_association : String | Symbol, query : Query)
         self.new.preload(preload_association, query)
       end
 
@@ -494,8 +494,8 @@ module Crecto
       # ```
       # Query.preload([:posts, :projects])
       # ```
-      def preload(preload_associations : Array(Symbol))
-        @preloads += preload_associations.map { |a| {symbol: a, query: nil} }
+      def preload(preload_associations : Array(String | Symbol))
+        @preloads += preload_associations.map { |a| {symbol: a.to_s, query: nil} }
         self
       end
 
@@ -504,8 +504,8 @@ module Crecto
       # ```
       # Query.preload([:posts, :projects], Query.where(name: "name"))
       # ```
-      def preload(preload_associations : Array(Symbol), query : Query)
-        @preloads += preload_associations.map { |a| {symbol: a, query: query} }
+      def preload(preload_associations : Array(String | Symbol), query : Query)
+        @preloads += preload_associations.map { |a| {symbol: a.to_s, query: query} }
         self
       end
 
@@ -514,8 +514,8 @@ module Crecto
       # ```
       # Query.preload(:posts)
       # ```
-      def preload(preload_association : Symbol)
-        @preloads.push({symbol: preload_association, query: nil})
+      def preload(preload_association : String | Symbol)
+        @preloads.push({symbol: preload_association.to_s, query: nil})
         self
       end
 
@@ -524,8 +524,8 @@ module Crecto
       # ```
       # Query.preload(:posts, Query.where(name: "name"))
       # ```
-      def preload(preload_association : Symbol, query : Query)
-        @preloads.push({symbol: preload_association, query: query})
+      def preload(preload_association : String | Symbol, query : Query)
+        @preloads.push({symbol: preload_association.to_s, query: query})
         self
       end
 

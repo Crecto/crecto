@@ -16,17 +16,17 @@ module Crecto
     #
     class Changeset(T)
       # :nodoc:
-      property action : Symbol?
+      property action : String?
       # :nodoc:
-      property errors = [] of Hash(Symbol, String)
+      property errors = [] of NamedTuple(field: String, message: String)
       # :nodoc:
-      property changes = [] of Hash(Symbol, DbValue | ArrayDbValue)
+      property changes = [] of Hash(String, DbValue | ArrayDbValue)
       # :nodoc:
-      property source : Hash(Symbol, DbValue)? | Hash(Symbol, ArrayDbValue)?
+      property source : Hash(String, DbValue)? | Hash(String, ArrayDbValue)?
 
       private property valid = true
       private property class_key : String?
-      private property instance_hash : Hash(Symbol, DbValue | ArrayDbValue)
+      private property instance_hash : Hash(String, DbValue | ArrayDbValue)
 
       def initialize(@instance : T)
         @class_key = @instance.class.to_s
@@ -54,7 +54,7 @@ module Crecto
       end
 
       def add_error(key, val)
-        errors.push({:field => key, :message => val})
+        errors.push({field: key, message: val})
         @valid = false
       end
 
@@ -182,7 +182,7 @@ module Crecto
       end
 
       private def diff_from_initial_values!
-        @initial_values = {} of Symbol => (DbValue | ArrayDbValue) if @initial_values.nil?
+        @initial_values = {} of String => (DbValue | ArrayDbValue) if @initial_values.nil?
         @changes.clear
         @instance_hash.each do |field, value|
           @changes.push({field => value}) if @initial_values.as(Hash).fetch(field, nil) != value
