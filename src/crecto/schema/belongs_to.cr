@@ -15,6 +15,7 @@ module Crecto
         {%
           field_name = association.var
           field_type = association.type
+          fkey_type = opts[:fkey_type] || "PkeyValue"
         %}
 
         @{{field_name.id}} : {{field_type}}?
@@ -34,13 +35,13 @@ module Crecto
         %}
 
         {% unless CRECTO_FIELDS.select { |f| f[:name] == foreign_key.id.stringify }.size > 0 %}
-          field {{foreign_key.id}} : PkeyValue
+          field {{foreign_key.id}} : {{ fkey_type.id }}
         {% end %}
 
         def {{field_name.id}}=(val : {{field_type}}?)
           @{{field_name.id}} = val
           return if val.nil?
-          @{{foreign_key.id}} = val.pkey_value.as(PkeyValue)
+          @{{foreign_key.id}} = val.pkey_value.as({{ fkey_type.id }})
         end
 
         CRECTO_ASSOCIATIONS.push({

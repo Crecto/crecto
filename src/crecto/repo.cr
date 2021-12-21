@@ -207,16 +207,17 @@ module Crecto
     # user = Crecto::Repo.get(User, 1)
     # post = Repo.get_association(user, :post)
     # ```
-    def get_association(queryable_instance, association_name : Symbol, query : Query = Query.new)
-      case queryable_instance.class.association_type_for_association(association_name)
-      when :has_many
+    def get_association(queryable_instance, association_name : String | Symbol, query : Query = Query.new)
+      sym = queryable_instance.class.association_type_for_association(association_name).to_s
+      case sym
+      when "has_many"
         get_has_many_association(queryable_instance, association_name, query)
-      when :has_one
+      when "has_one"
         get_has_one_association(queryable_instance, association_name, query)
-      when :belongs_to
+      when "belongs_to"
         get_belongs_to_association(queryable_instance, association_name, query)
       else
-        raise Exception.new("invalid operation passed to get_association")
+        raise Exception.new("invalid operation #{sym} passed to get_association")
       end
     end
 
@@ -228,7 +229,7 @@ module Crecto
     # user = Crecto::Repo.get(User, 1)
     # post = Repo.get_association!(user, :post)
     # ```
-    def get_association!(queryable_instance, association_name : Symbol, query : Query = Query.new)
+    def get_association!(queryable_instance, association_name : String | Symbol, query : Query = Query.new)
       if result = get_association(queryable_instance, association_name, query)
         result
       else
@@ -645,15 +646,16 @@ module Crecto
 
     private def add_preloads(results, queryable, preloads)
       preloads.each do |preload|
-        case queryable.association_type_for_association(preload[:symbol])
-        when :has_many
+        sym = queryable.association_type_for_association(preload[:symbol]).to_s
+        case sym
+        when "has_many"
           has_many_preload(results, queryable, preload)
-        when :has_one
+        when "has_one"
           has_one_preload(results, queryable, preload)
-        when :belongs_to
+        when "belongs_to"
           belongs_to_preload(results, queryable, preload)
         else
-          raise Exception.new("invalid operation passed to add_preloads")
+          raise Exception.new("invalid operation #{sym} passed to add_preloads")
         end
       end
     end

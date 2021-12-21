@@ -12,6 +12,7 @@ module Crecto
         {%
           field_name = association.var
           field_type = association.type
+          fkey_type = opts[:fkey_type] || "PkeyValue"
         %}
 
         @{{field_name.id}} : {{field_type}}?
@@ -43,7 +44,7 @@ module Crecto
         def {{field_name.id}}=(val : {{field_type}}?)
           @{{field_name.id}} = val
           return if val.nil?
-          @{{foreign_key.id}} = val.pkey_value.as(PkeyValue)
+          @{{foreign_key.id}} = val.pkey_value.as({{ fkey_type.id }})
         end
 
 
