@@ -128,6 +128,7 @@ module Crecto
           builder << ") RETURNING *"
         end
 
+        puts q
         execute(conn, position_args(q), fields_values[:values])
       end
 
