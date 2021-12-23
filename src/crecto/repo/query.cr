@@ -45,7 +45,7 @@ module Crecto
           # ```
           # query.{{ method.id }}("users.id > ?", [10])
           # ```
-          def {{ method.id }}(where_string : String | Symbol, params : Array(DbValue))
+          def {{ method.id }}(where_string : String, params : Array(DbValue))
             {{op.id}}({ clause: where_string.to_s, params: params.map { |p| p.as(DbValue) }})
           end
 
@@ -54,7 +54,7 @@ module Crecto
           # ```
           # query.{{ method.id }}(:name, "Conan")
           # ```
-          def {{ method.id }}(where_string : String | Symbol, param : DbValue)
+          def {{ method.id }}(where_string : Symbol, param : DbValue)
             {{op.id}}({where_string.to_s => param.as(DbValue)})
           end
 
@@ -63,7 +63,7 @@ module Crecto
           # ```
           # query.{{ method.id }}(:name, ["Conan", "Zeus"])
           # ```
-          def {{ method.id }}(where_string : String | Symbol, params : Array(DbValue))
+          def {{ method.id }}(where_string : Symbol, params : Array(DbValue))
             w = {} of String => Array(DbValue)
             w[where_string.to_s] = params.map { |x| x.as(DbValue) }
             {{op.id}}(w)
@@ -241,7 +241,7 @@ module Crecto
         # ```
         # Query.{{ method.id }}(:name, "Conan")
         # ```
-        def self.{{ method.id }}(where_string : String | Symbol, param : DbValue)
+        def self.{{ method.id }}(where_string : Symbol, param : DbValue)
           self.new.{{ method.id }}(where_string.to_s, param)
         end
 
@@ -250,7 +250,7 @@ module Crecto
         # ```
         # query.{{ method.id }}(:name, "Conan")
         # ```
-        def {{ method.id }}(where_string : String | Symbol, param : DbValue)
+        def {{ method.id }}(where_string : Symbol, param : DbValue)
           @where_expression = @where_expression.{{ method.id }}(where_string.to_s, param)
           self
         end
@@ -260,7 +260,7 @@ module Crecto
         # ```
         # Query.{{ method.id }}(:name, ["Conan", "Zeus"])
         # ```
-        def self.{{ method.id }}(where_string : String | Symbol, params : Array(DbValue | PkeyValue))
+        def self.{{ method.id }}(where_string : Symbol, params : Array(DbValue | PkeyValue))
           self.new.{{ method.id }}(where_string.to_s, params)
         end
 
@@ -269,7 +269,7 @@ module Crecto
         # ```
         # query.{{ method.id }}(:name, ["Conan", "Zeus"])
         # ```
-        def {{ method.id }}(where_string : String | Symbol, params : Array(DbValue))
+        def {{ method.id }}(where_string : Symbol, params : Array(DbValue))
           @where_expression = @where_expression.{{ method.id }}(where_string.to_s, params)
           self
         end
