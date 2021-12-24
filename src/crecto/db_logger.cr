@@ -29,7 +29,7 @@ module Crecto
 
     def self.set_handler(logger : Log)
       @@log_handler = logger
-      @@log_handler.as(Log).level = Log::INFO
+      @@log_handler.as(Log).level = Log::Severity::Info
     end
 
     def self.set_handler(io : IO)
