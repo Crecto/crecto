@@ -44,11 +44,11 @@ module Crecto
         {% end %}
 
         CRECTO_ASSOCIATIONS.push({
-          association_type: "has_many",
-          key: {{field_name.id.stringify}},
+          association_type: :has_many,
+          key: {{field_name.id.symbolize}},
           this_klass: {{@type}},
           klass: {{field_type}},
-          foreign_key: {{foreign_key.id.stringify}},
+          foreign_key: {{foreign_key.id.symbolize}},
           foreign_key_value: ->(item : Crecto::Model){
             {% if opts[:through] %}
               item.as({{field_type}}).id.as(PkeyValue)
@@ -60,7 +60,7 @@ module Crecto
             self_item.as({{@type}}).{{field_name.id}} = items.as(Array(Crecto::Model)).map{|i| i.as({{field_type}}) }
             nil
           },
-          through: {{through.id.stringify}}
+          through: {{through.id.symbolize}}
         })
       end
     end

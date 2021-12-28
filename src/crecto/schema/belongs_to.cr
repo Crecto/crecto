@@ -45,11 +45,11 @@ module Crecto
         end
 
         CRECTO_ASSOCIATIONS.push({
-          association_type: "belongs_to",
-          key: {{field_name.id.stringify}},
+          association_type: :belongs_to,
+          key: {{field_name.id.symbolize}},
           this_klass: {{@type}},
           klass: {{field_type}},
-          foreign_key: {{foreign_key.id.stringify}},
+          foreign_key: {{foreign_key.id.symbolize}},
           foreign_key_value: ->(item : Crecto::Model){
             item.as({{@type}}).{{foreign_key.id}}.as(PkeyValue)
           },

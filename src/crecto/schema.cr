@@ -39,6 +39,8 @@ module Crecto
     # :nodoc:
     CRECTO_USE_PRIMARY_KEY = true
     # :nodoc:
+    CRECTO_PRIMARY_KEY_FIELD_SYMBOL = :id
+    # :nodoc:
     CRECTO_PRIMARY_KEY_FIELD_TYPE = "PkeyValue"
 
     # schema block macro
@@ -54,7 +56,7 @@ module Crecto
       # macro constants
       CRECTO_VALID_FIELD_TYPES = [String, Int64, Int32, Int16, Float32, Float64, Bool, Time, Int32 | Int64, Float32 | Float64, Json, PkeyValue, Array(String), Array(Int64), Array(Int32), Array(Int16), Array(Float32), Array(Float64), Array(Bool), Array(Time), Array(Int32 | Int64), Array(Float32 | Float64), Array(Json), Array(PkeyValue)]
       CRECTO_VALID_FIELD_OPTIONS = [:primary_key, :virtual, :default, :converter]
-      CRECTO_FIELDS      = [] of NamedTuple(name: String, type: String, converter: Converter?)
+      CRECTO_FIELDS      = [] of NamedTuple(name: Symbol, type: String, converter: Converter?)
 
       # Class variables
       @@table_name = {{table_name.id.stringify}}
@@ -85,6 +87,7 @@ module Crecto
 
       {% if opts.keys.includes?(:primary_key.id) %}
         CRECTO_PRIMARY_KEY_FIELD = {{field_name.id.stringify}}
+        CRECTO_PRIMARY_KEY_FIELD_SYMBOL = {{field_name.id.symbolize}}
         CRECTO_PRIMARY_KEY_FIELD_TYPE = {{field_type.id.stringify}}
         {% primary_key = true %}
       {% end %}
@@ -101,18 +104,18 @@ module Crecto
 
 
       {% unless opts[:converter] %}
-        check_type!({{field_name.id.stringify}}, {{field_type}})
+        check_type!({{field_name.id.symbolize}}, {{field_type}})
       {% end %}
 
       # cache fields in class variable and macro variable
       {% unless virtual %}
-        @@changeset_fields << {{field_name.id.stringify}}
+        @@changeset_fields << {{field_name.id.symbolize}}
       {% end %}
 
       {% unless primary_key %}
-        {% CRECTO_FIELDS.push({name: field_name.id.stringify, type: field_type.id.stringify, converter: opts[:converter]}) %}
+        {% CRECTO_FIELDS.push({name: field_name.id.symbolize, type: field_type.id.stringify, converter: opts[:converter]}) %}
         {% unless virtual %}
-          CRECTO_MODEL_FIELDS.push({name: {{field_name.id.stringify}}, type: {{field_type.id.stringify}}})
+          CRECTO_MODEL_FIELDS.push({name: {{field_name.id.symbolize}}, type: {{field_type.id.stringify}}})
         {% end %}
       {% end %}
     end
@@ -153,18 +156,18 @@ module Crecto
 
       {% if CRECTO_USE_PRIMARY_KEY %}
         {% mapping.push(CRECTO_PRIMARY_KEY_FIELD.id.stringify + ": {type: #{CRECTO_PRIMARY_KEY_FIELD_TYPE.id}, nilable: true}") %}
-        CRECTO_MODEL_FIELDS.push({name: {{CRECTO_PRIMARY_KEY_FIELD.id.stringify}}, type: {{CRECTO_PRIMARY_KEY_FIELD_TYPE}}})
-        unique_constraint(CRECTO_PRIMARY_KEY_FIELD)
+        CRECTO_MODEL_FIELDS.push({name: {{CRECTO_PRIMARY_KEY_FIELD.id.symbolize}}, type: {{CRECTO_PRIMARY_KEY_FIELD_TYPE}}})
+        unique_constraint(CRECTO_PRIMARY_KEY_FIELD_SYMBOL)
       {% end %}
 
       {% unless CRECTO_CREATED_AT_FIELD == nil %}
         {% mapping.push(CRECTO_CREATED_AT_FIELD.id.stringify + ": {type: Time, nilable: true}") %}
-        CRECTO_MODEL_FIELDS.push({name: {{CRECTO_CREATED_AT_FIELD.id.stringify}}, type: "Time"})
+        CRECTO_MODEL_FIELDS.push({name: {{CRECTO_CREATED_AT_FIELD.id.symbolize}}, type: "Time"})
       {% end %}
 
       {% unless CRECTO_UPDATED_AT_FIELD == nil %}
         {% mapping.push(CRECTO_UPDATED_AT_FIELD.id.stringify + ": {type: Time, nilable: true}") %}
-        CRECTO_MODEL_FIELDS.push({name: {{CRECTO_UPDATED_AT_FIELD.id.stringify}}, type: "Time"})
+        CRECTO_MODEL_FIELDS.push({name: {{CRECTO_UPDATED_AT_FIELD.id.symbolize}}, type: "Time"})
       {% end %}
 
       DB.mapping({ {{mapping.uniq.join(", ").id}} }, false)
@@ -184,7 +187,7 @@ module Crecto
 
       # Builds a hash from all `CRECTO_FIELDS` defined
       def to_query_hash(include_virtual=false)
-        query_hash = {} of String => DbValue | ArrayDbValue
+        query_hash = {} of Symbol => DbValue | ArrayDbValue
 
         {% for field in CRECTO_FIELDS %}
           if include_virtual || @@changeset_fields.includes?({{field[:name]}})
@@ -199,15 +202,15 @@ module Crecto
         {% end %}
 
         {% unless CRECTO_CREATED_AT_FIELD == nil %}
-          query_hash[{{CRECTO_CREATED_AT_FIELD.id.stringify}}] = self.{{CRECTO_CREATED_AT_FIELD.id}}.nil? ? nil : (self.{{CRECTO_CREATED_AT_FIELD.id}}.as(Time).local? ? self.{{CRECTO_CREATED_AT_FIELD.id}}.as(Time).to_utc : self.{{CRECTO_CREATED_AT_FIELD.id}})
+          query_hash[{{CRECTO_CREATED_AT_FIELD.id.symbolize}}] = self.{{CRECTO_CREATED_AT_FIELD.id}}.nil? ? nil : (self.{{CRECTO_CREATED_AT_FIELD.id}}.as(Time).local? ? self.{{CRECTO_CREATED_AT_FIELD.id}}.as(Time).to_utc : self.{{CRECTO_CREATED_AT_FIELD.id}})
         {% end %}
 
         {% unless CRECTO_UPDATED_AT_FIELD == nil %}
-          query_hash[{{CRECTO_UPDATED_AT_FIELD.id.stringify}}] = self.{{CRECTO_UPDATED_AT_FIELD.id}}.nil? ? nil : (self.{{CRECTO_UPDATED_AT_FIELD.id}}.as(Time).local? ? self.{{CRECTO_UPDATED_AT_FIELD.id}}.as(Time).to_utc : self.{{CRECTO_UPDATED_AT_FIELD.id}})
+          query_hash[{{CRECTO_UPDATED_AT_FIELD.id.symbolize}}] = self.{{CRECTO_UPDATED_AT_FIELD.id}}.nil? ? nil : (self.{{CRECTO_UPDATED_AT_FIELD.id}}.as(Time).local? ? self.{{CRECTO_UPDATED_AT_FIELD.id}}.as(Time).to_utc : self.{{CRECTO_UPDATED_AT_FIELD.id}})
         {% end %}
 
         {% if CRECTO_USE_PRIMARY_KEY %}
-          query_hash[{{CRECTO_PRIMARY_KEY_FIELD.id.stringify}}] = self.{{CRECTO_PRIMARY_KEY_FIELD.id}} unless @{{CRECTO_PRIMARY_KEY_FIELD.id}}.nil?
+          query_hash[{{CRECTO_PRIMARY_KEY_FIELD.id.symbolize}}] = self.{{CRECTO_PRIMARY_KEY_FIELD.id}} unless self.{{CRECTO_PRIMARY_KEY_FIELD.id}}.nil?
         {% end %}
 
         query_hash

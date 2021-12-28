@@ -70,7 +70,7 @@ module Crecto
 
       results = queryable.from_rs(q.as(DB::ResultSet))
 
-      opt_preloads = opts.fetch(:preload, [] of String).map(&.to_s)
+      opt_preloads = opts.fetch(:preload, [] of Symbol)
       preloads = query.preloads + opt_preloads.map { |a| {symbol: a, query: nil} }
       if preloads.any?
         add_preloads(results, queryable, preloads)
@@ -207,17 +207,16 @@ module Crecto
     # user = Crecto::Repo.get(User, 1)
     # post = Repo.get_association(user, :post)
     # ```
-    def get_association(queryable_instance, association_name : String | Symbol, query : Query = Query.new)
-      sym = queryable_instance.class.association_type_for_association(association_name).to_s
-      case sym
-      when "has_many"
+    def get_association(queryable_instance, association_name : Symbol, query : Query = Query.new)
+      case queryable_instance.class.association_type_for_association(association_name)
+      when :has_many
         get_has_many_association(queryable_instance, association_name, query)
-      when "has_one"
+      when :has_one
         get_has_one_association(queryable_instance, association_name, query)
-      when "belongs_to"
+      when :belongs_to
         get_belongs_to_association(queryable_instance, association_name, query)
       else
-        raise Exception.new("invalid operation #{sym} passed to get_association")
+        raise Exception.new("invalid operation passed to get_association")
       end
     end
 
@@ -229,7 +228,7 @@ module Crecto
     # user = Crecto::Repo.get(User, 1)
     # post = Repo.get_association!(user, :post)
     # ```
-    def get_association!(queryable_instance, association_name : String | Symbol, query : Query = Query.new)
+    def get_association!(queryable_instance, association_name : Symbol, query : Query = Query.new)
       if result = get_association(queryable_instance, association_name, query)
         result
       else
@@ -268,7 +267,7 @@ module Crecto
         raise e unless changeset.check_unique_constraint_from_exception!(e, queryable_instance)
       end
 
-      changeset.action = "insert"
+      changeset.action = :insert
       changeset
     end
 
@@ -336,7 +335,7 @@ module Crecto
         raise e unless changeset.check_unique_constraint_from_exception!(e, queryable_instance)
       end
 
-      changeset.action = "update"
+      changeset.action = :update
       changeset
     end
 
@@ -415,7 +414,7 @@ module Crecto
         query.as(DB::ResultSet).close
       end
 
-      changeset.action = "delete"
+      changeset.action = :delete
       changeset
     end
 
@@ -564,13 +563,13 @@ module Crecto
 
     # Calculate the given aggregate `aggregate_function` over the given `field`
     # Aggregate `aggregate_function` must be one of (:avg, :count, :max, :min:, :sum)
-    def aggregate(queryable, aggregate_function : String | Symbol, field : String | Symbol)
+    def aggregate(queryable, aggregate_function : Symbol, field : Symbol)
       raise InvalidOption.new("Aggregate must be one of :avg, :count, :max, :min:, :sum") unless [:avg, :count, :max, :min, :sum].includes?(aggregate_function)
 
       config.adapter.aggregate(config.get_connection, queryable, aggregate_function, field)
     end
 
-    def aggregate(queryable, aggregate_function : String | Symbol, field : String | Symbol, query : Crecto::Repo::Query)
+    def aggregate(queryable, aggregate_function : Symbol, field : Symbol, query : Crecto::Repo::Query)
       raise InvalidOption.new("Aggregate must be one of :avg, :count, :max, :min:, :sum") unless [:avg, :count, :max, :min, :sum].includes?(aggregate_function)
 
       config.adapter.aggregate(config.get_connection, queryable, aggregate_function, field, query)
@@ -628,7 +627,7 @@ module Crecto
         outer_klass_ids = join_associations.map { |ja| outer_klass.foreign_key_value_for_association(through_key, ja) }
         return if join_associations.empty?
         delete_all(join_klass, Query.where(join_key, ids), tx)
-        outer_klass_pk_field = outer_klass.primary_key_field
+        outer_klass_pk_field = outer_klass.primary_key_field_symbol
         delete_all(outer_klass, Query.where(outer_klass_pk_field, outer_klass_ids), tx)
       end
     end
@@ -646,16 +645,15 @@ module Crecto
 
     private def add_preloads(results, queryable, preloads)
       preloads.each do |preload|
-        sym = queryable.association_type_for_association(preload[:symbol]).to_s
-        case sym
-        when "has_many"
+        case queryable.association_type_for_association(preload[:symbol])
+        when :has_many
           has_many_preload(results, queryable, preload)
-        when "has_one"
+        when :has_one
           has_one_preload(results, queryable, preload)
-        when "belongs_to"
+        when :belongs_to
           belongs_to_preload(results, queryable, preload)
         else
-          raise Exception.new("invalid operation #{sym} passed to add_preloads")
+          raise Exception.new("invalid operation passed to add_preloads")
         end
       end
     end
@@ -699,7 +697,7 @@ module Crecto
       return if foreign_key.nil?
       join_query = Crecto::Repo::Query.where(foreign_key, ids)
       # UserProjects
-      association_klass = queryable.klass_for_association(queryable.through_key_for_association(preload[:symbol]).as(String))
+      association_klass = queryable.klass_for_association(queryable.through_key_for_association(preload[:symbol]).as(Symbol))
       return if association_klass.nil?
       join_table_items = all(association_klass, join_query)
 
@@ -708,26 +706,26 @@ module Crecto
         # Set default association values as empty arrays to avoid confusion
         # between empty results and non-loaded associations.
         results.each do |result|
-          queryable.set_value_for_association(queryable.through_key_for_association(preload[:symbol]).as(String), result, [] of Crecto::Model)
+          queryable.set_value_for_association(queryable.through_key_for_association(preload[:symbol]).as(Symbol), result, [] of Crecto::Model)
           queryable.set_value_for_association(preload[:symbol], result, [] of Crecto::Model)
         end
       else
         association_klass = queryable.klass_for_association(preload[:symbol])
         return if association_klass.nil?
-        join_ids = join_table_items.map { |i| association_klass.foreign_key_value_for_association(queryable.through_key_for_association(preload[:symbol]).as(String), i) }
-        association_query = Crecto::Repo::Query.where(association_klass.primary_key_field, join_ids)
+        join_ids = join_table_items.map { |i| association_klass.foreign_key_value_for_association(queryable.through_key_for_association(preload[:symbol]).as(Symbol), i) }
+        association_query = Crecto::Repo::Query.where(association_klass.primary_key_field_symbol, join_ids)
         if preload_query = preload[:query]
           association_query = association_query.combine(preload_query)
         end
         # Projects
         relation_items = all(association_klass, association_query)
         # UserProject grouped by user_id
-        join_table_items = join_table_items.group_by { |t| queryable.foreign_key_value_for_association(queryable.through_key_for_association(preload[:symbol]).as(String), t) }
+        join_table_items = join_table_items.group_by { |t| queryable.foreign_key_value_for_association(queryable.through_key_for_association(preload[:symbol]).as(Symbol), t) }
 
         results.each do |result|
           join_items = join_table_items[result.pkey_value]? || [] of Crecto::Model
           # set join table has_many assocation i.e. user.user_projects
-          queryable.set_value_for_association(queryable.through_key_for_association(preload[:symbol]).as(String), result, join_items.map { |i| i.as(Crecto::Model) })
+          queryable.set_value_for_association(queryable.through_key_for_association(preload[:symbol]).as(Symbol), result, join_items.map { |i| i.as(Crecto::Model) })
           queryable_relation_items = relation_items.select { |i| join_ids.includes?(i.pkey_value) }
           # set association i.e. user.projects
           queryable.set_value_for_association(preload[:symbol], result, queryable_relation_items.map { |i| i.as(Crecto::Model) })
@@ -741,7 +739,7 @@ module Crecto
       return if ids.empty?
 
       association_klass = queryable.klass_for_association(preload[:symbol])
-      association_pk_field = association_klass.try(&.primary_key_field)
+      association_pk_field = association_klass.try(&.primary_key_field_symbol)
       return if association_pk_field.nil?
 
       query = Crecto::Repo::Query.where(association_pk_field, ids)
@@ -765,7 +763,7 @@ module Crecto
       end
     end
 
-    private def get_has_many_association(instance, association : String | Symbol, query : Query)
+    private def get_has_many_association(instance, association : Symbol, query : Query)
       queryable = instance.class
       foreign_key = queryable.foreign_key_for_association(association)
       return if foreign_key.nil?
@@ -775,13 +773,13 @@ module Crecto
       all(association_klass, query)
     end
 
-    private def get_has_one_association(instance, association : String | Symbol, query : Query)
+    private def get_has_one_association(instance, association : Symbol, query : Query)
       many = get_has_many_association(instance, association, query)
       return if many.nil?
       many.first?
     end
 
-    private def get_belongs_to_association(instance, association : String | Symbol, query : Query)
+    private def get_belongs_to_association(instance, association : Symbol, query : Query)
       queryable = instance.class
       klass_for_association = queryable.klass_for_association(association)
       return if klass_for_association.nil?

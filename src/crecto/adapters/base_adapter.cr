@@ -7,20 +7,20 @@ module Crecto
       #
       # Query data store using a *query*
       #
-      def run(conn : DB::Database | DB::Transaction, operation : String | Symbol, queryable, query : Crecto::Repo::Query)
-        case operation.to_s
-        when "all"
+      def run(conn : DB::Database | DB::Transaction, operation : Symbol, queryable, query : Crecto::Repo::Query)
+        case operation
+        when :all
           all(conn, queryable, query)
-        when "delete_all"
+        when :delete_all
           delete(conn, queryable, query)
         else
           raise Exception.new("invalid operation passed to run")
         end
       end
 
-      def run(conn : DB::Database | DB::Transaction, operation : String | Symbol, queryable, query : Crecto::Repo::Query, query_hash : Hash)
-        case operation.to_s
-        when "update_all"
+      def run(conn : DB::Database | DB::Transaction, operation : Symbol, queryable, query : Crecto::Repo::Query, query_hash : Hash)
+        case operation
+        when :update_all
           update(conn, queryable, query, query_hash)
         else
           raise Exception.new("invalid operation passed to run")
@@ -30,9 +30,9 @@ module Crecto
       #
       # Query data store using an *id*, returning a single record.
       #
-      def run(conn : DB::Database | DB::Transaction, operation : String | Symbol, queryable, id : PkeyValue)
-        case operation.to_s
-        when "get"
+      def run(conn : DB::Database | DB::Transaction, operation : Symbol, queryable, id : PkeyValue)
+        case operation
+        when :get
           get(conn, queryable, id)
         else
           raise Exception.new("invalid operation passed to run")
@@ -42,9 +42,9 @@ module Crecto
       #
       # Query data store using *sql*, returning multiple rows
       #
-      def run(conn : DB::Database | DB::Transaction, operation : String | Symbol, sql : String, params : Array(DbValue))
-        case operation.to_s
-        when "sql"
+      def run(conn : DB::Database | DB::Transaction, operation : Symbol, sql : String, params : Array(DbValue))
+        case operation
+        when :sql
           execute(conn, position_args(sql), params)
         else
           raise Exception.new("invalid operation passed to run")
@@ -53,12 +53,12 @@ module Crecto
 
       # Query data store in relation to a *queryable_instance* of Schema
       def run_on_instance(conn : DB::Database | DB::Transaction, operation, changeset)
-        case operation.to_s
-        when "insert"
+        case operation
+        when :insert
           insert(conn, changeset)
-        when "update"
+        when :update
           update(conn, changeset)
-        when "delete"
+        when :delete
           delete(conn, changeset)
         else
           raise Exception.new("invalid operation passed to run_on_instance")
@@ -348,7 +348,7 @@ module Crecto
 
       private def join_through(builder, queryable, join)
         association_klass = queryable.klass_for_association(join)
-        join_klass = queryable.klass_for_association(queryable.through_key_for_association(join).as(String))
+        join_klass = queryable.klass_for_association(queryable.through_key_for_association(join).as(Symbol))
         return "" if join_klass.nil? || association_klass.nil?
 
         builder << " INNER JOIN " << join_klass.table_name << " ON "
