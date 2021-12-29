@@ -55,9 +55,8 @@ module Crecto
 
       # macro constants
       CRECTO_VALID_FIELD_TYPES = [String, Int64, Int32, Int16, Float32, Float64, Bool, Time, Int32 | Int64, Float32 | Float64, Json, PkeyValue, Array(String), Array(Int64), Array(Int32), Array(Int16), Array(Float32), Array(Float64), Array(Bool), Array(Time), Array(Int32 | Int64), Array(Float32 | Float64), Array(Json), Array(PkeyValue)]
-      CRECTO_VALID_FIELD_OPTIONS = [:primary_key, :virtual, :default]
-      CRECTO_FIELDS      = [] of NamedTuple(name: Symbol, type: String)
-      CRECTO_ENUM_FIELDS = [] of NamedTuple(name: Symbol, type: String, column_name: String, column_type: String)
+      CRECTO_VALID_FIELD_OPTIONS = [:primary_key, :virtual, :default, :converter]
+      CRECTO_FIELDS      = [] of NamedTuple(name: Symbol, type: String, converter: Converter?)
 
       # Class variables
       @@table_name = {{table_name.id.stringify}}
@@ -68,7 +67,13 @@ module Crecto
     end
 
     # Field definitions macro
-    macro field(field_name, field_type, **opts)
+    macro field(field, **opts)
+      {%
+        field_name = field.var
+        field_type = field.type
+        default_value = field.value.nil? ? opts[:default] : field.value
+      %}
+
       # validate field options
       {% for opt in opts %}
         {% unless CRECTO_VALID_FIELD_OPTIONS.includes?(opt.id.symbolize) %}
@@ -91,42 +96,28 @@ module Crecto
         {% virtual = true %}
       {% end %}
 
-      {% if opts.keys.includes?(:default.id) %}
-        @{{field_name.id}} = {{opts[:default]}}
-      {% else %}
+      {% if default_value.is_a?(NilLiteral) %}
         @{{field_name.id}} : {{field_type.id}}?
+      {% else %}
+        @{{field_name.id}} = {{default_value}}
       {% end %}
 
-      check_type!({{field_name}}, {{field_type}})
+
+      {% unless opts[:converter] %}
+        check_type!({{field_name.id.symbolize}}, {{field_type}})
+      {% end %}
 
       # cache fields in class variable and macro variable
       {% unless virtual %}
-        @@changeset_fields << {{field_name}}
+        @@changeset_fields << {{field_name.id.symbolize}}
       {% end %}
 
       {% unless primary_key %}
-        {% CRECTO_FIELDS.push({name: field_name, type: field_type}) %}
+        {% CRECTO_FIELDS.push({name: field_name.id.symbolize, type: field_type.id.stringify, converter: opts[:converter]}) %}
         {% unless virtual %}
-          CRECTO_MODEL_FIELDS.push({name: {{field_name}}, type: {{field_type.id.stringify}}})
+          CRECTO_MODEL_FIELDS.push({name: {{field_name.id.symbolize}}, type: {{field_type.id.stringify}}})
         {% end %}
       {% end %}
-    end
-
-    # Enum field definition macro.
-    # `opts` can include `column_name` to set the name of the backing column
-    # in the database and `column_type` to set the type of that column (String
-    # and all Int types are currently supported)
-    macro enum_field(field_name, field_type, **opts)
-      {%
-        column_type = String
-        column_type = opts[:column_type] if opts[:column_type]
-        column_name = "#{field_name.id}_#{column_type.id.stringify.downcase.id}"
-        column_name = opts[:column_name] if opts[:column_name]
-      %}
-
-      field({{column_name.id.symbolize}}, {{column_type}})
-
-      {% CRECTO_ENUM_FIELDS.push({name: field_name, type: field_type, column_name: column_name, column_type: column_type}) %}
     end
 
     # Macro to change created_at field name
@@ -142,7 +133,7 @@ module Crecto
     # :nodoc:
     macro check_type!(field_name, field_type)
       {% unless CRECTO_VALID_FIELD_TYPES.includes?(field_type) %}
-        raise Crecto::InvalidType.new("{{field_name}} type must be one of #{CRECTO_VALID_FIELD_TYPES.join(", ")}")
+        raise Crecto::InvalidType.new("{{field_name.id}} type must be one of #{CRECTO_VALID_FIELD_TYPES.join(", ")}")
       {% end %}
     end
 
@@ -156,7 +147,11 @@ module Crecto
       {% mapping = CRECTO_FIELDS.map do |field|
            json_fields.push(field[:name]) if field[:type].id.stringify == "Json"
            field_type = field[:type].id.stringify
-           "#{field[:name].id.stringify}: {type: #{field_type.id}, nilable: true}"
+           if field[:converter]
+            "#{field[:name].id.stringify}: {type: #{field_type.id}, nilable: true, converter: #{field[:converter]}.new}"
+           else
+            "#{field[:name].id.stringify}: {type: #{field_type.id}, nilable: true}"
+           end
          end %}
 
       {% if CRECTO_USE_PRIMARY_KEY %}
@@ -190,44 +185,19 @@ module Crecto
         end
       {% end %}
 
-      {% for enum_field in CRECTO_ENUM_FIELDS %}
-        {%
-          field_name = enum_field[:name].id
-          field_type = enum_field[:type].id
-          column_name = enum_field[:column_name].id
-          column_type = enum_field[:column_type].id
-        %}
-        {% if column_type.stringify == "String" %}
-          def {{field_name}} : {{field_type}}
-            @{{field_name}} ||= {{field_type}}.parse(@{{column_name}}.to_s)
-          end
-
-          def {{field_name}}=(val : {{field_type}})
-            @{{field_name}} = val
-            @{{column_name}} = val.to_s
-          end
-
-        {% elsif column_type.stringify.includes?("Int") %}
-          def {{field_name}} : {{field_type}}
-            @{{field_name}} ||= {{field_type}}.new(@{{column_name}}.not_nil!.to_i32)
-          end
-
-          def {{field_name}}=(val : {{field_type}})
-            @{{field_name}} = val
-            @{{column_name}} = val.value
-          end
-        {% end %}
-      {% end %}
-
-
       # Builds a hash from all `CRECTO_FIELDS` defined
       def to_query_hash(include_virtual=false)
         query_hash = {} of Symbol => DbValue | ArrayDbValue
 
         {% for field in CRECTO_FIELDS %}
           if include_virtual || @@changeset_fields.includes?({{field[:name]}})
+            {% if field[:converter] %}
+            converter = {{ field[:converter] }}.new
+            query_hash[{{field[:name]}}] = self.{{field[:name].id}} ? converter.to_rs(self.{{field[:name].id}}!) : nil
+            {% else %}
             query_hash[{{field[:name]}}] = self.{{field[:name].id}}
             query_hash[{{field[:name]}}] = query_hash[{{field[:name]}}].as(Time).to_utc if query_hash[{{field[:name]}}].is_a?(Time) && query_hash[{{field[:name]}}].as(Time).local?
+            {% end %}
           end
         {% end %}
 
@@ -240,13 +210,13 @@ module Crecto
         {% end %}
 
         {% if CRECTO_USE_PRIMARY_KEY %}
-          query_hash[{{CRECTO_PRIMARY_KEY_FIELD.id.symbolize}}] = self.{{CRECTO_PRIMARY_KEY_FIELD.id}} unless self.{{CRECTO_PRIMARY_KEY_FIELD.id}}.nil?
+          query_hash[{{CRECTO_PRIMARY_KEY_FIELD.id.symbolize}}] = self.{{CRECTO_PRIMARY_KEY_FIELD.id}} unless @{{CRECTO_PRIMARY_KEY_FIELD.id}}.nil?
         {% end %}
 
         query_hash
       end
 
-      def update_from_hash(hash : Hash(String, DbValue))
+      def update_from_hash(hash)
         {% unless CRECTO_FIELDS.empty? %}
           hash.each do |key, value|
             case key.to_s
@@ -273,6 +243,8 @@ module Crecto
                   begin
                     @{{field[:name].id}} = Time.parse!(value, "%F %T %z")
                   end
+                {% else %}
+                  @{{field[:name].id}} = value
                 {% end %}
               end
             {% end %}
@@ -288,16 +260,22 @@ module Crecto
         {% end %}
       end
 
-      def update_primary_key(val)
-        self.{{CRECTO_PRIMARY_KEY_FIELD.id}} = val
+      {% if CRECTO_USE_PRIMARY_KEY %}
+      def {{CRECTO_PRIMARY_KEY_FIELD.id }}
+        @{{CRECTO_PRIMARY_KEY_FIELD.id}}.not_nil!
       end
 
-      def updated_at_value
-        self.{{CRECTO_UPDATED_AT_FIELD.id}}
+      def {{CRECTO_PRIMARY_KEY_FIELD.id }}=(val)
+        @{{CRECTO_PRIMARY_KEY_FIELD.id}} = val
+      end
+      {% end %}
+
+      def updated_at
+        @{{CRECTO_UPDATED_AT_FIELD.id}}
       end
 
-      def created_at_value
-        self.{{CRECTO_CREATED_AT_FIELD.id}}
+      def created_at
+        @{{CRECTO_CREATED_AT_FIELD.id}}
       end
 
       def updated_at_to_now
@@ -324,9 +302,9 @@ module Crecto
         cast(attributes.to_h, whitelist.to_a)
       end
 
-      def cast(attributes : Hash(Symbol, T), whitelist : Array(Symbol) = attributes.keys) forall T
+      def cast(attributes : Hash(String, T), whitelist : Array(String | Symbol) = attributes.keys) forall T
         {% if CRECTO_FIELDS.size > 0 %}
-          cast_attributes = {} of Symbol => Union({{ CRECTO_FIELDS.map { |field| field[:type].id }.splat }})
+          cast_attributes = {} of String => Union({{ CRECTO_FIELDS.map { |field| field[:type].id }.splat }})
 
           attributes.each do |key, value|
             cast_attributes[key] = value
