@@ -210,7 +210,7 @@ module Crecto
         {% end %}
 
         {% if CRECTO_USE_PRIMARY_KEY %}
-          query_hash[{{CRECTO_PRIMARY_KEY_FIELD.id.symbolize}}] = self.{{CRECTO_PRIMARY_KEY_FIELD.id}} unless self.{{CRECTO_PRIMARY_KEY_FIELD.id}}.nil?
+          query_hash[{{CRECTO_PRIMARY_KEY_FIELD.id.symbolize}}] = self.{{CRECTO_PRIMARY_KEY_FIELD.id}} unless @{{CRECTO_PRIMARY_KEY_FIELD.id}}.nil?
         {% end %}
 
         query_hash
