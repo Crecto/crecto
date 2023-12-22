@@ -2,7 +2,7 @@
 
 ![crecto](crecto.png)
 
-[https://www.crecto.com/](https://www.crecto.com/)
+[https://www.crecto.dev/](https://www.crecto.dev/)
 
 [![Build Status](https://travis-ci.org/Crecto/crecto.svg?branch=master)](https://travis-ci.org/Crecto/crecto) [![Join the chat at https://gitter.im/crecto/Lobby](https://badges.gitter.im/crecto/Lobby.svg)](https://gitter.im/crecto/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
@@ -10,9 +10,9 @@ Robust database wrapper for Crystal. Inspired by [Ecto](https://github.com/elixi
 
 With built in query composer, associations, transactions, validations, constraints, and more.
 
-<!-- Website with guides and examples - [https://www.crecto.com/](https://www.crecto.com/)
+Website with guides and examples - [https://www.crecto.dev/](https://www.crecto.dev/)
 
-See api docs - <http://docs.crecto.com> -->
+<!-- See api docs - <http://docs.crecto.dev> -->
 
 ## Example
 
@@ -38,7 +38,7 @@ changeset = Repo.delete(updated_user)
 
 New website and API docs coming soon!
 
-<!-- Visit [www.crecto.com](https://www.crecto.com) -->
+<!-- Visit [www.crecto.dev](https://www.crecto.dev) -->
 
 ### Benchmarks
 
