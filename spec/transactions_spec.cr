@@ -92,9 +92,6 @@ describe Crecto do
         Repo.delete_all(Post)
         Repo.delete_all(User)
 
-        puts "\nusers: #{Repo.all(User).size}\n"
-        sleep 0.1
-
         delete_user = quick_create_user("all_transactions_delete_user")
         update_user = quick_create_user("all_transactions_update_user")
         update_user.name = "all_transactions_update_user_ojjl2032"

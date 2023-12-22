@@ -44,6 +44,17 @@ New website and API docs coming soon!
 
 - [VS raw crystal-pg](https://github.com/Crecto/crecto/wiki/Benchmarks)
 
+## Development
+
+### Testing
+
+Specs are located in the `specs` directory. Seeing as this is an ORM, running specs does require a database connection
+of some kind. Copy the `spec/repo.example.cr` file to `spec/repo.cr` and fill in the connection details for your
+database. Then run `crystal spec` to run the specs.
+
+Specs for all three supported database types can be run using docker-compose. Simply run `docker-compose up` to start
+the database containers and run the specs.
+
 ## Contributing
 
 1. Fork it ( [https://github.com/Crecto/crecto/fork](https://github.com/Crecto/crecto/fork) )
