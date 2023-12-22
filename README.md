@@ -1,5 +1,3 @@
-## Crecto is working with Crystal 1.0, however this library is not actively maintained.  Please contact me or create an issue if you would like to take over as maintainer of Crecto.
-
 # Crecto
 
 ![crecto](crecto.png)
@@ -12,9 +10,9 @@ Robust database wrapper for Crystal. Inspired by [Ecto](https://github.com/elixi
 
 With built in query composer, associations, transactions, validations, constraints, and more.
 
-Website with guides and examples - [https://www.crecto.com/](https://www.crecto.com/)
+<!-- Website with guides and examples - [https://www.crecto.com/](https://www.crecto.com/)
 
-See api docs - <http://docs.crecto.com>
+See api docs - <http://docs.crecto.com> -->
 
 ## Example
 
@@ -38,15 +36,17 @@ changeset = Repo.delete(updated_user)
 
 ## Usage and Guides
 
-Visit [www.crecto.com](https://www.crecto.com)
+New website and API docs coming soon!
 
-#### Benchmarks
+<!-- Visit [www.crecto.com](https://www.crecto.com) -->
+
+### Benchmarks
 
 - [VS raw crystal-pg](https://github.com/Crecto/crecto/wiki/Benchmarks)
 
 ## Contributing
 
-1. Fork it ( https://github.com/fridgerator/crecto/fork )
+1. Fork it ( [https://github.com/Crecto/crecto/fork](https://github.com/Crecto/crecto/fork) )
 2. Create your feature branch (git checkout -b my-new-feature)
 3. Commit your changes (git commit -am 'Add some feature')
 4. Push to the branch (git push origin my-new-feature)

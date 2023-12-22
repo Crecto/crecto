@@ -1,4 +1,4 @@
-FROM crystallang/crystal:1.0.0 AS base
+FROM crystallang/crystal:1.10.1 AS base
 
 RUN apt-get -q update && \
   apt-get -qy install --no-install-recommends build-essential git wget libssl-dev libxml2-dev libyaml-0-2 libreadline-dev netcat libsqlite3-dev
