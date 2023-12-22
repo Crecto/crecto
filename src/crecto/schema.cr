@@ -257,18 +257,23 @@ module Crecto
               else
                 {% if field[:type].id.stringify == "String" %}
                   @{{field[:name].id}} = value.to_s
-                {% elsif field[:type].id.stringify == "Int16" %}
-                  @{{field[:name].id}} = value.to_i16 if value.to_i16?
-                {% elsif field[:type].id.stringify.includes?("Int") %}
-                  @{{field[:name].id}} = value.to_i if value.to_i?
+                {% elsif field[:type].id.stringify.starts_with?("Int") %}
+                  {% num = field[:type].id.stringify.gsub(/^Int/, "") %}
+                  @{{field[:name].id}} = value.to_i{{num.id}} if value.to_i{{num.id}}?
+                {% elsif field[:type].id.stringify.starts_with?("UInt") %}
+                  {% num = field[:type].id.stringify.gsub(/^UInt/, "") %}
+                  @{{field[:name].id}} = value.to_u{{num.id}} if value.to_u{{num.id}}?
                 {% elsif field[:type].id.stringify == "PkeyValue" %}
                   @{{field[:name].id}} = value.to_i if value.to_i?
-                {% elsif field[:type].id.stringify.includes?("Float") %}
-                  @{{field[:name].id}} = value.to_f if value.to_f?
+                {% elsif field[:type].id.stringify.starts_with?("Float") %}
+                  {% num = field[:type].id.stringify.gsub(/^Float/, "") %}
+                  @{{field[:name].id}} = value.to_f{{num.id}} if value.to_f{{num.id}}?
                 {% elsif field[:type].id.stringify == "Bool" %}
                   @{{field[:name].id}} = (value == "true")
                 {% elsif field[:type].id.stringify == "Json" %}
                   @{{field[:name].id}} = JSON.parse(value)
+                {% elsif field[:type].id.stringify == "UUID" %}
+                  @{{field[:name].id}} = UUID.parse(value.to_s)
                 {% elsif field[:type].id.stringify == "Time" %}
                   begin
                     @{{field[:name].id}} = Time.parse!(value, "%F %T %z")
