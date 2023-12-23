@@ -1,7 +1,7 @@
 require "json"
 
 # :nodoc:
-alias DbValue = Bool | Float32 | Float64 | Int8 | Int16 | Int32 | Int64 | Int64 | UInt8 | UInt16 | UInt32 | UInt64 | String | Time | JSON::Any | Nil
+alias DbValue = Bool | Float32 | Float64 | Int8 | Int16 | Int32 | Int64 | UInt8 | UInt16 | UInt32 | UInt64 | String | Time | JSON::Any | Nil
 # :nodoc:
 alias ArrayDbValue = Array(Bool) | Array(Float32) | Array(Float64) | Array(Int64) | Array(Int32) | Array(Int16) | Array(Int8) | Array(String) | Array(Time) | Array(JSON::Any) | Nil
 # alias for String | Int32 | Int64 | Nil
