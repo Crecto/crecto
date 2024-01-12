@@ -1,6 +1,6 @@
 language: crystal
 script:
-  - crystal spec
+  - crystal spec -D $DB_TYPE
   - crystal tool format --check
 services:
   - mysql
@@ -18,11 +18,9 @@ before_script:
   - psql -c 'create database crecto_test;' -U postgres
   - psql $PG_URL < spec/migrations/pg_migrations.sql
   - sqlite3 ./crecto_test.db < spec/migrations/sqlite3_migrations.sql
-  - if [ ! -z "$PG_URL" ]; then cp ./spec/travis_pg_repo.cr ./spec/repo.cr; fi
-  - if [ ! -z "$MYSQL_URL" ]; then cp ./spec/travis_mysql_repo.cr ./spec/repo.cr; fi
-  - if [ ! -z "$SQLITE3_PATH" ]; then cp ./spec/travis_sqlite_repo.cr ./spec/repo.cr; fi
+  - cp ./spec/travis_${DB_TYPE}_repo.cr ./spec/repo.cr
 env:
   matrix:
-    - PG_URL=postgres://postgres@localhost:5432/crecto_test
-    - MYSQL_URL=mysql://root@localhost/crecto_test
-    - SQLITE3_PATH=sqlite3://./crecto_test.db
+    - PG_URL=postgres://postgres@localhost:5432/crecto_test DB_TYPE=pg
+    - MYSQL_URL=mysql://root@localhost/crecto_test DB_TYPE=mysql
+    - SQLITE3_PATH=sqlite3://./crecto_test.db DB_TYPE=sqlite
