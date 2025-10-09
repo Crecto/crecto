@@ -13,3 +13,33 @@ crecto_test.db
 # Dependencies will be locked in application that uses them
 /shard.lock
 /test.cr
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dev-debug.log
+# Dependency directories
+node_modules/
+# Environment variables
+.env
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+# OS specific
+.DS_Store
+
+# AI/Spec kit
+/specs/
+/data/
+/.claude/
+/.opencode/
+/.cursor/
+/.specify/

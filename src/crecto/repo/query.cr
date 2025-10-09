@@ -19,11 +19,11 @@ module Crecto
           or(AtomExpression.new(other))
         end
 
-        def and
+        def and(&)
           and(yield InitialExpression.new)
         end
 
-        def or
+        def or(&)
           or(yield InitialExpression.new)
         end
 
@@ -589,7 +589,7 @@ module Crecto
       # #      (name = 'Wendy')
       # #    )
       # ```
-      def and
+      def and(&)
         @where_expression = @where_expression.and do |expression|
           yield expression
         end
@@ -634,7 +634,7 @@ module Crecto
       # #      (name = 'Wendy')
       # #    )
       # ```
-      def or
+      def or(&)
         @where_expression = @where_expression.or do |expression|
           yield expression
         end

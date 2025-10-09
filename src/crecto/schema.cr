@@ -55,7 +55,7 @@ module Crecto
 
       # macro constants
       # CRECTO_VALID_FIELD_TYPES = [String, Int64, Int32, Int16, UInt64, UInt32, UInt16, UInt8, Float32, Float64, Bool, Time, Int32 | Int64, UInt32 | UInt64, Float32 | Float64, Json, PkeyValue, Array(String), Array(Int64), Array(Int32), Array(Int16), Array(UInt8), Array(UInt16), Array(UInt32), Array(UInt64) Array(Float32), Array(Float64), Array(Bool), Array(Time), Array(Int32 | Int64), Array(UInt32 | UInt64), Array(Float32 | Float64), Array(Json), Array(PkeyValue)]
-      CRECTO_VALID_FIELD_TYPES = [String, Int64, Int32, Int16, UInt64, UInt32, UInt16, UInt8, Float32, Float64, Bool, Time, Json, PkeyValue]
+      CRECTO_VALID_FIELD_TYPES = [String, Int64, Int32, Int16, UInt64, UInt32, UInt16, UInt8, Float32, Float64, Bool, Time, Json, PkeyValue, UUID, Int32 | Int64, UInt32 | UInt64, Float32 | Float64, Array(String), Array(Int32), Array(Int64), Array(Int16), Array(UInt32), Array(UInt64), Array(UInt16), Array(UInt8), Array(Float32), Array(Float64), Array(Bool), Array(Time), Array(Json), Array(UUID)]
       CRECTO_VALID_FIELD_OPTIONS = [:primary_key, :virtual, :default]
       CRECTO_FIELDS      = [] of NamedTuple(name: Symbol, type: String)
       CRECTO_ENUM_FIELDS = [] of NamedTuple(name: Symbol, type: String, column_name: String, column_type: String)
@@ -142,10 +142,18 @@ module Crecto
 
     # :nodoc:
     macro check_type!(field_name, field_type)
-      {% field_types = field_type.resolve.union_types %}
-      {% for type in field_types %}
-        {% unless CRECTO_VALID_FIELD_TYPES.map(&.resolve).includes?(type) %}
-          raise Crecto::InvalidType.new("{{field_name}} is a {{field_type.id}}, but it should be one of #{CRECTO_VALID_FIELD_TYPES.join(", ")}")
+      {% begin %}
+        {% if field_type.is_a?(Union) %}
+          {% field_types = field_type.union_types %}
+        {% else %}
+          {% field_types = [field_type] %}
+        {% end %}
+        
+        {% for type in field_types %}
+          {% type_found = CRECTO_VALID_FIELD_TYPES.any? { |valid_type| type.stringify == valid_type.stringify } %}
+          {% unless type_found %}
+            raise Crecto::InvalidType.new("{{field_name}} is a {{field_type.id}}, but it should be one of #{CRECTO_VALID_FIELD_TYPES.join(", ")}")
+          {% end %}
         {% end %}
       {% end %}
     end

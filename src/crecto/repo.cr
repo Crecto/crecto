@@ -19,7 +19,7 @@ module Crecto
       @@config = Crecto::Repo::Config.new
     end
 
-    def config
+    def config(&)
       yield @@config
     end
 
@@ -38,7 +38,7 @@ module Crecto
     end
 
     # Run a raw `query` query directly on the adapter connection
-    def raw_query(query, *args)
+    def raw_query(query, *args, &)
       config.get_connection.query(query, *args) do |rs|
         yield rs
       end
@@ -529,7 +529,7 @@ module Crecto
     #   tx.insert!(post)
     # end
     # ```
-    def transaction!
+    def transaction!(&)
       config.get_connection.transaction do |tx|
         begin
           yield LiveTransaction.new(tx, self)

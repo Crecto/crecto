@@ -48,12 +48,62 @@ New website and API docs coming soon!
 
 ### Testing
 
-Specs are located in the `specs` directory. Seeing as this is an ORM, running specs does require a database connection
-of some kind. Copy the `spec/repo.example.cr` file to `spec/repo.cr` and fill in the connection details for your
-database. Then run `crystal spec` to run the specs.
+Specs are located in the `spec` directory. Since this is an ORM, running specs requires a database connection.
 
-Specs for all three supported database types can be run using docker-compose. Simply run `docker-compose up` to start
-the database containers and run the specs.
+#### Quick Start (SQLite)
+
+The project comes pre-configured with SQLite support. Simply run:
+
+```bash
+crystal spec
+```
+
+This will create a local SQLite database (`./crecto_test.db`) and run all 223 tests.
+
+#### Testing with Other Databases
+
+To test with PostgreSQL or MySQL:
+
+1. Copy the example configuration:
+   ```bash
+   cp spec/repo.example.cr spec/repo.cr
+   ```
+
+2. Edit `spec/repo.cr` to uncomment and configure your preferred database:
+   ```crystal
+   # For PostgreSQL:
+   config do |conf|
+     conf.adapter = Crecto::Adapters::Postgres
+     conf.uri = "postgres://localhost/crecto_test"
+   end
+
+   # For MySQL:
+   config do |conf|
+     conf.adapter = Crecto::Adapters::MySQL
+     conf.uri = "mysql://localhost/crecto_test"
+   end
+   ```
+
+3. Run the tests:
+   ```bash
+   crystal spec
+   ```
+
+#### Testing with Docker
+
+To test all three supported database types using Docker:
+
+```bash
+docker-compose up
+```
+
+This will start PostgreSQL and MySQL containers and run the test suite against all database adapters.
+
+#### Database Setup
+
+The database must exist prior to testing. Migrations for each database type are available in `spec/migrations/`.
+
+When contributing, please test against all supported databases before submitting a pull request.
 
 ## Contributing
 
