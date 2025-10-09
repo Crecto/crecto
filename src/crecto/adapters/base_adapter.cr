@@ -49,6 +49,10 @@ module Crecto
       def size
         @cache.size
       end
+
+      def max_size
+        @max_size
+      end
     end
 
     #

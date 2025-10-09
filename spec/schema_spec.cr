@@ -2,6 +2,32 @@ require "./spec_helper"
 
 describe Crecto do
   describe "Schema" do
+    describe "UUID_FORMAT" do
+      it "matches valid UUID v4 format" do
+        valid_uuid = "550e8400-e29b-41d4-a716-446655440000"
+        Crecto::Schema::UUID_FORMAT.should match(valid_uuid)
+      end
+
+      it "matches valid UUID v7 format" do
+        valid_uuid = "0189abcd-1234-5678-9012-34567890abcd"
+        Crecto::Schema::UUID_FORMAT.should match(valid_uuid)
+      end
+
+      it "rejects invalid UUID formats" do
+        invalid_uuids = [
+          "550e8400-e29b-41d4-a716-44665544",    # too short
+          "550e8400-e29b-41d4-a716-4466554400000", # too long
+          "550e8400-e29b-41d4-a716-44665544zzzz", # invalid characters
+          "550e8400e29b-41d4-a716-446655440000",  # missing dash
+          "g50e8400-e29b-41d4-a716-446655440000",  # invalid hex character
+          "not-a-uuid-at-all"
+        ]
+
+        invalid_uuids.each do |invalid_uuid|
+          Crecto::Schema::UUID_FORMAT.should_not match(invalid_uuid)
+        end
+      end
+    end
     describe "#schema and #field" do
       it "should set default values" do
         d = DefaultValue.new
