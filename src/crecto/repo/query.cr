@@ -1,5 +1,83 @@
 module Crecto
   module Repo
+    # QueryIterator provides memory-efficient iteration over large result sets
+    # Implements Crystal's Iterator interface for constant memory usage
+    class QueryIterator(T)
+      include Iterator(T)
+
+      @result_set : DB::ResultSet
+      @queryable : T.class
+      @batch_size : Int32
+      @current_batch : Array(T)?
+      @current_index : Int32 = 0
+      @exhausted : Bool = false
+      @processed_count : Int32 = 0
+
+      def initialize(@result_set, @queryable, @batch_size = 1000)
+        @current_batch = Array(T).new(batch_size)
+      end
+
+      def next
+        return stop if @exhausted
+
+        # Load next batch if current batch is exhausted
+        if @current_batch.nil? || @current_index >= @current_batch.not_nil!.size
+          load_next_batch
+          return stop if @exhausted
+          @current_index = 0
+        end
+
+        # Return next item from current batch
+        item = @current_batch.not_nil![@current_index]?
+        if item
+          @current_index += 1
+          @processed_count += 1
+          item
+        else
+          stop
+        end
+      end
+
+      def rewind
+        @current_index = 0
+        @processed_count = 0
+        @exhausted = false
+        # Note: Cannot rewind database result set, so we mark as exhausted
+        @exhausted = true
+        self
+      end
+
+      def processed_count
+        @processed_count
+      end
+
+      private def load_next_batch
+        @current_batch = Array(T).new(@batch_size)
+
+        @batch_size.times do
+          break unless @result_set.next
+
+          # Create new instance and populate with result set data
+          instance = @queryable.new
+          @queryable.schema_fields.each do |field|
+            value = @result_set.read
+            instance.set_instance_variable("@#{field}", value)
+          end
+
+          @current_batch.not_nil! << instance
+        end
+
+        @exhausted = @current_batch.not_nil!.empty?
+      rescue ex
+        raise IteratorError.new("Failed to load batch", @batch_size, @processed_count, ex)
+      ensure
+        # Close result set if exhausted
+        if @exhausted
+          @result_set.close
+        end
+      end
+    end
+
     # Queries are used to retrieve and manipulate data from a repository.  Syntax is much like that of ActiveRecord:
     #
     # `Query.select('id').where(name: "fred").join(:posts).order_by("users.name").limit(1).offset(4)`
@@ -661,6 +739,18 @@ module Crecto
           result.or(query.where_expression)
         end
         self
+      end
+
+      # Returns a QueryIterator for memory-efficient processing of large result sets
+      def stream(queryable_type : Class)
+        # This method will be implemented in Repo module with actual database connection
+        raise NotImplementedError.new("Query#stream must be called through Repo.stream(queryable, query)")
+      end
+
+      # Process results in batches using cursor-based iteration
+      def each_cursor(queryable_type : Class, batch_size = 1000, &block)
+        # This method will be implemented in Repo module with actual database connection
+        raise NotImplementedError.new("Query#each_cursor must be called through Repo.each_cursor(queryable, query, batch_size)")
       end
     end
   end

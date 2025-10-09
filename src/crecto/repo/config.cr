@@ -1,4 +1,34 @@
 module Crecto
+  # Configuration for bulk operations thresholds
+  class BulkConfig
+    @@instance : BulkConfig?
+
+    # PostgreSQL COPY threshold - use COPY for >2000 records
+    property postgres_copy_threshold : Int32 = 2000
+
+    # MySQL LOAD DATA threshold - use LOAD DATA for >1000 records
+    property mysql_load_threshold : Int32 = 1000
+
+    # SQLite batch size - process in batches of 200 records
+    property sqlite_batch_size : Int32 = 200
+
+    # Default batch size for iterators
+    property default_batch_size : Int32 = 1000
+
+    # Maximum number of changesets to process in a single bulk operation
+    property max_bulk_changesets : Int32 = 10_000
+
+    # Default timeout for bulk operations (seconds)
+    property bulk_timeout : Int32 = 300
+
+    def self.instance
+      @@instance ||= new
+    end
+
+    private def initialize
+    end
+  end
+
   module Repo
     class Config
       property database, username, password, hostname, port, uri,

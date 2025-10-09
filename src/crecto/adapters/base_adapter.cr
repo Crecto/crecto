@@ -1,9 +1,94 @@
 module Crecto
   module Adapters
     #
+    # PreparedStatementCache for managing prepared statement lifecycle
+    class PreparedStatementCache
+      @cache : Hash(String, DB::Statement)
+      @access_times : Hash(String, Time)
+      @max_size : Int32
+
+      def initialize(@max_size = 100)
+        @cache = {} of String => DB::Statement
+        @access_times = {} of String => Time
+      end
+
+      def get_statement(conn : DB::Database | DB::Transaction, query_hash : String) : DB::Statement
+        current_time = Time.local
+
+        if @cache.has_key?(query_hash)
+          @access_times[query_hash] = current_time
+          return @cache[query_hash]
+        end
+
+        cleanup if @cache.size >= @max_size
+
+        statement = conn.prepare(query_hash)
+        @cache[query_hash] = statement
+        @access_times[query_hash] = current_time
+        statement
+      end
+
+      def cleanup
+        return if @cache.size < @max_size
+
+        # Remove least recently used statements
+        sorted_by_access = @access_times.to_a.sort_by(&.[1])
+        to_remove = sorted_by_access[0..(@cache.size / 4)]
+
+        to_remove.each do |key, _|
+          @cache.delete(key)
+          @access_times.delete(key)
+        end
+      end
+
+      def clear
+        @cache.clear
+        @access_times.clear
+      end
+
+      def size
+        @cache.size
+      end
+    end
+
+    #
     # BaseAdapter module
     # Extended by actual adapters
     module BaseAdapter
+      macro included
+        @@statement_cache : PreparedStatementCache?
+
+        def self.statement_cache
+          @@statement_cache ||= PreparedStatementCache.new
+        end
+
+        def self.initialize_statement_cache(max_size = 100)
+          @@statement_cache = PreparedStatementCache.new(max_size)
+        end
+
+        protected def self.execute_with_cache(conn : DB::Database | DB::Transaction, query_string : String, params : Array(DbValue)? = nil)
+          query_hash = "#{query_string}:#{params.hash}"
+
+          if cached_statement = statement_cache.get_statement(conn, query_string)
+            start = Time.local
+            begin
+              if params
+                conn.query(query_string, args: params)
+              else
+                conn.query(query_string)
+              end
+            ensure
+              DbLogger.log(query_string, Time.local - start, params || [] of DbValue)
+            end
+          else
+            if params
+              execute(conn, query_string, params)
+            else
+              execute(conn, query_string)
+            end
+          end
+        end
+      end
       #
       # Query data store using a *query*
       #

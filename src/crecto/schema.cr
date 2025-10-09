@@ -42,6 +42,8 @@ module Crecto
     CRECTO_PRIMARY_KEY_FIELD_SYMBOL = :id
     # :nodoc:
     CRECTO_PRIMARY_KEY_FIELD_TYPE = "PkeyValue"
+    # :nodoc:
+    UUID_FORMAT = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
     # schema block macro
     macro schema(table_name, **opts, &block)
