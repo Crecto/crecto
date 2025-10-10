@@ -3,6 +3,35 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+
+## [0.14.0] 2025-10-10
+
+### Added
+- Enhanced association safety with bounds checking to prevent IndexError (#133, #195)
+- Association foreign key validation in changesets (#249, #195)
+- Comprehensive test suite for association safety
+- Transaction support with savepoints for nested operations (#249)
+- Enhanced changeset validation with association support
+
+### Fixed
+- IndexError in belongs_to associations (#133, #195)
+- IndexError in has_many associations (#133, #195)
+- IndexError in has_one associations (#133, #195)
+- Query string interpolation corruption (#217)
+- Multi-transaction association operations (#249)
+- Association foreign key validation (#249, #195)
+
+### Improved
+- Query and transaction testing coverage
+- Live transaction enhancements for better consistency
+- Safe array access patterns to all association macros
+
+## [0.13.0] 2021-6-11
+
+### Changed
+- Update for crystal 1.0
+
 ## [0.12.0] 2021-6-11
 
 - Update for crystal 1.0
@@ -228,6 +257,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Query
 - Postgres Adapter
 
+[0.14.0]: https://github.com/Crecto/crecto/compare/v0.13.0...v0.14.0
+[0.13.0]: https://github.com/Crecto/crecto/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/fridgerator/crecto/compare/v0.11.2...v0.12.0
 [0.11.2]: https://github.com/fridgerator/crecto/compare/v0.11.0...v0.11.2
 [0.11.0]: https://github.com/fridgerator/crecto/compare/v0.10.1...v0.11.0
