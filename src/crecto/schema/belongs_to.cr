@@ -45,7 +45,17 @@ module Crecto
             item.as({{@type}}).{{foreign_key.id}}.as(PkeyValue)
           },
           set_association: ->(self_item : Crecto::Model, items : Array(Crecto::Model) | Crecto::Model){
-            self_item.as({{@type}}).{{association_name.id}} = items.as(Array(Crecto::Model))[0].as({{klass}});nil
+            if items.is_a?(Array)
+              array_items = items.as(Array)
+              if array_items.size > 0
+                self_item.as({{@type}}).{{association_name.id}} = array_items[0].as({{klass}})
+              else
+                self_item.as({{@type}}).{{association_name.id}} = nil
+              end
+            else
+              self_item.as({{@type}}).{{association_name.id}} = items.as({{klass}})
+            end
+            nil
           },
           through: nil
         })

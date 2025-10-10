@@ -45,14 +45,37 @@ module Crecto
           klass: {{klass}},
           foreign_key: {{foreign_key.id.symbolize}},
           foreign_key_value: ->(item : Crecto::Model){
+            # For has_many, the item could be either the parent (User) or child (Post)
+            # If it's the parent type, return the primary key
+            # If it's the child type, return the foreign key value
             {% if opts[:through] %}
-              item.as({{klass}}).id.as(PkeyValue)
+              item.as({{@type}}).pkey_value.as(PkeyValue)
             {% else %}
-              item.as({{klass}}).{{foreign_key.id}}.as(PkeyValue)
+              # Check if item is the parent class (this_klass)
+              if item.is_a?({{@type}})
+                # Parent class: return primary key for matching
+                item.as({{@type}}).pkey_value.as(PkeyValue)
+              else
+                # Child class: return foreign key value (e.g. post.user_id)
+                item.to_query_hash[{{foreign_key.id.symbolize}}]?.as(PkeyValue?)
+              end
             {% end %}
           },
           set_association: ->(self_item : Crecto::Model, items : Array(Crecto::Model) | Crecto::Model){
-            self_item.as({{@type}}).{{association_name.id}} = items.as(Array(Crecto::Model)).map{|i| i.as({{klass}}) }
+            if items.is_a?(Array)
+              array_items = items.as(Array(Crecto::Model))
+              # Safe array access with bounds checking - ensure all items are convertible to {{klass}}
+              typed_items = array_items.map { |i| i.as({{klass}}) }
+              self_item.as({{@type}}).{{association_name.id}} = typed_items
+            else
+              # Single item case - wrap in array if not nil
+              if items.nil?
+                self_item.as({{@type}}).{{association_name.id}} = Array({{klass}}).new
+              else
+                typed_item = items.as({{klass}})
+                self_item.as({{@type}}).{{association_name.id}} = [typed_item]
+              end
+            end
             nil
           },
           through: {{through}}

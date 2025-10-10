@@ -40,8 +40,8 @@ module Crecto
       end
     end
 
-    def changeset(instance)
-      Changeset(T).new(instance.as(T))
+    def changeset(instance, validation_context : Crecto::Repo? = nil)
+      Changeset(T).new(instance.as(T), validation_context)
     end
 
     # Validate that a *field* is present.
@@ -164,6 +164,7 @@ module Crecto
       fields.each { |f| unique_constraint(f) }
     end
 
+  
     # Assigns multiple validations for one or many *field*s.
     # *contrains* can include:
     #   * `presence: Bool`

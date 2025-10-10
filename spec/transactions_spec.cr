@@ -334,5 +334,260 @@ describe Crecto do
         Repo.all(User, Query.where(name: "perform_all_io2oj999")).size.should eq 0
       end
     end
+
+    describe "Multi-Transaction Association Operations" do
+      describe "Issue #249: Association operations in multi-transaction scenarios" do
+        it "should handle belongs_to associations within transactions" do
+          # Test for issue #249: Associations should work correctly in multi-transaction scenarios
+          user = User.new
+          user.name = "Transaction Test User"
+          user = Repo.insert(user).instance
+
+          post = Post.new
+          post.user = user
+          post = Repo.insert(post).instance
+
+          # Now test association operations within a transaction
+          Repo.transaction! do
+            # Verify association is accessible within transaction
+            retrieved_post = Repo.get!(Post, post.id)
+            retrieved_post.user_id.should eq(user.id)
+
+            # Load the association explicitly since get! doesn't preload
+            associated_user = Repo.get_association!(retrieved_post, :user)
+            associated_user.should_not be_nil
+            associated_user.as(User).name.should eq("Transaction Test User")
+
+            # Update association within transaction
+            new_user = User.new
+            new_user.name = "New Association User"
+            new_user = Repo.insert(new_user).instance
+            retrieved_post.user = new_user
+            Repo.update(retrieved_post)
+
+            # Verify association was updated
+            updated_post = Repo.get!(Post, post.id)
+            updated_post.user_id.should eq(new_user.id)
+          end
+
+          # Verify final state outside transaction
+          final_post = Repo.get!(Post, post.id)
+          final_associated_user = Repo.get_association!(final_post, :user)
+          final_associated_user.should_not be_nil
+          final_associated_user.as(User).name.should eq("New Association User")
+        end
+
+        it "should handle has_many associations within transactions" do
+          # Test has_many associations in multi-transaction scenarios
+          user = User.new
+          user.name = "Has Many Transaction User"
+          user = Repo.insert(user).instance
+
+          post1 = Post.new
+          post1.user = user
+          post1 = Repo.insert(post1).instance
+
+          post2 = Post.new
+          post2.user = user
+          post2 = Repo.insert(post2).instance
+
+          # Test has_many operations within transaction
+          Repo.transaction! do
+            retrieved_user = Repo.get!(User, user.id)
+
+            # Preload associations within transaction
+            users = Repo.all(User, Query.where(id: user.id).preload(:posts))
+            users.size.should eq(1)
+            users[0].posts.size.should eq(2)
+
+            # Add new post to association within transaction
+            post3 = Post.new
+            post3.user = retrieved_user
+            post3 = Repo.insert(post3).instance
+
+            # Verify association count increased
+            users_with_posts = Repo.all(User, Query.where(id: user.id).preload(:posts))
+            users_with_posts[0].posts.size.should eq(3)
+          end
+
+          # Verify final state
+          final_user = Repo.get!(User, user.id)
+          final_posts = Repo.all(Post, Query.where(user_id: final_user.id))
+          final_posts.size.should eq(3)
+        end
+
+        it "should handle has_one associations within transactions" do
+          # Test has_one associations in multi-transaction scenarios
+          user = User.new
+          user.name = "Has One Transaction User"
+          user = Repo.insert(user).instance
+
+          post = Post.new
+          post.user = user
+          post = Repo.insert(post).instance
+
+          # Test has_one operations within transaction
+          Repo.transaction! do
+            retrieved_user = Repo.get!(User, user.id)
+
+            # Preload has_one association within transaction
+            users = Repo.all(User, Query.where(id: user.id).preload(:post))
+            users.size.should eq(1)
+            users[0].post?.should_not be_nil
+            users[0].post.as(Post).user_id.should eq(user.id)
+
+            # Update has_one association within transaction
+            new_post = Post.new
+            new_post.user = retrieved_user
+            new_post = Repo.insert(new_post).instance
+
+            # Verify association was updated
+            users_with_post = Repo.all(User, Query.where(id: user.id).preload(:post))
+            users_with_post[0].post?.should_not be_nil
+            users_with_post[0].post.as(Post).id.should eq(new_post.id)
+          end
+        end
+
+        it "should handle association foreign key validation within transactions" do
+          # Test foreign key validation for associations within transactions
+          user = User.new
+          user.name = "Foreign Key Test User"
+          user = Repo.insert(user).instance
+
+          post = Post.new
+          post.user = user
+          post = Repo.insert(post).instance
+
+          # Test foreign key consistency within transaction
+          Repo.transaction! do
+            retrieved_post = Repo.get!(Post, post.id)
+            retrieved_post.user_id.should eq(user.id)
+
+            # Test association method calls within transaction
+            Post.klass_for_association(:user).should eq(User)
+            Post.foreign_key_for_association(:user).should eq(:user_id)
+            Post.foreign_key_value_for_association(:user, retrieved_post).should eq(user.id)
+          end
+        end
+
+        it "should handle complex multi-transaction association scenarios" do
+          # Test complex scenarios with multiple association operations
+          user1 = User.new
+          user1.name = "Complex User 1"
+          user1 = Repo.insert(user1).instance
+
+          user2 = User.new
+          user2.name = "Complex User 2"
+          user2 = Repo.insert(user2).instance
+
+          post1 = Post.new
+          post1.user = user1
+          post1 = Repo.insert(post1).instance
+
+          post2 = Post.new
+          post2.user = user1
+          post2 = Repo.insert(post2).instance
+
+          # Test complex multi-transaction scenario
+          Repo.transaction! do
+            # Update first post to use different user
+            retrieved_post1 = Repo.get!(Post, post1.id)
+            retrieved_post1.user = user2
+            Repo.update(retrieved_post1)
+
+            # Create new post for first user
+            post3 = Post.new
+            post3.user = user1
+            post3 = Repo.insert(post3).instance
+
+            # Verify all associations are consistent
+            user1_posts = Repo.all(Post, Query.where(user_id: user1.id))
+            user2_posts = Repo.all(Post, Query.where(user_id: user2.id))
+
+            user1_posts.size.should eq(2)
+            user2_posts.size.should eq(1)
+
+            # Test preloaded associations within transaction
+            users = Repo.all(User, Query.where("id IN (?, ?)", [user1.id, user2.id]).preload(:posts))
+            users.size.should eq(2)
+
+            user1_record = users.find { |u| u.id == user1.id }
+            user2_record = users.find { |u| u.id == user2.id }
+
+            user1_record.not_nil!.posts.size.should eq(2)
+            user2_record.not_nil!.posts.size.should eq(1)
+          end
+        end
+
+        it "should handle transaction rollback with association operations" do
+          # Test that association operations are properly rolled back
+          initial_user_count = Repo.all(User).size
+          initial_post_count = Repo.all(Post).size
+
+          # Expect transaction to rollback
+          expect_raises Crecto::InvalidChangeset do
+            Repo.transaction! do |tx|
+              # Create user inside transaction
+              user = User.new
+              user.name = "Rollback Test User"
+              user = tx.insert!(user).instance
+
+              # Create valid post association
+              post = Post.new
+              post.user = user
+              post = tx.insert!(post).instance
+
+              # Verify association was created
+              retrieved_post = tx.get!(Post, post.id)
+              retrieved_post.user_id.should eq(user.id)
+
+              # Create invalid user to cause rollback
+              invalid_user = User.new
+              tx.insert!(invalid_user)
+            end
+          end
+
+          # Verify rollback worked - counts should be back to original
+          final_user_count = Repo.all(User).size
+          final_post_count = Repo.all(Post).size
+
+          final_user_count.should eq(initial_user_count)
+          final_post_count.should eq(initial_post_count)
+        end
+
+        it "should handle nested transactions with associations" do
+          # Test nested transaction scenarios with associations
+          user = User.new
+          user.name = "Nested Transaction User"
+          user = Repo.insert(user).instance
+
+          # Outer transaction
+          Repo.transaction! do
+            post1 = Post.new
+            post1.user = user
+            post1 = Repo.insert(post1).instance
+
+            # Inner transaction (savepoint)
+            Repo.transaction! do
+              post2 = Post.new
+              post2.user = user
+              post2 = Repo.insert(post2).instance
+
+              # Verify association in inner transaction
+              user_posts = Repo.all(Post, Query.where(user_id: user.id))
+              user_posts.size.should eq(2)
+            end
+
+            # Verify after inner transaction
+            user_posts = Repo.all(Post, Query.where(user_id: user.id))
+            user_posts.size.should eq(2)
+          end
+
+          # Verify final state
+          final_posts = Repo.all(Post, Query.where(user_id: user.id))
+          final_posts.size.should eq(2)
+        end
+      end
+    end
   end
 end

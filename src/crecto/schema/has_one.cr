@@ -50,10 +50,30 @@ module Crecto
           klass: {{klass}},
           foreign_key: {{foreign_key.id.symbolize}},
           foreign_key_value: ->(item : Crecto::Model) {
-            item.as({{klass}}).{{foreign_key.id}}.as(PkeyValue)
+            item.as({{@type}}).pkey_value.as(PkeyValue)
           },
           set_association: ->(self_item : Crecto::Model, item: Array(Crecto::Model) | Crecto::Model) {
-            self_item.as({{@type}}).{{association_name.id}} = item.as({{klass}})
+            if item.is_a?(Array)
+              array_items = item.as(Array(Crecto::Model))
+              # Safe array access with bounds checking - take first valid item
+              if array_items.size > 0
+                target_item = array_items[0]?
+                if target_item
+                  self_item.as({{@type}}).{{association_name.id}} = target_item.as({{klass}})
+                else
+                  self_item.as({{@type}}).{{association_name.id}} = nil
+                end
+              else
+                self_item.as({{@type}}).{{association_name.id}} = nil
+              end
+            else
+              # Single item case
+              if item.nil?
+                self_item.as({{@type}}).{{association_name.id}} = nil
+              else
+                self_item.as({{@type}}).{{association_name.id}} = item.as({{klass}})
+              end
+            end
             nil
           },
           through: nil

@@ -101,8 +101,8 @@ module Crecto
     # ```
     # user = Repo.get(User, 1)
     # ```
-    def get(queryable, id)
-      q = config.adapter.run(config.get_connection, :get, queryable, id).as(DB::ResultSet)
+    def get(queryable, id, tx : DB::Transaction? = nil)
+      q = config.adapter.run(tx || config.get_connection, :get, queryable, id).as(DB::ResultSet)
       results = queryable.from_rs(q)
       results.first if results.any?
     end
@@ -243,7 +243,7 @@ module Crecto
     # Repo.insert(user)
     # ```
     def insert(queryable_instance, tx : DB::Transaction?)
-      changeset = queryable_instance.class.changeset(queryable_instance)
+      changeset = queryable_instance.class.changeset(queryable_instance, self)
       return changeset unless changeset.valid?
 
       begin
@@ -254,13 +254,15 @@ module Crecto
 
         if query.nil?
           changeset.add_error("insert_error", "Insert Failed")
-        elsif config.adapter == Crecto::Adapters::Postgres || (config.adapter == Crecto::Adapters::Mysql && tx.nil?) ||
-              (config.adapter == Crecto::Adapters::SQLite3 && tx.nil?)
+        elsif config.adapter == Crecto::Adapters::Postgres ||
+              (config.adapter == Crecto::Adapters::Mysql && tx.nil?) ||
+              (config.adapter == Crecto::Adapters::SQLite3 && tx.nil?) ||
+              (config.adapter == Crecto::Adapters::SQLite3 && tx)
           if query.is_a?(DB::ResultSet)
             new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first?
-            changeset = new_instance.class.changeset(new_instance) if new_instance
+            changeset = new_instance.class.changeset(new_instance, self) if new_instance
           else
-            changeset = queryable_instance.class.changeset(queryable_instance)
+            changeset = queryable_instance.class.changeset(queryable_instance, self)
           end
         end
       rescue e
@@ -317,7 +319,7 @@ module Crecto
     # Repo.update(user)
     # ```
     def update(queryable_instance, tx : DB::Transaction?)
-      changeset = queryable_instance.class.changeset(queryable_instance)
+      changeset = queryable_instance.class.changeset(queryable_instance, self)
       return changeset unless changeset.valid?
 
       begin
@@ -329,7 +331,7 @@ module Crecto
           changeset.add_error("update_error", "Update Failed")
         else
           new_instance = changeset.instance.class.from_rs(query.as(DB::ResultSet)).first?
-          changeset = new_instance.class.changeset(new_instance) if new_instance
+          changeset = new_instance.class.changeset(new_instance, self) if new_instance
         end
       rescue e
         raise e unless changeset.check_unique_constraint_from_exception!(e, queryable_instance)
@@ -402,7 +404,7 @@ module Crecto
     # Repo.delete(user)
     # ```
     def delete(queryable_instance, tx : DB::Transaction?)
-      changeset = queryable_instance.class.changeset(queryable_instance)
+      changeset = queryable_instance.class.changeset(queryable_instance, self)
       return changeset unless changeset.valid?
 
       check_dependents(changeset, tx)
@@ -540,6 +542,69 @@ module Crecto
       end
     end
 
+    # Run a nested transaction with savepoint support.
+    # If called within an existing transaction, creates a savepoint.
+    # If called outside a transaction, creates a new transaction.
+    #
+    # ```
+    # Crecto::Repo.transaction_with_savepoint! do |tx|
+    #   tx.insert!(user)
+    #   Crecto::Repo.transaction_with_savepoint! do |inner_tx|
+    #     # This creates a savepoint
+    #     inner_tx.insert!(post)
+    #     # Can rollback to this savepoint with inner_tx.rollback
+    #   end
+    # end
+    # ```
+    def transaction_with_savepoint!(savepoint_name : String? = nil, &)
+      savepoint_name ||= "sp_#{Time.utc.to_unix_ms}"
+
+      begin
+        # Check if we're already in a transaction by checking connection state
+        connection = config.get_connection
+
+        # Try to create a savepoint first
+        if connection.responds_to?(:exec)
+          begin
+            connection.exec("SAVEPOINT #{savepoint_name}")
+            in_transaction = true
+          rescue ex
+            # If savepoints aren't supported or we're not in a transaction, start a new transaction
+            in_transaction = false
+          end
+        else
+          in_transaction = false
+        end
+
+        if in_transaction
+          # We're in a transaction and created a savepoint
+          begin
+            yield NestedTransaction.new(connection, self, savepoint_name)
+          rescue error : Exception
+            # Rollback to savepoint
+            connection.exec("ROLLBACK TO SAVEPOINT #{savepoint_name}") rescue nil
+            raise error
+          end
+        else
+          # Not in a transaction, create a new one
+          transaction! do |tx|
+            yield tx
+          end
+        end
+      rescue error : Exception
+        raise error
+      ensure
+        # Release the savepoint if it was created
+        if in_transaction && connection.responds_to?(:exec)
+          begin
+            connection.exec("RELEASE SAVEPOINT #{savepoint_name}")
+          rescue ex
+            # Ignore release errors - transaction might have been rolled back
+          end
+        end
+      end
+    end
+
     {% for operation in %w[insert update delete] %}
       private def run_operation(operation : Multi::{{operation.camelcase.id}}, tx)
         cs = {{operation.id}}(operation.instance, tx)
@@ -624,7 +689,9 @@ module Crecto
         query = Query.select([outer_key.to_s])
         query = query.where(join_key, ids)
         join_associations = all(join_klass, query)
-        outer_klass_ids = join_associations.map { |ja| outer_klass.foreign_key_value_for_association(through_key, ja) }
+        outer_klass_ids = join_associations.map do |ja|
+        ja.to_query_hash[outer_key]?.as(PkeyValue?)
+      end
         return if join_associations.empty?
         delete_all(join_klass, Query.where(join_key, ids), tx)
         outer_klass_pk_field = outer_klass.primary_key_field_symbol
@@ -674,14 +741,23 @@ module Crecto
       ids = results.map(&.pkey_value.as(PkeyValue))
       foreign_key = queryable.foreign_key_for_association(preload[:symbol])
       return if foreign_key.nil?
+      association_klass = queryable.klass_for_association(preload[:symbol])
+      return if association_klass.nil?
+
       query = Crecto::Repo::Query.where(foreign_key, ids)
       if preload_query = preload[:query]
         query = query.combine(preload_query)
       end
-      association_klass = queryable.klass_for_association(preload[:symbol])
-      return if association_klass.nil?
+
+      # For singular associations (has_one), order by primary key DESC to get the most recent record
+      if singular
+        query = query.order_by("#{association_klass.primary_key_field} DESC")
+      end
+
       relation_items = all(association_klass, query)
-      relation_items = relation_items.group_by { |t| queryable.foreign_key_value_for_association(preload[:symbol], t) }
+      relation_items = relation_items.group_by do |t|
+        t.to_query_hash[foreign_key]?.as(PkeyValue?)
+      end
 
       results.each do |result|
         items = relation_items[result.pkey_value]? || [] of Crecto::Model
@@ -712,7 +788,11 @@ module Crecto
       else
         association_klass = queryable.klass_for_association(preload[:symbol])
         return if association_klass.nil?
-        join_ids = join_table_items.map { |i| association_klass.foreign_key_value_for_association(queryable.through_key_for_association(preload[:symbol]).as(Symbol), i) }
+        # Get the foreign key from the join table to the association class
+        join_to_association_fk = association_klass.foreign_key_for_association(queryable.through_key_for_association(preload[:symbol]).as(Symbol))
+        join_ids = join_table_items.map do |i|
+        i.to_query_hash[join_to_association_fk]?.as(PkeyValue?)
+      end
         association_query = Crecto::Repo::Query.where(association_klass.primary_key_field_symbol, join_ids)
         if preload_query = preload[:query]
           association_query = association_query.combine(preload_query)
@@ -720,7 +800,11 @@ module Crecto
         # Projects
         relation_items = all(association_klass, association_query)
         # UserProject grouped by user_id
-        join_table_items = join_table_items.group_by { |t| queryable.foreign_key_value_for_association(queryable.through_key_for_association(preload[:symbol]).as(Symbol), t) }
+        # Group join table items by the foreign key back to the original queryable
+        join_table_fk = queryable.foreign_key_for_association(queryable.through_key_for_association(preload[:symbol]).as(Symbol))
+        join_table_items = join_table_items.group_by do |t|
+        t.to_query_hash[join_table_fk]?.as(PkeyValue?)
+      end
 
         results.each do |result|
           join_items = join_table_items[result.pkey_value]? || [] of Crecto::Model
@@ -734,7 +818,12 @@ module Crecto
     end
 
     private def belongs_to_preload(results, queryable, preload)
-      ids = results.map { |r| queryable.foreign_key_value_for_association(preload[:symbol], r).as(PkeyValue) }
+      # For belongs_to, get the foreign key directly from the queryable instance
+        foreign_key = queryable.foreign_key_for_association(preload[:symbol])
+        ids = results.map do |r|
+          # Use to_query_hash to safely access any foreign key field
+          r.to_query_hash[foreign_key]?.as(PkeyValue?)
+        end
       ids.compact!
       return if ids.empty?
 
@@ -754,7 +843,7 @@ module Crecto
         relation_items = relation_items.group_by { |t| t.pkey_value.as(PkeyValue) }
 
         results.each do |result|
-          fkey = queryable.foreign_key_value_for_association(preload[:symbol], result)
+          fkey = result.to_query_hash[foreign_key]?.as(PkeyValue?)
           if fkey && relation_items.has_key?(fkey)
             items = relation_items[fkey]
             queryable.set_value_for_association(preload[:symbol], result, items.map { |i| i.as(Crecto::Model) })
@@ -783,7 +872,9 @@ module Crecto
       queryable = instance.class
       klass_for_association = queryable.klass_for_association(association)
       return if klass_for_association.nil?
-      key_for_association = queryable.foreign_key_value_for_association(association, instance)
+      foreign_key = queryable.foreign_key_for_association(association)
+      return if foreign_key.nil?
+      key_for_association = instance.to_query_hash[foreign_key]?.as(PkeyValue?)
       get(klass_for_association, key_for_association, query)
     end
   end

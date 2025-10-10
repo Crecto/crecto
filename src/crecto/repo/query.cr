@@ -115,7 +115,7 @@ module Crecto
           # ```
           def {{ method.id }}(**wheres)
             wheres = wheres.to_h
-            {{op.id}}(Hash.zip(wheres.keys, wheres.values))
+            {{op.id}}(wheres)
           end
 
           # Query#{{ method.id }} with a String and Array(DbValue)
