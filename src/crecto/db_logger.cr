@@ -42,6 +42,26 @@ module Crecto
       @@tty = true
     end
 
+    def self.log_error(error_type : String, message : String, context : Hash(String, String | Int32 | Bool | Array(String))? = nil) : Nil
+      error_msg = "[#{error_type}] #{message}"
+      if context && !context.empty?
+        context_str = context.map { |k, v| "#{k}=#{v}" }.join(", ")
+        error_msg += " | Context: #{context_str}"
+      end
+
+      if handler = @@log_handler
+        if handler.is_a?(Log)
+          handler.as(Log).error { error_msg.colorize(:red) }
+        else
+          handler.as(IO) << if @@tty
+            "#{error_msg.colorize(:red)}\n"
+          else
+            "#{error_msg}\n"
+          end
+        end
+      end
+    end
+
     private def self.elapsed_text(elapsed) : String
       minutes = elapsed.total_minutes
       return "#{minutes.round(2)}m" if minutes >= 1

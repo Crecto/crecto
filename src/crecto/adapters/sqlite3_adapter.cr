@@ -8,6 +8,8 @@ module Crecto
 
       def self.exec_execute(conn, query_string, params : Array)
         start = Time.local
+        # Add SQL capture for tests
+        Crecto::Adapters.sqls << query_string
         results = if conn.is_a?(DB::Database)
                     conn.exec(query_string, args: params)
                   else
@@ -19,6 +21,8 @@ module Crecto
 
       def self.exec_execute(conn, query_string)
         start = Time.local
+        # Add SQL capture for tests
+        Crecto::Adapters.sqls << query_string
         results = if conn.is_a?(DB::Database)
                     conn.exec(query_string)
                   else
@@ -115,7 +119,16 @@ module Crecto
       end
 
       private def self.instance_fields_and_values(query_hash : Hash)
-        values = query_hash.values.map { |x| x.is_a?(JSON::Any) ? x.to_json : x.as(DbValue) }
+        values = query_hash.values.map do |x|
+          if x.is_a?(JSON::Any)
+            x.to_json
+          elsif x.is_a?(Time)
+            # SQLite3 stores Time as ISO8601 string for consistency
+            Crecto::Adapters::BaseAdapter.format_time_for_db(x)
+          else
+            x.as(DbValue)
+          end
+        end
         {fields: query_hash.keys, values: values}
       end
 

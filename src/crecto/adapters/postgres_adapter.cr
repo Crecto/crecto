@@ -33,7 +33,9 @@ module Crecto
           elsif x.is_a?(Array)
             x = x.to_json
             x = x.sub(0, "{").sub(x.size - 1, "}")
-            x
+            elsif x.is_a?(Time)
+            # PostgreSQL handles Time natively with timezone awareness
+            Crecto::Adapters::BaseAdapter.format_time_for_db(x)
           else
             x.as(DbValue)
           end

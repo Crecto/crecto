@@ -7,6 +7,12 @@ module Crecto
       extend BaseAdapter
 
       def self.exec_execute(conn, query_string, params : Array)
+        # Validate parameter count to prevent IndexError
+        param_count = query_string.count('?')
+        if param_count != params.size
+          raise ArgumentError.new("Parameter count mismatch: expected #{param_count} parameters, got #{params.size}. Query: #{query_string}")
+        end
+
         start = Time.local
         results = if conn.is_a?(DB::Database)
                     conn.exec(query_string, args: params)
@@ -112,7 +118,14 @@ module Crecto
       end
 
       private def self.instance_fields_and_values(query_hash : Hash)
-        {fields: query_hash.keys, values: query_hash.values.map { |v| v.is_a?(Time) ? v.to_s.split(" ")[0..1].join(" ") : v.as(DbValue) }}
+        {fields: query_hash.keys, values: query_hash.values.map do |v|
+          if v.is_a?(Time)
+            # MySQL: Convert to UTC for consistent storage, format as DATETIME/TIMESTAMP
+            Crecto::Adapters::BaseAdapter.format_time_for_db(v)
+          else
+            v.as(DbValue)
+          end
+        end}
       end
 
       private def self.position_args(query_string : String)
