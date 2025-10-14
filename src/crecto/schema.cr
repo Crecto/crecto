@@ -290,7 +290,7 @@ module Crecto
                   @{{field[:name].id}} = UUID.parse(value.to_s)
                 {% elsif field[:type].id.stringify == "Time" %}
                   begin
-                    @{{field[:name].id}} = Time.parse!(value, "%F %T %z")
+                    @{{field[:name].id}} = Time.parse!(value, "%F %H:%M:%S.%L", location: Time::Location::UTC)
                   end
                 {% end %}
               end
@@ -312,11 +312,15 @@ module Crecto
       end
 
       def updated_at_value
-        self.{{CRECTO_UPDATED_AT_FIELD.id}}
+        {% unless CRECTO_UPDATED_AT_FIELD == nil %}
+          self.{{CRECTO_UPDATED_AT_FIELD.id}}
+        {% end %}
       end
 
       def created_at_value
-        self.{{CRECTO_CREATED_AT_FIELD.id}}
+        {% unless CRECTO_CREATED_AT_FIELD == nil %}
+          self.{{CRECTO_CREATED_AT_FIELD.id}}
+        {% end %}
       end
 
       def updated_at_to_now
