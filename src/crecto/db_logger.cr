@@ -21,15 +21,25 @@ module Crecto
     end
 
     def self.log(string, elapsed, params) : Nil
-      params.each do |param|
-        string = string.sub(/(\$\d+|\?)/, "'#{param}'")
+      # Sanitize parameters to prevent SQL injection in logs
+      sanitized_params = params.map do |param|
+        # Escape single quotes and limit parameter length for security
+        sanitized = param.to_s.gsub("'", "''")
+        sanitized.size > 100 ? "#{sanitized[0, 97]}..." : sanitized
       end
-      log(string, elapsed)
+
+      # Create a safe representation of the query with parameters
+      safe_string = string.dup
+      sanitized_params.each do |param|
+        safe_string = safe_string.sub(/(\$\d+|\?)/, "'#{param}'")
+      end
+
+      log(safe_string, elapsed)
     end
 
     def self.set_handler(logger : Log)
       @@log_handler = logger
-      @@log_handler.as(Log).level = Log::INFO
+      @@log_handler.as(Log).level = Log::Severity::Info
     end
 
     def self.set_handler(io : IO)
@@ -45,7 +55,13 @@ module Crecto
     def self.log_error(error_type : String, message : String, context : Hash(String, String | Int32 | Bool | Array(String))? = nil) : Nil
       error_msg = "[#{error_type}] #{message}"
       if context && !context.empty?
-        context_str = context.map { |k, v| "#{k}=#{v}" }.join(", ")
+        context_str = context.map { |k, v|
+          if v.is_a?(Array)
+            "#{k}=#{v.as(Array).join(",")}"
+          else
+            "#{k}=#{v}"
+          end
+        }.join(", ")
         error_msg += " | Context: #{context_str}"
       end
 
@@ -70,9 +86,14 @@ module Crecto
       return "#{seconds.round(2)}s" if seconds >= 1
 
       millis = elapsed.total_milliseconds
-      return "#{millis.round(2)}ms" if millis >= 1
+      if millis >= 1
+        # Keep milliseconds as integer if it's a whole number
+        return millis == millis.to_i ? "#{millis.to_i}ms" : "#{millis.round(2)}ms"
+      end
 
-      "#{(millis * 1000).round(2)}µs"
+      micros = millis * 1000
+      return "#{micros.to_i}µs" if micros == micros.to_i
+      "#{micros.round(2)}µs"
     end
   end
 end

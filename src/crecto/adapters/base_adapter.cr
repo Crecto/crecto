@@ -411,12 +411,14 @@ module Crecto
           # Validate parameter count to prevent IndexError
           param_count = query_string.count('?')
           if param_count != params.size
-            error_msg = "Parameter count mismatch: expected #{param_count} parameters, got #{params.size}. Query: #{query_string}"
+            # Sanitize error message to prevent SQL structure exposure
+            error_msg = "Parameter count mismatch: expected #{param_count} parameters, got #{params.size}"
             context = {
-            "params" => params.map(&.to_s),
-            "query" => query_string
-          }
-          DbLogger.log_error("PARAMETER_VALIDATION_ERROR", error_msg, context)
+              "param_count" => params.size.to_s,
+              "expected_count" => param_count.to_s,
+              "query_length" => query_string.size.to_s
+            }
+            DbLogger.log_error("PARAMETER_VALIDATION_ERROR", error_msg, context)
             raise ArgumentError.new(error_msg)
           end
 
@@ -448,13 +450,13 @@ module Crecto
           end
 
           # Enhanced error logging for all other exceptions during insert operations
+          # Sanitize to prevent query structure exposure
           context = {
-            "query" => query_string,
             "param_count" => params.size.to_s,
             "error_class" => ex.class.name,
             "connection_type" => conn.is_a?(DB::Database) ? "database" : "transaction"
           }
-          DbLogger.log_error("INSERT_EXECUTION_ERROR", ex.message || "Unknown execution error", context)
+          DbLogger.log_error("INSERT_EXECUTION_ERROR", "Execution error occurred", context)
           raise ex
         ensure
           DbLogger.log(query_string, Time.local - start, params)
@@ -483,10 +485,12 @@ module Crecto
         # Validate parameter count to prevent IndexError
         param_count = query_string.count('?')
         if param_count != params.size
-          error_msg = "Parameter count mismatch: expected #{param_count} parameters, got #{params.size}. Query: #{query_string}"
+          # Sanitize error message to prevent SQL structure exposure
+          error_msg = "Parameter count mismatch: expected #{param_count} parameters, got #{params.size}"
           context = {
-            "params" => params.map(&.to_s),
-            "query" => query_string
+            "param_count" => params.size.to_s,
+            "expected_count" => param_count.to_s,
+            "query_length" => query_string.size.to_s
           }
           DbLogger.log_error("EXEC_PARAMETER_VALIDATION_ERROR", error_msg, context)
           raise ArgumentError.new(error_msg)
@@ -692,8 +696,6 @@ module Crecto
 
       private def add_where(builder, where : Hash, queryable, params, join_string)
         where.keys.each do |key|
-          [where[key]].flatten.uniq.each { |param| params.push(param) unless param.is_a?(Nil) }
-
           if where[key].is_a?(Array) && where[key].as(Array).size === 0
             builder << "1=0" << join_string
             next
@@ -702,8 +704,28 @@ module Crecto
           builder << '(' << queryable.table_name << '.' << key.to_s
 
           if where[key].is_a?(Array)
+            array_values = where[key].as(Array).uniq
+
+            # Prevent overly large IN clauses that can cause database errors
+            # SQLite default limit is 999 parameters, but we use 500 for safety
+            max_array_size = 500
+
+            if array_values.size > max_array_size
+              # Fail-fast instead of truncating to prevent silent data loss
+              error_msg = "Array size (#{array_values.size}) exceeds maximum allowed for IN clause (#{max_array_size})"
+              DbLogger.log_error("ARRAY_SIZE_LIMIT_EXCEEDED", error_msg, {
+                "actual_size" => array_values.size.to_s,
+                "max_allowed" => max_array_size.to_s,
+                "field" => key.to_s
+              })
+              raise ArgumentError.new(error_msg)
+            end
+
+            # Add each non-nil array value to params, flattening the array
+            array_values.each { |param| params.push(param) unless param.is_a?(Nil) }
+
             builder << " IN ("
-            where[key].as(Array).uniq.size.times do
+            array_values.size.times do
               builder << "?, "
             end
             builder.back(2)
@@ -711,6 +733,8 @@ module Crecto
           elsif where[key].is_a?(Nil)
             builder << " IS NULL"
           else
+            # For non-array values, add the single parameter
+            [where[key]].flatten.uniq.each { |param| params.push(param) unless param.is_a?(Nil) }
             builder << "=?"
           end
 
@@ -819,7 +843,7 @@ module Crecto
 
       # Format Time values consistently across all database adapters
       # Converts Time to UTC and formats as database-compatible string
-      # Includes error handling for extreme or invalid Time values
+      # Rejects invalid Time values to prevent data integrity issues
       def self.format_time_for_db(time : Time) : String
         begin
           # Validate Time is within reasonable database range
@@ -829,27 +853,26 @@ module Crecto
 
           # Check for extreme values that might cause database errors
           if unix_time < -62135596800 || unix_time > 2147483647  # ~1900 to 2038
-            # Clamp to reasonable range to prevent database errors
-            safe_time = unix_time < 0 ? Time.unix(0) : Time.unix(2147483647)
-            DbLogger.log_error("TIME_VALUE_CLAMPED", "Time value clamped to prevent database error", {
-              "original_time" => time.to_s,
-              "original_unix" => unix_time.to_s,
-              "clamped_time" => safe_time.to_s,
-              "clamped_unix" => safe_time.to_unix.to_s
+            # Reject invalid time values instead of silently modifying them
+            error_msg = "Time value #{time} (Unix: #{unix_time}) is outside supported database range"
+            DbLogger.log_error("TIME_VALUE_OUT_OF_RANGE", error_msg, {
+              "provided_time" => time.to_s,
+              "unix_timestamp" => unix_time.to_s,
+              "min_supported_unix" => "-62135596800",
+              "max_supported_unix" => "2147483647"
             })
-            time = safe_time
+            raise ArgumentError.new(error_msg)
           end
 
           time.to_utc.to_s(@@time_format)
         rescue ex : Exception
-          # If Time formatting fails, log the error and use a safe default
-          DbLogger.log_error("TIME_FORMAT_ERROR", "Failed to format Time value, using default", {
+          # If Time formatting fails, log the error and raise an exception
+          error_msg = "Failed to format Time value: #{ex.message}"
+          DbLogger.log_error("TIME_FORMAT_ERROR", error_msg, {
             "error_message" => ex.message || "Unknown Time formatting error",
-            "error_class" => ex.class.name,
-            "original_time" => time.inspect
+            "error_class" => ex.class.name
           })
-          # Return a safe default timestamp (current time in UTC)
-          Time.utc.to_s(@@time_format)
+          raise ArgumentError.new(error_msg)
         end
       end
 
