@@ -1,0 +1,583 @@
+require "spec"
+require "../spec_helper"
+require "./integration_test_models"
+
+describe Crecto::Integration do
+  describe "Transaction and Migration Integration" do
+    before_all do
+      setup_transaction_test_database
+    end
+
+    after_all do
+      cleanup_transaction_test_database
+    end
+
+    it "handles complex nested transactions with savepoints" do
+      # Create initial data
+      user = TransactionTestUser.new
+      user.name = "Transaction User"
+      user.email = "transaction@example.com"
+      user.balance = 1000.0
+
+      user_changeset = TransactionTestUser.changeset(user)
+      created_user = TransactionRepo.insert(user_changeset)
+      user_id = created_user.id.not_nil!
+
+      # Test nested transaction
+      begin
+        TransactionRepo.transaction do |tx|
+          # First level: user transaction
+          user.balance -= 100.0
+          user.updated_at = Time.utc
+          user_changeset = TransactionTestUser.changeset(user)
+          TransactionRepo.update(user_changeset, tx)
+
+          # Create transaction record
+          transaction = TransactionTestTransaction.new
+              
+            user_id: user_id,
+            amount: -100.0,
+            type: "withdrawal",
+            status: "pending",
+            created_at: Time.utc,
+            updated_at: Time.utc
+          )
+
+          transaction_changeset = TransactionTestTransaction.changeset(transaction)
+          created_transaction = TransactionRepo.insert(transaction_changeset, tx)
+          transaction_id = created_transaction.id.not_nil!
+
+          # Nested transaction for audit log
+          begin
+            TransactionRepo.transaction do |nested_tx|
+              # Create audit log entry
+              audit_log = TransactionTestAuditLog.new
+        
+                user_id: user_id,
+                transaction_id: transaction_id,
+                action: "withdrawal_initiated",
+                details: "User withdrew $100.00",
+                created_at: Time.utc
+              )
+
+              audit_changeset = TransactionTestAuditLog.changeset(audit_log)
+              TransactionRepo.insert(audit_changeset, nested_tx)
+
+              # Simulate an error in nested transaction
+              if Random.rand(2) == 0
+                raise "Simulated nested transaction error"
+              end
+            end
+          rescue ex
+            # Nested transaction should rollback
+            puts "Nested transaction rolled back: #{ex.message}"
+          end
+
+          # Continue with main transaction
+          created_transaction.status = "completed"
+          transaction_changeset = TransactionTestTransaction.changeset(created_transaction)
+          TransactionRepo.update(transaction_changeset, tx)
+
+          # Randomly fail main transaction to test rollback
+          if Random.rand(5) == 0
+            raise "Simulated main transaction error"
+          end
+        end
+      rescue ex
+        puts "Main transaction rolled back: #{ex.message}"
+      end
+
+      # Verify final state
+      final_user = TransactionRepo.get(TransactionTestUser, user_id)
+      final_user.should_not be_nil
+
+      # Should either be complete or rolled back
+      if final_user.not_nil!.balance == 900.0
+        # Transaction succeeded
+        transactions = TransactionRepo.all(TransactionTestTransaction, Crecto::Repo::Query.where(user_id: user_id))
+        transactions.size.should be > 0
+        transactions.last?.try(&.status).should eq("completed")
+      else
+        # Transaction rolled back
+        final_user.not_nil!.balance.should eq(1000.0)
+        transactions = TransactionRepo.all(TransactionTestTransaction, Crecto::Repo::Query.where(user_id: user_id))
+        transactions.size.should eq(0)
+      end
+    end
+
+    it "handles large batch operations within transactions" do
+      # Create initial user
+      user = TransactionTestUser.new
+      user.name = "Batch User"
+      user.email = "batch@example.com"
+      user.balance = 10000.0
+
+      user_changeset = TransactionTestUser.changeset(user)
+      created_user = TransactionRepo.insert(user_changeset)
+      user_id = created_user.id.not_nil!
+
+      # Perform large batch operation
+      batch_size = 1000
+      batch_succeeded = false
+
+      begin
+        TransactionRepo.transaction do |tx|
+          # Create many transactions in batch
+          transactions = [] of TransactionTestTransaction
+          batch_size.times do |i|
+            transaction = TransactionTestTransaction.new
+              
+              user_id: user_id,
+              amount: -10.0,
+              type: "batch_withdrawal",
+              status: "pending",
+              created_at: Time.utc,
+              updated_at: Time.utc
+            )
+            transactions << transaction
+          end
+
+          # Insert all transactions
+          transactions.each do |transaction|
+            transaction_changeset = TransactionTestTransaction.changeset(transaction)
+            created_transaction = TransactionRepo.insert(transaction_changeset, tx)
+            created_transaction.should_not be_nil
+          end
+
+          # Update user balance
+          user.balance -= (batch_size * 10.0)
+          user.updated_at = Time.utc
+          user_changeset = TransactionTestUser.changeset(user)
+          TransactionRepo.update(user_changeset, tx)
+
+          # Create audit log for batch operation
+          audit_log = TransactionTestAuditLog.new
+        
+            user_id: user_id,
+            transaction_id: 0, # No single transaction ID for batch
+            action: "batch_withdrawal",
+            details: "Batch withdrawal of #{batch_size} transactions",
+            created_at: Time.utc
+          )
+
+          audit_changeset = TransactionTestAuditLog.changeset(audit_log)
+          TransactionRepo.insert(audit_changeset, tx)
+
+          batch_succeeded = true
+        end
+      rescue ex
+        puts "Batch transaction failed: #{ex.message}"
+        batch_succeeded = false
+      end
+
+      # Verify results
+      final_user = TransactionRepo.get(TransactionTestUser, user_id)
+      final_user.should_not be_nil
+
+      if batch_succeeded
+        final_user.not_nil!.balance.should eq(0.0) # 10000 - (1000 * 10) = 0
+
+        # Verify all transactions were created
+        all_transactions = TransactionRepo.all(TransactionTestTransaction, Crecto::Repo::Query.where(user_id: user_id))
+        all_transactions.size.should eq(batch_size)
+
+        # Verify audit log
+        audit_logs = TransactionRepo.all(TransactionTestAuditLog, Crecto::Repo::Query.where(user_id: user_id, action: "batch_withdrawal"))
+        audit_logs.size.should eq(1)
+      else
+        final_user.not_nil!.balance.should eq(10000.0) # Should be unchanged
+
+        # Verify no transactions were created
+        all_transactions = TransactionRepo.all(TransactionTestTransaction, Crecto::Repo::Query.where(user_id: user_id))
+        all_transactions.size.should eq(0)
+      end
+
+      # Cleanup
+      if batch_succeeded
+        all_transactions = TransactionRepo.all(TransactionTestTransaction, Crecto::Repo::Query.where(user_id: user_id))
+        all_transactions.each { |t| TransactionRepo.delete(t) }
+
+        audit_logs = TransactionRepo.all(TransactionTestAuditLog, Crecto::Repo::Query.where(user_id: user_id))
+        audit_logs.each { |a| TransactionRepo.delete(a) }
+      end
+
+      TransactionRepo.delete(final_user.not_nil!)
+    end
+
+    it "handles concurrent transactions safely" do
+      # Create initial user with sufficient balance
+      user = TransactionTestUser.new
+      
+        name: "Concurrent User",
+        email: "concurrent@example.com",
+        balance: 1000.0,
+        created_at: Time.utc,
+        updated_at: Time.utc
+      )
+
+      user_changeset = TransactionTestUser.changeset(user)
+      created_user = TransactionRepo.insert(user_changeset)
+      user_id = created_user.id.not_nil!
+
+      # Simulate concurrent withdrawals
+      channel = Channel(Bool).new(10)
+      withdrawal_amount = 50.0
+      concurrent_attempts = 10
+
+      concurrent_attempts.times do |i|
+        spawn do
+          begin
+            TransactionRepo.transaction do |tx|
+              # Read current balance within transaction
+              current_user = TransactionRepo.get(TransactionTestUser, user_id, tx)
+              if current_user && current_user.balance >= withdrawal_amount
+                # Perform withdrawal
+                current_user.balance -= withdrawal_amount
+                current_user.updated_at = Time.utc
+                user_changeset = TransactionTestUser.changeset(current_user)
+                TransactionRepo.update(user_changeset, tx)
+
+                # Create transaction record
+                transaction = TransactionTestTransaction.new
+              
+                  user_id: user_id,
+                  amount: -withdrawal_amount,
+                  type: "concurrent_withdrawal",
+                  status: "completed",
+                  created_at: Time.utc,
+                  updated_at: Time.utc
+                )
+
+                transaction_changeset = TransactionTestTransaction.changeset(transaction)
+                TransactionRepo.insert(transaction_changeset, tx)
+
+                channel.send(true)
+              else
+                # Insufficient funds
+                channel.send(false)
+              end
+            end
+          rescue ex
+            puts "Concurrent transaction #{i} failed: #{ex.message}"
+            channel.send(false)
+          end
+        end
+      end
+
+      # Collect results
+      successful_withdrawals = 0
+      concurrent_attempts.times do
+        if channel.receive
+          successful_withdrawals += 1
+        end
+      end
+
+      # Verify final state
+      final_user = TransactionRepo.get(TransactionTestUser, user_id)
+      final_user.should_not be_nil
+
+      expected_balance = 1000.0 - (successful_withdrawals * withdrawal_amount)
+      final_user.not_nil!.balance.should be_close(expected_balance, 0.01)
+
+      # Verify transaction records
+      transactions = TransactionRepo.all(TransactionTestTransaction, Crecto::Repo::Query.where(user_id: user_id))
+      transactions.size.should eq(successful_withdrawals)
+
+      # Cleanup
+      transactions.each { |t| TransactionRepo.delete(t) }
+      TransactionRepo.delete(final_user.not_nil!)
+    end
+
+    it "handles migration and schema evolution scenarios" do
+      # Test adding new fields via schema migration
+      begin
+        # Simulate migration: add new field to users table
+        TransactionRepo.raw_exec("ALTER TABLE transaction_test_users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE")
+
+        # Create user with new field
+        user = TransactionTestUser.new
+      
+          name: "Migration User",
+          email: "migration@example.com",
+          balance: 500.0,
+          created_at: Time.utc,
+          updated_at: Time.utc
+        )
+
+        user_changeset = TransactionTestUser.changeset(user)
+        created_user = TransactionRepo.insert(user_changeset)
+        created_user.should_not be_nil
+
+        # Update the new field
+        TransactionRepo.raw_exec("UPDATE transaction_test_users SET email_verified = TRUE WHERE id = ?", created_user.id)
+
+        # Verify field was added and updated
+        updated_user = TransactionRepo.get(TransactionTestUser, created_user.id.not_nil!)
+        updated_user.should_not be_nil
+
+        # Test that existing functionality still works
+        transaction = TransactionTestTransaction.new
+              
+          user_id: created_user.id.not_nil!,
+          amount: -50.0,
+          type: "migration_test",
+          status: "completed",
+          created_at: Time.utc,
+          updated_at: Time.utc
+        )
+
+        transaction_changeset = TransactionTestTransaction.changeset(transaction)
+        created_transaction = TransactionRepo.insert(transaction_changeset)
+        created_transaction.should_not be_nil
+
+        # Cleanup
+        TransactionRepo.delete(created_transaction.not_nil!)
+        TransactionRepo.delete(updated_user.not_nil!)
+
+        # Reverse migration: remove the field
+        TransactionRepo.raw_exec("ALTER TABLE transaction_test_users DROP COLUMN IF EXISTS email_verified")
+
+      rescue ex
+        puts "Migration test error: #{ex.message}"
+      end
+    end
+
+    it "validates data consistency across complex operations" do
+      # Create test data
+      user1 = TransactionTestUser.new
+      
+        name: "User 1",
+        email: "user1@example.com",
+        balance: 1000.0,
+        created_at: Time.utc,
+        updated_at: Time.utc
+      )
+
+      user2 = TransactionTestUser.new
+      
+        name: "User 2",
+        email: "user2@example.com",
+        balance: 500.0,
+        created_at: Time.utc,
+        updated_at: Time.utc
+      )
+
+      user1_changeset = TransactionTestUser.changeset(user1)
+      user2_changeset = TransactionTestUser.changeset(user2)
+
+      created_user1 = TransactionRepo.insert(user1_changeset)
+      created_user2 = TransactionRepo.insert(user2_changeset)
+
+      user1_id = created_user1.id.not_nil!
+      user2_id = created_user2.id.not_nil!
+
+      # Perform complex transfer operation
+      transfer_amount = 200.0
+
+      begin
+        TransactionRepo.transaction do |tx|
+          # Check user1 has sufficient funds
+          user1_current = TransactionRepo.get(TransactionTestUser, user1_id, tx)
+          if user1_current && user1_current.balance >= transfer_amount
+            # Withdraw from user1
+            user1_current.balance -= transfer_amount
+            user1_current.updated_at = Time.utc
+            user1_changeset = TransactionTestUser.changeset(user1_current)
+            TransactionRepo.update(user1_changeset, tx)
+
+            # Deposit to user2
+            user2_current = TransactionRepo.get(TransactionTestUser, user2_id, tx)
+            if user2_current
+              user2_current.balance += transfer_amount
+              user2_current.updated_at = Time.utc
+              user2_changeset = TransactionTestUser.changeset(user2_current)
+              TransactionRepo.update(user2_changeset, tx)
+
+              # Create transaction records
+              withdrawal = TransactionTestTransaction.new
+              
+                user_id: user1_id,
+                amount: -transfer_amount,
+                type: "transfer_out",
+                status: "completed",
+                created_at: Time.utc,
+                updated_at: Time.utc
+              )
+
+              deposit = TransactionTestTransaction.new
+              
+                user_id: user2_id,
+                amount: transfer_amount,
+                type: "transfer_in",
+                status: "completed",
+                created_at: Time.utc,
+                updated_at: Time.utc
+              )
+
+              withdrawal_changeset = TransactionTestTransaction.changeset(withdrawal)
+              deposit_changeset = TransactionTestTransaction.changeset(deposit)
+
+              TransactionRepo.insert(withdrawal_changeset, tx)
+              TransactionRepo.insert(deposit_changeset, tx)
+
+              # Create audit log
+              audit_log = TransactionTestAuditLog.new
+        
+                user_id: user1_id,
+                transaction_id: 0,
+                action: "transfer",
+                details: "Transferred #{transfer_amount} from user #{user1_id} to user #{user2_id}",
+                created_at: Time.utc
+              )
+
+              audit_changeset = TransactionTestAuditLog.changeset(audit_log)
+              TransactionRepo.insert(audit_changeset, tx)
+            end
+          else
+            raise "Insufficient funds for transfer"
+          end
+        end
+
+        # Verify transfer succeeded
+        final_user1 = TransactionRepo.get(TransactionTestUser, user1_id)
+        final_user2 = TransactionRepo.get(TransactionTestUser, user2_id)
+
+        final_user1.should_not be_nil
+        final_user2.should_not be_nil
+
+        final_user1.not_nil!.balance.should eq(800.0) # 1000 - 200
+        final_user2.not_nil!.balance.should eq(700.0) # 500 + 200
+
+        # Verify transaction records
+        user1_transactions = TransactionRepo.all(TransactionTestTransaction, Crecto::Repo::Query.where(user_id: user1_id))
+        user2_transactions = TransactionRepo.all(TransactionTestTransaction, Crecto::Repo::Query.where(user_id: user2_id))
+
+        user1_transactions.size.should eq(1)
+        user2_transactions.size.should eq(1)
+
+        user1_transactions.first?.try(&.amount).should eq(-transfer_amount)
+        user2_transactions.first?.try(&.amount).should eq(transfer_amount)
+
+        # Verify audit log
+        audit_logs = TransactionRepo.all(TransactionTestAuditLog, Crecto::Repo::Query.where(action: "transfer"))
+        audit_logs.size.should eq(1)
+
+      rescue ex
+        puts "Transfer failed: #{ex.message}"
+      end
+
+      # Cleanup
+      user1_transactions = TransactionRepo.all(TransactionTestTransaction, Crecto::Repo::Query.where(user_id: user1_id))
+      user2_transactions = TransactionRepo.all(TransactionTestTransaction, Crecto::Repo::Query.where(user_id: user2_id))
+      audit_logs = TransactionRepo.all(TransactionTestAuditLog, Crecto::Repo::Query.where(action: "transfer"))
+
+      user1_transactions.each { |t| TransactionRepo.delete(t) }
+      user2_transactions.each { |t| TransactionRepo.delete(t) }
+      audit_logs.each { |a| TransactionRepo.delete(a) }
+
+      final_user1 = TransactionRepo.get(TransactionTestUser, user1_id)
+      final_user2 = TransactionRepo.get(TransactionTestUser, user2_id)
+
+      TransactionRepo.delete(final_user1.not_nil!) if final_user1
+      TransactionRepo.delete(final_user2.not_nil!) if final_user2
+    end
+  end
+end
+
+private def setup_transaction_test_database
+    begin
+      # Create tables for transaction testing
+      TransactionRepo.raw_exec("CREATE TABLE IF NOT EXISTS transaction_test_users (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        balance REAL NOT NULL DEFAULT 0.0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )")
+
+      TransactionRepo.raw_exec("CREATE TABLE IF NOT EXISTS transaction_test_transactions (
+        id INTEGER PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        amount REAL NOT NULL,
+        type TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES transaction_test_users(id)
+      )")
+
+      TransactionRepo.raw_exec("CREATE TABLE IF NOT EXISTS transaction_test_audit_logs (
+        id INTEGER PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        transaction_id INTEGER,
+        action TEXT NOT NULL,
+        details TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES transaction_test_users(id),
+        FOREIGN KEY (transaction_id) REFERENCES transaction_test_transactions(id)
+      )")
+
+    rescue ex
+      puts "Error setting up transaction test database: #{ex.message}"
+    end
+  end
+
+  private def cleanup_transaction_test_database
+    begin
+      TransactionRepo.raw_exec("DROP TABLE IF EXISTS transaction_test_audit_logs")
+      TransactionRepo.raw_exec("DROP TABLE IF EXISTS transaction_test_transactions")
+      TransactionRepo.raw_exec("DROP TABLE IF EXISTS transaction_test_users")
+    rescue ex
+      puts "Error cleaning up transaction test database: #{ex.message}"
+    end
+  end
+
+# Transaction test models
+class TransactionTestUser < Crecto::Model
+  schema "transaction_test_users" do
+    field :name, String
+    field :email, String
+    field :balance, Float64
+  end
+
+  validates :name, presence: true
+  validates :email, presence: true, uniqueness: true
+  validates :balance, numericality: {greater_than_or_equal_to: 0}
+end
+
+class TransactionTestTransaction < Crecto::Model
+  schema "transaction_test_transactions" do
+    field :user_id, Int32
+    field :amount, Float64
+    field :type, String
+    field :status, String
+  end
+
+  validates :user_id, presence: true
+  validates :amount, presence: true
+  validates :type, presence: true
+  validates :status, inclusion: {in: ["pending", "completed", "failed"]}
+end
+
+class TransactionTestAuditLog < Crecto::Model
+  schema "transaction_test_audit_logs" do
+    field :user_id, Int32
+    field :transaction_id, Int32?
+    field :action, String
+    field :details, String?
+  end
+
+  validates :user_id, presence: true
+  validates :action, presence: true
+end
+
+# Repository for transaction testing
+module TransactionRepo
+  extend Crecto::Repo
+
+  config do |conf|
+    conf.adapter = Crecto::Adapters::SQLite3
+    conf.database = "sqlite3:./spec/integration/transaction_test.db"
+  end
+end

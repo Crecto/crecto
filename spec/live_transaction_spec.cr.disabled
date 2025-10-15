@@ -1,0 +1,481 @@
+require "spec"
+require "./spec_helper"
+require "../src/crecto/live_transaction"
+
+# Enhanced test models for LiveTransaction testing
+class TestUser < Crecto::Model
+  schema "test_users" do
+    field :username, String
+    field :email, String
+    field :lock_version, Int32
+  end
+
+  validates :username, presence: true
+  validates :email, presence: true
+end
+
+class TestPost < Crecto::Model
+  schema "test_posts" do
+    field :title, String
+    field :content, String
+    field :author_id, PkeyValue
+  end
+
+  validates :title, presence: true
+  validates :content, presence: true
+end
+
+# Mock repository with transaction support
+class MockRepoWithTransactions
+  def initialize(@mock_db = MockDB.new)
+  end
+
+  def insert(queryable, tx = nil)
+    if tx
+      @mock_db.last_operation = "insert with transaction"
+      queryable
+    else
+      @mock_db.last_operation = "insert without transaction"
+      queryable
+    end
+  end
+
+  def insert!(queryable, tx = nil)
+    if tx
+      @mock_db.last_operation = "insert! with transaction"
+      queryable
+    else
+      @mock_db.last_operation = "insert! without transaction"
+      queryable
+    end
+  end
+
+  def delete(queryable, tx = nil)
+    if tx
+      @mock_db.last_operation = "delete with transaction"
+      queryable
+    else
+      @mock_db.last_operation = "delete without transaction"
+      queryable
+    end
+  end
+
+  def delete!(queryable, tx = nil)
+    if tx
+      @mock_db.last_operation = "delete! with transaction"
+      queryable
+    else
+      @mock_db.last_operation = "delete! without transaction"
+      queryable
+    end
+  end
+
+  def insert(changeset : Crecto::Changeset::Changeset, tx = nil)
+    insert(changeset.instance, tx)
+  end
+
+  def insert!(changeset : Crecto::Changeset::Changeset, tx = nil)
+    insert!(changeset.instance, tx)
+  end
+
+  def delete(changeset : Crecto::Changeset::Changeset, tx = nil)
+    delete(changeset.instance, tx)
+  end
+
+  def delete!(changeset : Crecto::Changeset::Changeset, tx = nil)
+    delete!(changeset.instance, tx)
+  end
+
+  def update(queryable, tx = nil)
+    if tx
+      @mock_db.last_operation = "update with transaction"
+      queryable
+    else
+      @mock_db.last_operation = "update without transaction"
+      queryable
+    end
+  end
+
+  def update!(queryable, tx = nil)
+    result = update(queryable, tx)
+    if @mock_db.should_fail_update
+      changeset = Crecto::Changeset::Changeset.new(queryable)
+      changeset.add_error(:base, "Update failed")
+      changeset
+    else
+      result
+    end
+  end
+
+  def update(changeset : Crecto::Changeset::Changeset, tx = nil)
+    update(changeset.instance, tx)
+  end
+
+  def update_all(queryable, query, update_hash, tx = nil)
+    if tx
+      @mock_db.last_operation = "update_all with transaction"
+      "updated rows"
+    else
+      @mock_db.last_operation = "update_all without transaction"
+      "updated rows"
+    end
+  end
+
+  def delete_all(queryable, query, tx = nil)
+    if tx
+      @mock_db.last_operation = "delete_all with transaction"
+      "deleted rows"
+    else
+      @mock_db.last_operation = "delete_all without transaction"
+      "deleted rows"
+    end
+  end
+
+  def get(queryable, id, tx = nil)
+    if tx
+      @mock_db.last_operation = "get with transaction"
+      MockModel.new(id)
+    else
+      @mock_db.last_operation = "get without transaction"
+      MockModel.new(id)
+    end
+  end
+
+  def get_by(queryable, **opts)
+    @mock_db.last_operation = "get_by"
+    MockModel.new(1)
+  end
+
+  def get_by!(queryable, **opts)
+    @mock_db.last_operation = "get_by!"
+    MockModel.new(1)
+  end
+
+  def all(queryable, query)
+    @mock_db.last_operation = "all"
+    [MockModel.new(1), MockModel.new(2)]
+  end
+end
+
+# Mock model for testing
+class MockModel
+  def initialize(@id : Int32 = 1)
+  end
+
+  def pkey_value
+    @id
+  end
+
+  def class
+    MockModel
+  end
+
+  def respond_to?(method)
+    method == :lock_version || method == :lock_version=
+  end
+
+  def lock_version
+    @lock_version ||= 1
+  end
+
+  def lock_version=(value)
+    @lock_version = value
+  end
+
+  def get_changeset
+    Crecto::Changeset::Changeset.new(self)
+  end
+end
+
+# Mock database transaction
+class MockDBTransaction
+  property last_query : String?
+  property rows_affected : Int32 = 1
+  property should_fail : Bool = false
+
+  def exec(query, params = nil)
+    @last_query = query
+
+    if should_fail
+      raise Exception.new("Transaction failed")
+    end
+
+    MockResult.new(rows_affected)
+  end
+
+  def query_one(query, param, as type)
+    if should_fail
+      raise Exception.new("Query failed")
+    end
+    MockModel.new(1)
+  end
+
+  def query(query, args = nil)
+    [MockModel.new(1)]
+  end
+end
+
+# Mock database
+class MockDB
+  property last_operation : String?
+  property should_fail_update : Bool = false
+
+  def transaction
+    MockDBTransaction.new
+  end
+end
+
+# Mock result
+class MockResult
+  def initialize(@rows_affected : Int32)
+  end
+
+  def rows_affected
+    @rows_affected
+  end
+end
+
+describe Crecto::LiveTransaction do
+  before_each do
+    @mock_db = MockDB.new
+    @mock_repo = MockRepoWithTransactions.new(@mock_db)
+    @mock_transaction = MockDBTransaction.new
+    @live_transaction = Crecto::LiveTransaction.new(@mock_transaction, @mock_repo)
+    @mock_model = MockModel.new
+  end
+
+  describe "basic operations" do
+    it "passes transaction to insert operations" do
+      result = @live_transaction.insert(@mock_model)
+      @mock_db.last_operation.should eq("insert with transaction")
+      result.should be(@mock_model)
+    end
+
+    it "passes transaction to insert! operations" do
+      result = @live_transaction.insert!(@mock_model)
+      @mock_db.last_operation.should eq("insert with transaction")
+      result.should be(@mock_model)
+    end
+
+    it "passes transaction to delete operations" do
+      result = @live_transaction.delete(@mock_model)
+      @mock_db.last_operation.should eq("delete with transaction")
+      result.should be(@mock_model)
+    end
+
+    it "passes transaction to delete! operations" do
+      result = @live_transaction.delete!(@mock_model)
+      @mock_db.last_operation.should eq("delete with transaction")
+      result.should be(@mock_model)
+    end
+
+    it "passes transaction to delete_all operations" do
+      query = Crecto::Repo::Query.new
+      result = @live_transaction.delete_all(MockModel, query)
+      @mock_db.last_operation.should eq("delete_all with transaction")
+      result.should eq("deleted rows")
+    end
+
+    it "passes transaction to get operations" do
+      result = @live_transaction.get(MockModel, 1)
+      @mock_db.last_operation.should eq("get with transaction")
+      result.should be_a(MockModel)
+    end
+
+    it "passes transaction to get! operations" do
+      result = @live_transaction.get!(MockModel, 1)
+      result.should be_a(MockModel)
+    end
+
+    it "passes transaction to get_by operations" do
+      result = @live_transaction.get_by(MockModel, username: "test")
+      @mock_db.last_operation.should eq("get_by")
+      result.should be_a(MockModel)
+    end
+
+    it "passes transaction to get_by! operations" do
+      result = @live_transaction.get_by!(MockModel, username: "test")
+      @mock_db.last_operation.should eq("get_by!")
+      result.should be_a(MockModel)
+    end
+
+    it "delegates to repo for all operations" do
+      query = Crecto::Repo::Query.new
+      result = @live_transaction.all(MockModel, query)
+      @mock_db.last_operation.should eq("all")
+      result.should be_a(Array)
+    end
+  end
+
+  describe "update operations" do
+    it "handles basic updates without optimistic locking" do
+      result = @live_transaction.update(@mock_model)
+      @mock_db.last_operation.should eq("update with transaction")
+      result.should be(@mock_model)
+    end
+
+    it "handles update! operations" do
+      result = @live_transaction.update!(@mock_model)
+      @mock_db.last_operation.should eq("update with transaction")
+      result.should be(@mock_model)
+    end
+
+    it "raises exception on update! failure" do
+      @mock_db.should_fail_update = true
+      expect_raises(Crecto::InvalidChangeset) do
+        @live_transaction.update!(@mock_model)
+      end
+    end
+
+    it "passes transaction to update_all operations" do
+      query = Crecto::Repo::Query.new
+      update_hash = {title: "new title"}
+      result = @live_transaction.update_all(MockModel, query, update_hash)
+      @mock_db.last_operation.should eq("update_all with transaction")
+      result.should eq("updated rows")
+    end
+
+    it "handles update_all with NamedTuple" do
+      query = Crecto::Repo::Query.new
+      update_tuple = {title: "new title", content: "new content"}
+      result = @live_transaction.update_all(MockModel, query, update_tuple)
+      @mock_db.last_operation.should eq("update_all with transaction")
+      result.should eq("updated rows")
+    end
+  end
+
+  describe "changeset handling" do
+    it "extracts model from changeset for insert" do
+      changeset = Crecto::Changeset::Changeset.new(@mock_model)
+      result = @live_transaction.insert(changeset)
+      @mock_db.last_operation.should eq("insert with transaction")
+      result.should be(@mock_model)
+    end
+
+    it "extracts model from changeset for delete" do
+      changeset = Crecto::Changeset::Changeset.new(@mock_model)
+      result = @live_transaction.delete(changeset)
+      @mock_db.last_operation.should eq("delete with transaction")
+      result.should be(@mock_model)
+    end
+
+    it "extracts model from changeset for update" do
+      changeset = Crecto::Changeset::Changeset.new(@mock_model)
+      result = @live_transaction.update(changeset)
+      @mock_db.last_operation.should eq("update with transaction")
+      result.should be(@mock_model)
+    end
+  end
+
+  describe "optimistic locking" do
+    it "handles models with lock_version field" do
+      @mock_model.lock_version = 1
+
+      # Mock successful update
+      @live_transaction.update(@mock_model)
+
+      # Check that version was incremented
+      @mock_model.lock_version.should eq(2)
+    end
+
+    it "raises ConcurrentModificationError on version mismatch" do
+      @mock_model.lock_version = 1
+      @mock_transaction.rows_affected = 0  # Simulate version mismatch
+
+      expect_raises(Crecto::Errors::ConcurrentModificationError) do
+        @live_transaction.update(@mock_model)
+      end
+
+      # Version should be restored on error
+      @mock_model.lock_version.should eq(1)
+    end
+
+    it "handles atomic updates for models without lock_version" do
+      model_without_lock = MockModel.new
+      # Ensure model doesn't have lock_version methods
+      def model_without_lock.respond_to?(method)
+        false
+      end
+
+      @live_transaction.update(model_without_lock)
+      @mock_db.last_operation.should eq("update with transaction")
+    end
+
+    it "handles RecordNotFoundError when record not found" do
+      @mock_transaction.should_fail = true
+
+      expect_raises(Crecto::Errors::RecordNotFoundError) do
+        @live_transaction.update(@mock_model)
+      end
+    end
+  end
+
+  describe "error handling" do
+    it "logs errors during update operations" do
+      @mock_transaction.should_fail = true
+
+      expect_raises(Exception) do
+        @live_transaction.update(@mock_model)
+      end
+    end
+
+    it "restores original lock version on error" do
+      @mock_model.lock_version = 1
+      @mock_transaction.should_fail = true
+
+      expect_raises(Exception) do
+        @live_transaction.update(@mock_model)
+      end
+
+      @mock_model.lock_version.should eq(1)
+    end
+  end
+end
+
+describe Crecto::NestedTransaction do
+  before_each do
+    @mock_db = MockDB.new
+    @mock_repo = MockRepoWithTransactions.new(@mock_db)
+    @savepoint_name = "test_savepoint"
+    @nested_transaction = Crecto::NestedTransaction.new(@mock_db, @mock_repo, @savepoint_name)
+    @mock_model = MockModel.new
+  end
+
+  describe "basic operations" do
+    it "performs operations without transaction parameter" do
+      @nested_transaction.insert(@mock_model)
+      @mock_db.last_operation.should eq("insert without transaction")
+    end
+
+    it "performs delete_all operations without transaction parameter" do
+      query = Crecto::Repo::Query.new
+      result = @nested_transaction.delete_all(MockModel, query)
+      @mock_db.last_operation.should eq("delete_all without transaction")
+      result.should eq("deleted rows")
+    end
+
+    it "performs update_all operations without transaction parameter" do
+      query = Crecto::Repo::Query.new
+      update_hash = {title: "new title"}
+      result = @nested_transaction.update_all(MockModel, query, update_hash)
+      @mock_db.last_operation.should eq("update_all without transaction")
+      result.should eq("updated rows")
+    end
+  end
+
+  describe "rollback functionality" do
+    it "has rollback method available" do
+      # Test that the rollback method exists and doesn't raise errors
+      @nested_transaction.rollback.should be_nil
+    end
+  end
+
+  describe "changeset handling" do
+    it "extracts model from changeset for operations" do
+      changeset = Crecto::Changeset::Changeset.new(@mock_model)
+      result = @nested_transaction.insert(changeset)
+      @mock_db.last_operation.should eq("insert without transaction")
+      result.should be(@mock_model)
+    end
+  end
+end

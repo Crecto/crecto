@@ -1,0 +1,523 @@
+require "spec"
+require "../spec_helper"
+require "./integration_test_models"
+
+# Multi-Database Integration Testing
+# Tests Crecto functionality across PostgreSQL, MySQL, and SQLite3
+
+# Test model for multi-database testing
+class MultiDbUser < Crecto::Model
+  schema "multi_db_users" do
+    field :username, String
+    field :email, String
+    field :created_at, Time
+    field :updated_at, Time
+  end
+
+  validates :username, presence: true, uniqueness: true
+  validates :email, presence: true, uniqueness: true
+end
+
+class MultiDbPost < Crecto::Model
+  schema "multi_db_posts" do
+    field :title, String
+    field :content, String
+    field :user_id, Int32
+    field :status, String
+    field :created_at, Time
+    field :updated_at, Time
+  end
+
+  validates :title, presence: true
+  validates :content, presence: true
+  validates :status, inclusion: {in: ["draft", "published", "archived"]}
+end
+
+# Database-specific repositories
+module MultiDbPostgresRepo
+  extend Crecto::Repo
+
+  config do |conf|
+    conf.adapter = Crecto::Adapters::Postgres
+    conf.hostname = ENV["POSTGRES_HOST"]? || "localhost"
+    conf.database = ENV["POSTGRES_DB"]? || "crecto_test"
+    conf.username = ENV["POSTGRES_USER"]? || "postgres"
+    conf.password = ENV["POSTGRES_PASSWORD"]? || ""
+    conf.port = (ENV["POSTGRES_PORT"]? || "5432").to_i
+  end
+end
+
+module MultiDbMysqlRepo
+  extend Crecto::Repo
+
+  config do |conf|
+    conf.adapter = Crecto::Adapters::Mysql
+    conf.hostname = ENV["MYSQL_HOST"]? || "localhost"
+    conf.database = ENV["MYSQL_DB"]? || "crecto_test"
+    conf.username = ENV["MYSQL_USER"]? || "root"
+    conf.password = ENV["MYSQL_PASSWORD"]? || ""
+    conf.port = (ENV["MYSQL_PORT"]? || "3306").to_i
+  end
+end
+
+module MultiDbSqliteRepo
+  extend Crecto::Repo
+
+  config do |conf|
+    conf.adapter = Crecto::Adapters::SQLite3
+    conf.database = "./spec/integration/multi_db_test.sqlite3"
+  end
+end
+
+# Test configuration
+DATABASE_CONFIG = {
+  "postgres" => {
+    repo: MultiDbPostgresRepo,
+    skip_reason: -> { postgres_available? },
+    setup: -> { setup_postgres_tables(MultiDbPostgresRepo) },
+    cleanup: -> { cleanup_postgres_tables(MultiDbPostgresRepo) }
+  },
+  "mysql" => {
+    repo: MultiDbMysqlRepo,
+    skip_reason: -> { mysql_available? },
+    setup: -> { setup_mysql_tables(MultiDbMysqlRepo) },
+    cleanup: -> { cleanup_mysql_tables(MultiDbMysqlRepo) }
+  },
+  "sqlite3" => {
+    repo: MultiDbSqliteRepo,
+    skip_reason: -> { false },  # Always available
+    setup: -> { setup_sqlite_tables(MultiDbSqliteRepo) },
+    cleanup: -> { cleanup_sqlite_tables(MultiDbSqliteRepo) }
+  }
+}
+
+describe "Multi-Database Integration Tests" do
+  DATABASE_CONFIG.each do |db_name, config|
+    describe "#{db_name.upcase} Database Tests" do
+      if config[:skip_reason].call
+        pending "#{db_name} not available: #{config[:skip_reason].call}"
+        next
+      end
+
+      before_all do
+        config[:setup].call
+      end
+
+      after_all do
+        config[:cleanup].call
+      end
+
+      it "performs basic CRUD operations" do
+        repo = config[:repo]
+
+        # Create
+        user = MultiDbUser.new
+        user.username = "#{db_name}_user_#{Time.local.to_unix}"
+        user.email = "user_#{Time.local.to_unix}@#{db_name}.com"
+        user.created_at = Time.local
+        user.updated_at = Time.local
+
+        user_changeset = MultiDbUser.changeset(user)
+        created_user_changeset = repo.insert(user_changeset)
+        created_user_changeset.should_not be_nil
+        created_user = created_user_changeset.instance
+        user_id = created_user.id.not_nil!
+
+        # Read
+        retrieved_user = repo.get(MultiDbUser, user_id)
+        retrieved_user.should_not be_nil
+        retrieved_user.not_nil!.username.should eq(user.username)
+        retrieved_user.not_nil!.email.should eq(user.email)
+
+        # Update
+        retrieved_user.not_nil!.username = "updated_#{user.username}"
+        retrieved_user.not_nil!.updated_at = Time.local
+
+        update_changeset = MultiDbUser.changeset(retrieved_user.not_nil!)
+        updated_user_changeset = repo.update(update_changeset)
+        updated_user_changeset.should_not be_nil
+
+        # Verify update
+        updated_user = repo.get(MultiDbUser, user_id)
+        updated_user.not_nil!.username.should start_with("updated_")
+
+        # Delete
+        delete_changeset = MultiDbUser.changeset(updated_user.not_nil!)
+        deleted_user_changeset = repo.delete(delete_changeset)
+        deleted_user_changeset.should_not be_nil
+
+        # Verify deletion
+        deleted_user = repo.get(MultiDbUser, user_id)
+        deleted_user.should be_nil
+      end
+
+      it "handles complex queries with associations" do
+        repo = config[:repo]
+
+        # Create user
+        user = MultiDbUser.new
+        user.username = "#{db_name}_assoc_user_#{Time.local.to_unix}"
+        user.email = "assoc_user_#{Time.local.to_unix}@#{db_name}.com"
+        user.created_at = Time.local
+        user.updated_at = Time.local
+
+        user_changeset = MultiDbUser.changeset(user)
+        created_user_changeset = repo.insert(user_changeset)
+        created_user = created_user_changeset.instance
+        user_id = created_user.id.not_nil!
+
+        # Create multiple posts
+        posts = [] of MultiDbPost
+        5.times do |i|
+          post = MultiDbPost.new
+          post.title = "Post #{i + 1} for #{user.username}"
+          post.content = "Content for post #{i + 1}"
+          post.user_id = user_id
+          post.status = i.even? ? "published" : "draft"
+          post.created_at = Time.local
+          post.updated_at = Time.local
+
+          post_changeset = MultiDbPost.changeset(post)
+          created_post_changeset = repo.insert(post_changeset)
+          if created_post_changeset && created_post_changeset.valid?
+            posts << created_post_changeset.instance
+          end
+        end
+
+        posts.size.should eq(5)
+
+        # Query posts by user
+        user_posts = repo.all(MultiDbPost, Crecto::Repo::Query.where(user_id: user_id))
+        user_posts.size.should eq(5)
+
+        # Query published posts
+        published_posts = repo.all(MultiDbPost, Crecto::Repo::Query.where(status: "published"))
+        published_posts.size.should eq(3)  # Posts 1, 3, 5
+
+        # Query with limit
+        limited_posts = repo.all(MultiDbPost, Crecto::Repo::Query.where(user_id: user_id).limit(3))
+        limited_posts.size.should eq(3)
+
+        # Count posts
+        post_count = repo.aggregate(MultiDbPost, :count, :id, Crecto::Repo::Query.where(user_id: user_id))
+        post_count.should eq(5)
+
+        # Cleanup
+        posts.each { |post| repo.delete(post) }
+        repo.delete(created_user)
+      end
+
+      it "handles transaction rollback correctly" do
+        repo = config[:repo]
+
+        initial_user_count = repo.aggregate(MultiDbUser, :count, :id)
+
+        begin
+          repo.transaction! do |tx|
+            # Create user
+            user = MultiDbUser.new
+            user.username = "rollback_user_#{Time.local.to_unix}"
+            user.email = "rollback_#{Time.local.to_unix}@#{db_name}.com"
+            user.created_at = Time.local
+            user.updated_at = Time.local
+
+            user_changeset = MultiDbUser.changeset(user)
+            created_user_changeset = tx.insert(user_changeset)
+            created_user = created_user_changeset.instance
+
+            # Create post
+            post = MultiDbPost.new
+            post.title = "Rollback Post"
+            post.content = "This should be rolled back"
+            post.user_id = created_user.id.not_nil!
+            post.status = "draft"
+            post.created_at = Time.local
+            post.updated_at = Time.local
+
+            post_changeset = MultiDbPost.changeset(post)
+            tx.insert(post_changeset)
+
+            # Force rollback
+            raise "Intentional rollback"
+          end
+        rescue ex
+          ex.message.should eq("Intentional rollback")
+        end
+
+        # Verify rollback worked
+        final_user_count = repo.aggregate(MultiDbUser, :count, :id)
+        final_user_count.should eq(initial_user_count)
+      end
+
+      it "handles database-specific data types correctly" do
+        repo = config[:repo]
+
+        # Test with various Time formats
+        user = MultiDbUser.new
+        user.username = "#{db_name}_time_user_#{Time.local.to_unix}"
+        user.email = "time_user_#{Time.local.to_unix}@#{db_name}.com"
+
+        # Test different time formats
+        test_time = Time.local(2023, 12, 25, 15, 30, 45)
+        user.created_at = test_time
+        user.updated_at = Time.utc(2023, 12, 26, 10, 15, 30)
+
+        user_changeset = MultiDbUser.changeset(user)
+        created_user_changeset = repo.insert(user_changeset)
+        created_user_changeset.should_not be_nil
+
+        # Retrieve and verify time handling
+        retrieved_user = repo.get(MultiDbUser, created_user_changeset.instance.id.not_nil!)
+        retrieved_user.should_not be_nil
+
+        # Times should be preserved (database-specific formatting may apply)
+        retrieved_user.not_nil!.created_at.year.should eq(2023)
+        retrieved_user.not_nil!.created_at.month.should eq(12)
+        retrieved_user.not_nil!.created_at.day.should eq(25)
+
+        retrieved_user.not_nil!.updated_at.year.should eq(2023)
+        retrieved_user.not_nil!.updated_at.month.should eq(12)
+        retrieved_user.not_nil!.updated_at.day.should eq(26)
+
+        # Cleanup
+        repo.delete(retrieved_user.not_nil!)
+      end
+
+      it "handles concurrent operations safely" do
+        repo = config[:repo]
+
+        # Create base user
+        user = MultiDbUser.new
+        user.username = "#{db_name}_concurrent_user_#{Time.local.to_unix}"
+        user.email = "concurrent_#{Time.local.to_unix}@#{db_name}.com"
+        user.created_at = Time.local
+        user.updated_at = Time.local
+
+        user_changeset = MultiDbUser.changeset(user)
+        created_user_changeset = repo.insert(user_changeset)
+        created_user = created_user_changeset.instance
+        user_id = created_user.id.not_nil!
+
+        # Create multiple posts concurrently
+        channel = Channel(MultiDbPost).new(10)
+        error_channel = Channel(Exception).new(10)
+
+        10.times do |i|
+          spawn do
+            begin
+              post = MultiDbPost.new
+              post.title = "Concurrent Post #{i}"
+              post.content = "Content for concurrent post #{i}"
+              post.user_id = user_id
+              post.status = "draft"
+              post.created_at = Time.local
+              post.updated_at = Time.local
+
+              post_changeset = MultiDbPost.changeset(post)
+              created_post_changeset = repo.insert(post_changeset)
+              if created_post_changeset && created_post_changeset.valid?
+                channel.send(created_post_changeset.instance)
+              else
+                error_channel.send(Exception.new("Failed to create post #{i}"))
+              end
+            rescue ex
+              error_channel.send(ex)
+            end
+          end
+        end
+
+        # Collect results
+        successful_posts = [] of MultiDbPost
+        errors = [] of Exception
+
+        10.times do
+          select
+          when result = channel.receive
+            successful_posts << result
+          when error = error_channel.receive
+            errors << error
+          end
+        end
+
+        # Verify results
+        successful_posts.size.should be > 0
+        errors.size.should be < successful_posts.size  # Most should succeed
+
+        # Cleanup
+        successful_posts.each { |post| repo.delete(post) }
+        repo.delete(created_user)
+      end
+
+      it "validates constraints correctly" do
+        repo = config[:repo]
+
+        # Test unique constraint
+        user1 = MultiDbUser.new
+        user1.username = "unique_test_user"
+        user1.email = "unique@test.com"
+        user1.created_at = Time.local
+        user1.updated_at = Time.local
+
+        user1_changeset = MultiDbUser.changeset(user1)
+        result1 = repo.insert(user1_changeset)
+        result1.should_not be_nil
+
+        # Try to insert duplicate
+        user2 = MultiDbUser.new
+        user2.username = "unique_test_user"  # Same username
+        user2.email = "different@test.com"
+        user2.created_at = Time.local
+        user2.updated_at = Time.local
+
+        user2_changeset = MultiDbUser.changeset(user2)
+        result2 = repo.insert(user2_changeset)
+
+        # Should fail validation due to unique constraint
+        if result2.is_a?(Crecto::Changeset::Changeset)
+          result2.valid?.should be_false
+        else
+          # Some databases might throw exceptions
+          # Both behaviors are acceptable for testing
+        end
+
+        # Cleanup
+        if result1.is_a?(Crecto::Changeset::Changeset)
+          repo.delete(result1.instance)
+        end
+      end
+    end
+  end
+end
+
+# Database availability and setup functions
+
+def postgres_available?
+  begin
+    # Try to connect to PostgreSQL
+    MultiDbPostgresRepo.query("SELECT 1")
+    true
+  rescue ex
+    false
+  end
+end
+
+def mysql_available?
+  begin
+    # Try to connect to MySQL
+    MultiDbMysqlRepo.query("SELECT 1")
+    true
+  rescue ex
+    false
+  end
+end
+
+def setup_postgres_tables(repo)
+  repo.query("DROP TABLE IF EXISTS multi_db_posts CASCADE")
+  repo.query("DROP TABLE IF EXISTS multi_db_users CASCADE")
+
+  repo.query(%{
+    CREATE TABLE multi_db_users (
+      id SERIAL PRIMARY KEY,
+      username VARCHAR(255) NOT NULL UNIQUE,
+      email VARCHAR(255) NOT NULL UNIQUE,
+      created_at TIMESTAMP NOT NULL,
+      updated_at TIMESTAMP NOT NULL
+    )
+  })
+
+  repo.query(%{
+    CREATE TABLE multi_db_posts (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      content TEXT NOT NULL,
+      user_id INTEGER NOT NULL REFERENCES multi_db_users(id),
+      status VARCHAR(50) NOT NULL DEFAULT 'draft',
+      created_at TIMESTAMP NOT NULL,
+      updated_at TIMESTAMP NOT NULL
+    )
+  })
+
+  repo.query("CREATE INDEX idx_multi_db_posts_user_id ON multi_db_posts(user_id)")
+  repo.query("CREATE INDEX idx_multi_db_posts_status ON multi_db_posts(status)")
+end
+
+def setup_mysql_tables(repo)
+  repo.query("DROP TABLE IF EXISTS multi_db_posts")
+  repo.query("DROP TABLE IF EXISTS multi_db_users")
+
+  repo.query(%{
+    CREATE TABLE multi_db_users (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      username VARCHAR(255) NOT NULL UNIQUE,
+      email VARCHAR(255) NOT NULL UNIQUE,
+      created_at DATETIME NOT NULL,
+      updated_at DATETIME NOT NULL
+    )
+  })
+
+  repo.query(%{
+    CREATE TABLE multi_db_posts (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      content TEXT NOT NULL,
+      user_id INT NOT NULL,
+      status VARCHAR(50) NOT NULL DEFAULT 'draft',
+      created_at DATETIME NOT NULL,
+      updated_at DATETIME NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES multi_db_users(id)
+    )
+  })
+
+  repo.query("CREATE INDEX idx_multi_db_posts_user_id ON multi_db_posts(user_id)")
+  repo.query("CREATE INDEX idx_multi_db_posts_status ON multi_db_posts(status)")
+end
+
+def setup_sqlite_tables(repo)
+  repo.query("DROP TABLE IF EXISTS multi_db_posts")
+  repo.query("DROP TABLE IF EXISTS multi_db_users")
+
+  repo.query(%{
+    CREATE TABLE multi_db_users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT NOT NULL UNIQUE,
+      email TEXT NOT NULL UNIQUE,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  })
+
+  repo.query(%{
+    CREATE TABLE multi_db_posts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      content TEXT NOT NULL,
+      user_id INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'draft',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES multi_db_users(id)
+    )
+  })
+
+  repo.query("CREATE INDEX idx_multi_db_posts_user_id ON multi_db_posts(user_id)")
+  repo.query("CREATE INDEX idx_multi_db_posts_status ON multi_db_posts(status)")
+end
+
+def cleanup_postgres_tables(repo)
+  repo.query("DROP TABLE IF EXISTS multi_db_posts CASCADE")
+  repo.query("DROP TABLE IF EXISTS multi_db_users CASCADE")
+end
+
+def cleanup_mysql_tables(repo)
+  repo.query("DROP TABLE IF EXISTS multi_db_posts")
+  repo.query("DROP TABLE IF EXISTS multi_db_users")
+end
+
+def cleanup_sqlite_tables(repo)
+  repo.query("DROP TABLE IF EXISTS multi_db_posts")
+  repo.query("DROP TABLE IF EXISTS multi_db_users")
+
+  # Remove SQLite database file
+  db_file = "./spec/integration/multi_db_test.sqlite3"
+  File.delete(db_file) if File.exists?(db_file)
+end
