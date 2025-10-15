@@ -54,6 +54,10 @@ module Crecto
       @[JSON::Field(ignore: true)]
       property initial_values : Hash(Symbol, DbValue)?
 
+      # Track fields that had invalid casting attempts
+      @[JSON::Field(ignore: true)]
+      property invalid_cast_attempts = [] of Symbol
+
       def initialize
       end
 
@@ -114,7 +118,12 @@ module Crecto
 
       # Class methods for mass assignment
       def self.cast(**attributes)
-        new.tap { |m| m.cast(**attributes) }
+        # Convert **attributes to Hash and call Hash version
+        hash = {} of Symbol => DbValue
+        attributes.each do |key, value|
+          hash[key] = value
+        end
+        cast(hash, hash.keys)
       end
 
       def self.cast(attributes : NamedTuple, whitelist : Tuple = attributes.keys)
