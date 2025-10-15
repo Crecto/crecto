@@ -179,7 +179,9 @@ describe "Time Field Query Functionality (Issue #169)" do
     # Test AC 5: Performance tests show efficient Time field query execution
 
     it "should handle large numbers of Time parameters efficiently" do
-      times = Array(Time).new(1000) { |i| Time.utc(2023, 1, 1) + i.days }
+      # Use a more reasonable number to avoid SQLite parameter limits
+      # SQLite has a default limit of 999 parameters per query
+      times = Array(Time).new(100) { |i| Time.utc(2023, 1, 1) + i.days }
 
       check_sql do |sqls|
         query = Query.where(some_date: times)

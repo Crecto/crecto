@@ -19,11 +19,11 @@ describe Crecto do
         changeset = Repo.insert(u)
         changeset.errors.empty?.should be_false
         if Repo.config.adapter == Crecto::Adapters::Postgres
-          changeset.errors[0].should eq({:field => "unique_field", :message => "duplicate key value violates unique constraint \"users_unique_field_key\""})
+          changeset.errors[0].should eq({"unique_field", "duplicate key value violates unique constraint \"users_unique_field_key\""})
         elsif Repo.config.adapter == Crecto::Adapters::Mysql
-          changeset.errors[0].should eq({:field => "unique_field", :message => "Duplicate entry '123' for key 'unique_field'"})
+          changeset.errors[0].should eq({"unique_field", "Duplicate entry '123' for key 'unique_field'"})
         elsif Repo.config.adapter == Crecto::Adapters::SQLite3
-          changeset.errors[0].should eq({:field => "unique_field", :message => "UNIQUE constraint failed: users.unique_field"})
+          changeset.errors[0].should eq({"unique_field", "UNIQUE constraint failed: users.unique_field"})
         end
       end
 
@@ -45,11 +45,11 @@ describe Crecto do
         changeset = Repo.update(u)
         changeset.errors.empty?.should be_false
         if Repo.config.adapter == Crecto::Adapters::Postgres
-          changeset.errors[0].should eq({:field => "unique_field", :message => "duplicate key value violates unique constraint \"users_unique_field_key\""})
+          changeset.errors[0].should eq({"unique_field", "duplicate key value violates unique constraint \"users_unique_field_key\""})
         elsif Repo.config.adapter == Crecto::Adapters::Mysql
-          changeset.errors[0].should eq({:field => "unique_field", :message => "Duplicate entry '123' for key 'unique_field'"})
+          changeset.errors[0].should eq({"unique_field", "Duplicate entry '123' for key 'unique_field'"})
         elsif Repo.config.adapter == Crecto::Adapters::SQLite3
-          changeset.errors[0].should eq({:field => "unique_field", :message => "UNIQUE constraint failed: users.unique_field"})
+          changeset.errors[0].should eq({"unique_field", "UNIQUE constraint failed: users.unique_field"})
         end
       end
 
@@ -77,7 +77,7 @@ describe Crecto do
         u = UserRequired.new
         changeset = UserRequired.changeset(u)
         changeset.errors.size.should be > 0
-        changeset.errors[0].should eq({:field => "name", :message => "is required"})
+        changeset.errors[0].should eq({"name", "is required"})
       end
     end
 
@@ -94,7 +94,7 @@ describe Crecto do
         u.name = "123"
         changeset = UserFormat.changeset(u)
         changeset.errors.size.should be > 0
-        changeset.errors[0].should eq({:field => "name", :message => "is invalid"})
+        changeset.errors[0].should eq({"name", "is invalid"})
       end
     end
 
@@ -111,7 +111,7 @@ describe Crecto do
         u.name = "fred"
         changeset = UserInclusion.changeset(u)
         changeset.errors.size.should be > 0
-        changeset.errors[0].should eq({:field => "name", :message => "is invalid"})
+        changeset.errors[0].should eq({"name", "is invalid"})
       end
     end
 
@@ -128,7 +128,7 @@ describe Crecto do
         u.name = "bill"
         changeset = UserExclusion.changeset(u)
         changeset.errors.size.should be > 0
-        changeset.errors[0].should eq({:field => "name", :message => "is invalid"})
+        changeset.errors[0].should eq({"name", "is invalid"})
       end
     end
 
@@ -145,7 +145,7 @@ describe Crecto do
         u.name = "fridge"
         changeset = UserLength.changeset(u)
         changeset.errors.size.should be > 0
-        changeset.errors[0].should eq({:field => "name", :message => "is invalid"})
+        changeset.errors[0].should eq({"name", "is invalid"})
       end
     end
 
@@ -160,7 +160,7 @@ describe Crecto do
         u = UserGenericValidation.new
         changeset = UserGenericValidation.changeset(u)
         changeset.errors.size.should be > 0
-        changeset.errors[0].should eq({:field => "_base", :message => "Password must exist"})
+        changeset.errors[0].should eq({"_base", "Password must exist"})
       end
 
       it "should not have some errors and be valid" do
@@ -183,8 +183,8 @@ describe Crecto do
       it "should error required fields" do
         u = UserMultipleValidations.new
         changeset = UserMultipleValidations.changeset(u)
-        changeset.errors[0]?.should eq({:field => "first_name", :message => "is required"})
-        changeset.errors[1]?.should eq({:field => "last_name", :message => "is required"})
+        changeset.errors[0]?.should eq({"first_name", "is required"})
+        changeset.errors[1]?.should eq({"last_name", "is required"})
       end
 
       it "should error formated fields" do
@@ -192,8 +192,8 @@ describe Crecto do
         u.first_name = "asdf1234"
         u.last_name = "asdf1234"
         changeset = UserMultipleValidations.changeset(u)
-        changeset.errors[0]?.should eq({:field => "first_name", :message => "is invalid"})
-        changeset.errors[1]?.should eq({:field => "last_name", :message => "is invalid"})
+        changeset.errors[0]?.should eq({"first_name", "is invalid"})
+        changeset.errors[1]?.should eq({"last_name", "is invalid"})
       end
 
       it "should error fields with bad length" do
@@ -202,11 +202,11 @@ describe Crecto do
         u.first_name = "x"
         u.last_name = "Smith"
         changeset = UserMultipleValidations.changeset(u)
-        changeset.errors[0]?.should eq({:field => "first_name", :message => "is invalid"})
+        changeset.errors[0]?.should eq({"first_name", "is invalid"})
 
         u.first_name = "qwertyuiop" # size is 10
         changeset = UserMultipleValidations.changeset(u)
-        changeset.errors[0]?.should eq({:field => "first_name", :message => "is invalid"})
+        changeset.errors[0]?.should eq({"first_name", "is invalid"})
       end
 
       it "should error fields within exclusions" do
@@ -214,8 +214,8 @@ describe Crecto do
         u.first_name = "foo"
         u.last_name = "bar"
         changeset = UserMultipleValidations.changeset(u)
-        changeset.errors[0]?.should eq({:field => "first_name", :message => "is invalid"})
-        changeset.errors[1]?.should eq({:field => "last_name", :message => "is invalid"})
+        changeset.errors[0]?.should eq({"first_name", "is invalid"})
+        changeset.errors[1]?.should eq({"last_name", "is invalid"})
       end
 
       it "should error fields outside of inclusions" do
@@ -225,11 +225,11 @@ describe Crecto do
 
         u.rank = 1000
         changeset = UserMultipleValidations.changeset(u)
-        changeset.errors[0]?.should eq({:field => "rank", :message => "is invalid"})
+        changeset.errors[0]?.should eq({"rank", "is invalid"})
 
         u.rank = 0
         changeset = UserMultipleValidations.changeset(u)
-        changeset.errors[0]?.should eq({:field => "rank", :message => "is invalid"})
+        changeset.errors[0]?.should eq({"rank", "is invalid"})
       end
 
       it "should not have errors and be valid" do
