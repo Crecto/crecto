@@ -8,6 +8,11 @@ db/
 
 # SQLite3 testing database
 crecto_test.db
+spec/integration/integration_test.db
+spec/load/*.db
+spec/performance/*.json
+spec/performance/baseline_*.json
+spec/performance/results_*.json
 
 # Libraries don't need dependency lock
 # Dependencies will be locked in application that uses them
