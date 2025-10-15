@@ -1,0 +1,545 @@
+name: Comprehensive Stability Validation Suite
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+  schedule:
+    # Run stability tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of tests to run'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+        - full
+        - unit
+        - integration
+        - load
+        - performance
+      database:
+        description: 'Database to test against'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - sqlite3
+        - postgresql
+        - mysql
+
+env:
+  CRYSTAL_VERSION: '1.13.0'
+
+jobs:
+  # Unit Tests
+  unit-tests:
+    name: Unit Tests - ${{ matrix.database }}
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.test_type == 'full' || github.event.inputs.test_type == 'unit' || github.event.inputs.test_type == '' }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        database: [sqlite3, postgresql, mysql]
+        include:
+          - database: sqlite3
+            env_file: .env.sqlite3
+          - database: postgresql
+            env_file: .env.postgresql
+          - database: mysql
+            env_file: .env.mysql
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: crecto_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+        if: ${{ matrix.database == 'postgresql' }}
+
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: crecto_test
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
+        ports:
+          - 3306:3306
+        if: ${{ matrix.database == 'mysql' }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Crystal
+      uses: crystal-lang/install-crystal@v1
+      with:
+        crystal: ${{ env.CRYSTAL_VERSION }}
+
+    - name: Cache shards
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/crystal
+        key: ${{ runner.os }}-crystal-${{ hashFiles('**/shard.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-crystal-
+
+    - name: Install shards
+      run: shards install
+
+    - name: Setup database
+      run: |
+        case "${{ matrix.database }}" in
+          "postgresql")
+            sudo apt-get update
+            sudo apt-get install -y libpq-dev
+            wait-for-it localhost:5432 --timeout=30
+            psql -h localhost -U postgres -d crecto_test -f spec/migrations/pg_migrations.sql
+            ;;
+          "mysql")
+            sudo apt-get update
+            sudo apt-get install -y libmysqlclient-dev
+            wait-for-it localhost:3306 --timeout=30
+            mysql -h localhost -u root -proot crecto_test < spec/migrations/mysql_migrations.sql
+            ;;
+        esac
+
+    - name: Run unit tests
+      env:
+        DATABASE_TYPE: ${{ matrix.database }}
+      run: |
+        echo "Running unit tests with ${{ matrix.database }}"
+        crystal spec --tag unit --error-trace
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: unit-test-results-${{ matrix.database }}
+        path: |
+          test-results/
+          coverage/
+
+  # Integration Tests
+  integration-tests:
+    name: Integration Tests - ${{ matrix.database }}
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    if: ${{ github.event.inputs.test_type == 'full' || github.event.inputs.test_type == 'integration' || github.event.inputs.test_type == '' }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        database: [sqlite3, postgresql, mysql]
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: crecto_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+        if: ${{ matrix.database == 'postgresql' }}
+
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: crecto_test
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
+        ports:
+          - 3306:3306
+        if: ${{ matrix.database == 'mysql' }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Crystal
+      uses: crystal-lang/install-crystal@v1
+      with:
+        crystal: ${{ env.CRYSTAL_VERSION }}
+
+    - name: Cache shards
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/crystal
+        key: ${{ runner.os }}-crystal-${{ hashFiles('**/shard.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-crystal-
+
+    - name: Install shards
+      run: shards install
+
+    - name: Setup database
+      run: |
+        case "${{ matrix.database }}" in
+          "postgresql")
+            sudo apt-get update
+            sudo apt-get install -y libpq-dev
+            wait-for-it localhost:5432 --timeout=30
+            psql -h localhost -U postgres -d crecto_test -f spec/migrations/pg_migrations.sql
+            ;;
+          "mysql")
+            sudo apt-get update
+            sudo apt-get install -y libmysqlclient-dev
+            wait-for-it localhost:3306 --timeout=30
+            mysql -h localhost -u root -proot crecto_test < spec/migrations/mysql_migrations.sql
+            ;;
+        esac
+
+    - name: Run integration tests
+      env:
+        DATABASE_TYPE: ${{ matrix.database }}
+      run: |
+        echo "Running integration tests with ${{ matrix.database }}"
+        crystal spec spec/integration/ --error-trace
+
+    - name: Upload integration test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: integration-test-results-${{ matrix.database }}
+        path: |
+          test-results/
+          integration-logs/
+
+  # Load Tests
+  load-tests:
+    name: Load Tests
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests]
+    if: ${{ github.event.inputs.test_type == 'full' || github.event.inputs.test_type == 'load' || github.event.inputs.test_type == '' }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Crystal
+      uses: crystal-lang/install-crystal@v1
+      with:
+        crystal: ${{ env.CRYSTAL_VERSION }}
+
+    - name: Cache shards
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/crystal
+        key: ${{ runner.os }}-crystal-${{ hashFiles('**/shard.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-crystal-
+
+    - name: Install shards
+      run: shards install
+
+    - name: Run load tests
+      run: |
+        echo "Running load tests..."
+        crystal spec spec/load/ --tag load --error-trace --verbose
+
+    - name: Generate load test report
+      run: |
+        echo "Generating load test report..."
+        crystal run scripts/generate_load_report.cr
+
+    - name: Upload load test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: load-test-results
+        path: |
+          load-test-results/
+          load-test-reports/
+
+  # Performance Benchmarks
+  performance-benchmarks:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests]
+    if: ${{ github.event.inputs.test_type == 'full' || github.event.inputs.test_type == 'performance' || github.event.inputs.test_type == '' }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Crystal
+      uses: crystal-lang/install-crystal@v1
+      with:
+        crystal: ${{ env.CRYSTAL_VERSION }}
+
+    - name: Cache shards
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/crystal
+        key: ${{ runner.os }}-crystal-${{ hashFiles('**/shard.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-crystal-
+
+    - name: Install shards
+      run: shards install
+
+    - name: Run performance benchmarks
+      run: |
+        echo "Running performance benchmarks..."
+        crystal spec spec/performance/ --tag performance --error-trace
+
+    - name: Compare with baseline
+      run: |
+        echo "Comparing performance with baseline..."
+        crystal run scripts/compare_performance.cr
+
+    - name: Upload performance results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: performance-results
+        path: |
+          performance-results/
+          performance-comparisons/
+
+  # Cross-Database Consistency Validation
+  cross-database-validation:
+    name: Cross-Database Consistency
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests]
+    if: ${{ github.event.inputs.test_type == 'full' || github.event.inputs.test_type == '' }}
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: crecto_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: crecto_test
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
+        ports:
+          - 3306:3306
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Crystal
+      uses: crystal-lang/install-crystal@v1
+      with:
+        crystal: ${{ env.CRYSTAL_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libpq-dev libmysqlclient-dev
+        shards install
+
+    - name: Setup databases
+      run: |
+        # Setup PostgreSQL
+        wait-for-it localhost:5432 --timeout=30
+        psql -h localhost -U postgres -d crecto_test -f spec/migrations/pg_migrations.sql
+
+        # Setup MySQL
+        wait-for-it localhost:3306 --timeout=30
+        mysql -h localhost -u root -proot crecto_test < spec/migrations/mysql_migrations.sql
+
+    - name: Run cross-database consistency tests
+      run: |
+        echo "Testing SQLite3..."
+        DATABASE_TYPE=sqlite3 crystal spec --tag consistency
+
+        echo "Testing PostgreSQL..."
+        DATABASE_TYPE=postgres crystal spec --tag consistency
+
+        echo "Testing MySQL..."
+        DATABASE_TYPE=mysql crystal spec --tag consistency
+
+    - name: Generate consistency report
+      run: |
+        crystal run scripts/generate_consistency_report.cr
+
+    - name: Upload consistency results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: consistency-results
+        path: consistency-reports/
+
+  # Stability Validation Summary
+  stability-summary:
+    name: Stability Validation Summary
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, load-tests, performance-benchmarks, cross-database-validation]
+    if: always()
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts/
+
+    - name: Generate comprehensive stability report
+      run: |
+        crystal run scripts/generate_stability_report.cr
+
+    - name: Generate test coverage badge
+      run: |
+        crystal run scripts/generate_coverage_badge.cr
+
+    - name: Upload final stability report
+      uses: actions/upload-artifact@v4
+      with:
+        name: final-stability-report
+        path: |
+          stability-report/
+          coverage-badges/
+
+    - name: Comment on PR with results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = 'stability-report/summary.json';
+
+          if (fs.existsSync(path)) {
+            const summary = JSON.parse(fs.readFileSync(path, 'utf8'));
+
+            const comment = `## 🧪 Stability Validation Results
+
+            **Overall Status:** ${summary.overall_status}
+
+            ### 📊 Test Results
+            - **Unit Tests:** ${summary.unit_tests.passed}/${summary.unit_tests.total} ✅
+            - **Integration Tests:** ${summary.integration_tests.passed}/${summary.integration_tests.total} ✅
+            - **Load Tests:** ${summary.load_tests.status} ${summary.load_tests.emoji}
+            - **Performance Tests:** ${summary.performance_tests.status} ${summary.performance_tests.emoji}
+            - **Cross-Database Tests:** ${summary.cross_db_tests.status} ${summary.cross_db_tests.emoji}
+
+            ### 🚀 Performance Metrics
+            - **CRUD Operations:** ${summary.performance.crud_ops} ops/sec
+            - **Query Performance:** ${summary.performance.query_ops} ops/sec
+            - **Memory Usage:** ${summary.performance.memory_mb} MB
+
+            ### 📈 Coverage
+            - **Test Coverage:** ${summary.coverage.percentage}%
+
+            ${summary.overall_status === '✅ PASSED' ? '🎉 All stability validations passed!' : '⚠️ Some stability validations failed. Please review the detailed results.'}
+
+            [View Detailed Report](${context.payload.repository.html_url}/actions/runs/${context.runId})`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          }
+
+  # Performance Regression Detection
+  performance-regression-check:
+    name: Performance Regression Detection
+    runs-on: ubuntu-latest
+    needs: performance-benchmarks
+    if: always() && github.event_name == 'pull_request'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Download performance results
+      uses: actions/download-artifact@v4
+      with:
+        name: performance-results
+        path: performance-results/
+
+    - name: Check for performance regressions
+      run: |
+        crystal run scripts/check_performance_regressions.cr
+
+    - name: Alert on regressions
+      if: failure()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: '⚠️ **Performance Regression Detected**\n\nThis PR shows performance regressions compared to the main branch. Please review the performance test results and consider optimizing before merging.'
+          });
+
+  # Automated Stability Monitoring
+  stability-monitoring:
+    name: Stability Monitoring Dashboard
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, load-tests, performance-benchmarks]
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts/
+
+    - name: Update stability dashboard
+      run: |
+        crystal run scripts/update_stability_dashboard.cr
+
+    - name: Deploy dashboard to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./stability-dashboard
+
+    - name: Send stability alert if needed
+      if: failure()
+      run: |
+        # Send notification (could integrate with Slack, email, etc.)
+        echo "Stability issues detected - sending alert..."
