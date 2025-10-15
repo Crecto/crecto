@@ -11,7 +11,7 @@ module Crecto
     def message
       error_list = [] of String
       changeset.errors.each do |error|
-        error_list += error.map { |field, message| "#{field}: #{message}" }
+        error_list << "#{error[0]}: #{error[1]}"
       end
 
       "Failed to #{changeset.action} #{changeset.instance.class}: #{error_list.join(", ")}"

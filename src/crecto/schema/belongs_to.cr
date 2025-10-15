@@ -21,7 +21,7 @@ module Crecto
 
 
         {%
-          foreign_key = klass.id.stringify.split(":")[-1].id.stringify.underscore.downcase + "_id"
+          foreign_key = association_name.id.stringify + "_id"
           foreign_key = opts[:foreign_key] if opts[:foreign_key]
         %}
 
@@ -32,7 +32,12 @@ module Crecto
         def {{association_name.id}}=(val : {{klass}}?)
           @{{association_name.id}} = val
           return if val.nil?
-          @{{foreign_key.id}} = val.pkey_value.as(PkeyValue)
+          {% if CRECTO_FIELDS.select { |f| f[:name] == foreign_key.id.symbolize }.size > 0 %}
+            {% field_type = CRECTO_FIELDS.find { |f| f[:name] == foreign_key.id.symbolize }[:type] %}
+            @{{foreign_key.id}} = val.pkey_value.as({{field_type.id}})
+          {% else %}
+            @{{foreign_key.id}} = val.pkey_value.as(PkeyValue)
+          {% end %}
         end
 
         CRECTO_ASSOCIATIONS.push({

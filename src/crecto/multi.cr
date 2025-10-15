@@ -1,3 +1,7 @@
+require "../types"
+require "./model"
+require "./changeset/changeset"
+
 module Crecto
   # Multi is used for grouping multiple Repo operations into a single transaction
   #
@@ -65,9 +69,13 @@ module Crecto
 
         changeset = operation.instance.get_changeset
         next if changeset.valid?
-        @errors = changeset.errors.tap do |errors|
-          errors.first[:queryable] = operation.instance.class.to_s
-          errors.first[:failed_operation] = operation.class.to_s
+        @errors = changeset.errors.map do |error|
+          {
+            :field => error[0],
+            :message => error[1],
+            :queryable => operation.instance.class.to_s,
+            :failed_operation => operation.class.to_s
+          }
         end
         return false
       end
