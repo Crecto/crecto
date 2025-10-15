@@ -99,6 +99,22 @@ docker-compose up
 
 This will start PostgreSQL and MySQL containers and run the test suite against all database adapters.
 
+#### Performance Testing
+
+The test suite includes comprehensive performance and load tests that can be resource-intensive. By default, these tests are skipped to keep regular test runs fast. To run performance tests:
+
+```bash
+RUN_PERFORMANCE_TESTS=true crystal spec
+```
+
+Performance tests include:
+- CRUD operations under high load
+- Association performance testing
+- Database benchmarking
+- Stress testing with concurrent operations
+
+**Note:** Performance tests may take several minutes to complete and require significant system resources.
+
 #### Database Setup
 
 The database must exist prior to testing. Migrations for each database type are available in `spec/migrations/`.
