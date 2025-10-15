@@ -3,91 +3,7 @@ require "./load_test_helper"
 
 # CRUD Operations Load Testing
 # Tests the performance and stability of basic CRUD operations under sustained load
-
-describe "CRUD Load Testing" do
-  before_all do
-    # Setup test database
-    setup_test_database
-  end
-
-  after_all do
-    # Cleanup test database
-    cleanup_test_database
-  end
-
-  describe "Basic CRUD Load Test" do
-    it "handles sustained CRUD operations under high load" do
-      config = Crecto::LoadTesting::Config.new(
-        operation_counts: {
-          "insert" => 500,
-          "update" => 500,
-          "delete" => 250,
-          "query" => 1000
-        },
-        concurrent_workers: 5
-      )
-
-      runner = CRUDLoadTestRunner.new(config)
-      stats = runner.run_load_test("Basic CRUD Operations")
-
-      # Assert basic performance requirements
-      stats.success_rate.should be > 95.0
-      stats.operations_per_second.should be > 50.0
-      stats.memory_usage_mb.should be < 256.0
-      stats.failed_operations.should be < (stats.total_operations * 0.1).to_i
-    end
-
-    it "handles high-volume insert operations" do
-      config = Crecto::LoadTesting::Config.new(
-        operation_counts: {"insert" => 2000},
-        concurrent_workers: 10
-      )
-
-      runner = CRUDLoadTestRunner.new(config)
-      stats = runner.run_load_test("High-Volume Inserts")
-
-      stats.success_rate.should be > 98.0
-      stats.operations_per_second.should be > 100.0
-    end
-
-    it "handles concurrent query operations" do
-      config = Crecto::LoadTesting::Config.new(
-        operation_counts: {"query" => 5000},
-        concurrent_workers: 15
-      )
-
-      runner = CRUDLoadTestRunner.new(config)
-      stats = runner.run_load_test("Concurrent Queries")
-
-      stats.success_rate.should be > 99.0
-      stats.operations_per_second.should be > 200.0
-    end
-  end
-
-  describe "Stress Testing" do
-    it "handles extreme load without memory leaks" do
-      config = Crecto::LoadTesting::Config.new(
-        operation_counts: {
-          "insert" => 1000,
-          "update" => 1000,
-          "query" => 2000,
-          "delete" => 500
-        },
-        concurrent_workers: 8
-      )
-      config.test_duration_seconds = 15
-      config.warmup_seconds = 2
-      config.cooldown_seconds = 2
-
-      runner = CRUDLoadTestRunner.new(config)
-      stats = runner.run_load_test("Extreme Load Stress Test")
-
-      # Even under extreme load, basic requirements should be met
-      stats.success_rate.should be > 90.0
-      stats.memory_usage_mb.should be < 512.0
-    end
-  end
-end
+# Run these tests with: RUN_PERFORMANCE_TESTS=true crystal spec
 
 # CRUD-specific load test runner
 class CRUDLoadTestRunner < Crecto::LoadTesting::Runner
@@ -214,6 +130,99 @@ class CRUDLoadTestRunner < Crecto::LoadTesting::Runner
       # Only delete if we have enough records left
       return nil if @created_ids.size < 10
       @created_ids.empty? ? nil : @created_ids.sample
+    end
+  end
+end
+
+if ENV["RUN_PERFORMANCE_TESTS"]?
+  describe "CRUD Load Testing" do
+    before_all do
+      # Setup test database
+      setup_test_database
+    end
+
+    after_all do
+      # Cleanup test database
+      cleanup_test_database
+    end
+
+    describe "Basic CRUD Load Test" do
+      it "handles sustained CRUD operations under high load" do
+        config = Crecto::LoadTesting::Config.new(
+          operation_counts: {
+            "insert" => 500,
+            "update" => 500,
+            "delete" => 250,
+            "query"  => 1000,
+          },
+          concurrent_workers: 5
+        )
+
+        runner = CRUDLoadTestRunner.new(config)
+        stats = runner.run_load_test("Basic CRUD Operations")
+
+        # Assert basic performance requirements
+        stats.success_rate.should be > 95.0
+        stats.operations_per_second.should be > 50.0
+        stats.memory_usage_mb.should be < 256.0
+        stats.failed_operations.should be < (stats.total_operations * 0.1).to_i
+      end
+
+      it "handles high-volume insert operations" do
+        config = Crecto::LoadTesting::Config.new(
+          operation_counts: {"insert" => 2000},
+          concurrent_workers: 10
+        )
+
+        runner = CRUDLoadTestRunner.new(config)
+        stats = runner.run_load_test("High-Volume Inserts")
+
+        stats.success_rate.should be > 98.0
+        stats.operations_per_second.should be > 100.0
+      end
+
+      it "handles concurrent query operations" do
+        config = Crecto::LoadTesting::Config.new(
+          operation_counts: {"query" => 5000},
+          concurrent_workers: 15
+        )
+
+        runner = CRUDLoadTestRunner.new(config)
+        stats = runner.run_load_test("Concurrent Queries")
+
+        stats.success_rate.should be > 99.0
+        stats.operations_per_second.should be > 200.0
+      end
+    end
+
+    describe "Stress Testing" do
+      it "handles extreme load without memory leaks" do
+        config = Crecto::LoadTesting::Config.new(
+          operation_counts: {
+            "insert" => 1000,
+            "update" => 1000,
+            "query"  => 2000,
+            "delete" => 500,
+          },
+          concurrent_workers: 8
+        )
+        config.test_duration_seconds = 15
+        config.warmup_seconds = 2
+        config.cooldown_seconds = 2
+
+        runner = CRUDLoadTestRunner.new(config)
+        stats = runner.run_load_test("Extreme Load Stress Test")
+
+        # Even under extreme load, basic requirements should be met
+        stats.success_rate.should be > 90.0
+        stats.memory_usage_mb.should be < 512.0
+      end
+    end
+  end
+else
+  describe "CRUD Load Testing" do
+    it "performance tests are skipped" do
+      puts "ℹ️  Performance tests skipped. Set RUN_PERFORMANCE_TESTS=true to run them."
     end
   end
 end

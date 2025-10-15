@@ -3,93 +3,7 @@ require "./load_test_helper"
 
 # Association Load Testing
 # Tests the performance and stability of association operations under sustained load
-
-describe "Association Load Testing" do
-  before_all do
-    # Setup test database with association tables
-    setup_association_test_database
-  end
-
-  after_all do
-    # Cleanup test database
-    cleanup_association_test_database
-  end
-
-  describe "Basic Association Load Test" do
-    it "handles sustained association operations under high load" do
-      config = Crecto::LoadTesting::Config.new(
-        operation_counts: {
-          "insert" => 500,
-          "update" => 300,
-          "delete" => 200,
-          "query" => 800,
-          "association" => 600
-        },
-        concurrent_workers: 8
-      )
-
-      runner = AssociationLoadTestRunner.new(config)
-      stats = runner.run_load_test("Basic Association Operations")
-
-      # Assert basic performance requirements
-      stats.success_rate.should be > 90.0
-      stats.operations_per_second.should be > 40.0
-      stats.memory_usage_mb.should be < 300.0
-    end
-
-    it "handles complex association queries under load" do
-      config = Crecto::LoadTesting::Config.new(
-        operation_counts: {
-          "association" => 1000,
-          "query" => 500
-        },
-        concurrent_workers: 6
-      )
-
-      runner = AssociationLoadTestRunner.new(config)
-      stats = runner.run_load_test("Complex Association Queries")
-
-      stats.success_rate.should be > 95.0
-      stats.operations_per_second.should be > 40.0
-    end
-
-    it "handles concurrent association loading with eager loading" do
-      config = Crecto::LoadTesting::Config.new(
-        operation_counts: {
-          "association" => 800
-        },
-        concurrent_workers: 6
-      )
-
-      runner = AssociationLoadTestRunner.new(config)
-      stats = runner.run_load_test("Eager Loading Associations")
-
-      stats.success_rate.should be > 92.0
-      stats.operations_per_second.should be > 30.0
-    end
-  end
-
-  describe "Association Stress Testing" do
-    it "handles deep association chains without performance degradation" do
-      config = Crecto::LoadTesting::Config.new(
-        operation_counts: {
-          "association" => 1000,
-          "insert" => 500,
-          "query" => 1000
-        },
-        concurrent_workers: 6
-      )
-      config.warmup_seconds = 2
-      config.cooldown_seconds = 2
-
-      runner = AssociationLoadTestRunner.new(config)
-      stats = runner.run_load_test("Deep Association Stress Test")
-
-      stats.success_rate.should be > 85.0
-      stats.memory_usage_mb.should be < 400.0
-    end
-  end
-end
+# Run these tests with: RUN_PERFORMANCE_TESTS=true crystal spec
 
 # Association test models
 class AssociationUser < Crecto::Model
@@ -371,8 +285,103 @@ class AssociationLoadTestRunner < Crecto::LoadTesting::Runner
 
   private def get_random_user_id_for_deletion : Int64?
     @test_data_lock.synchronize do
-      return nil if @user_ids.size < 5  # Keep minimum users
+      return nil if @user_ids.size < 5 # Keep minimum users
       @user_ids.empty? ? nil : @user_ids.sample
+    end
+  end
+end
+
+if ENV["RUN_PERFORMANCE_TESTS"]?
+  describe "Association Load Testing" do
+    before_all do
+      # Setup test database with association tables
+      setup_association_test_database
+    end
+
+    after_all do
+      # Cleanup test database
+      cleanup_association_test_database
+    end
+
+    describe "Basic Association Load Test" do
+      it "handles sustained association operations under high load" do
+        config = Crecto::LoadTesting::Config.new(
+          operation_counts: {
+            "insert"      => 500,
+            "update"      => 300,
+            "delete"      => 200,
+            "query"       => 800,
+            "association" => 600,
+          },
+          concurrent_workers: 8
+        )
+
+        runner = AssociationLoadTestRunner.new(config)
+        stats = runner.run_load_test("Basic Association Operations")
+
+        # Assert basic performance requirements
+        stats.success_rate.should be > 90.0
+        stats.operations_per_second.should be > 40.0
+        stats.memory_usage_mb.should be < 300.0
+      end
+
+      it "handles complex association queries under load" do
+        config = Crecto::LoadTesting::Config.new(
+          operation_counts: {
+            "association" => 1000,
+            "query"       => 500,
+          },
+          concurrent_workers: 6
+        )
+
+        runner = AssociationLoadTestRunner.new(config)
+        stats = runner.run_load_test("Complex Association Queries")
+
+        stats.success_rate.should be > 95.0
+        stats.operations_per_second.should be > 40.0
+      end
+
+      it "handles concurrent association loading with eager loading" do
+        config = Crecto::LoadTesting::Config.new(
+          operation_counts: {
+            "association" => 800,
+          },
+          concurrent_workers: 6
+        )
+
+        runner = AssociationLoadTestRunner.new(config)
+        stats = runner.run_load_test("Eager Loading Associations")
+
+        stats.success_rate.should be > 92.0
+        stats.operations_per_second.should be > 30.0
+      end
+    end
+
+    describe "Association Stress Testing" do
+      it "handles deep association chains without performance degradation" do
+        config = Crecto::LoadTesting::Config.new(
+          operation_counts: {
+            "association" => 1000,
+            "insert"      => 500,
+            "query"       => 1000,
+          },
+          concurrent_workers: 6
+        )
+        config.warmup_seconds = 2
+        config.cooldown_seconds = 2
+
+        runner = AssociationLoadTestRunner.new(config)
+        stats = runner.run_load_test("Deep Association Stress Test")
+
+        stats.success_rate.should be > 85.0
+        stats.memory_usage_mb.should be < 400.0
+      end
+    end
+  end
+else
+  describe "Association Load Testing" do
+    it "performance tests are skipped" do
+      puts "ℹ️  Association performance tests skipped. Set RUN_PERFORMANCE_TESTS=true to run them."
     end
   end
 end
