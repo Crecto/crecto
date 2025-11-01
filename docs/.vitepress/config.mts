@@ -3,7 +3,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: 'Crecto Documentation',
   description: 'A Crystal ORM',
-  base: '/crecto/',
+  base: '/',
   ignoreDeadLinks: true,
   themeConfig: {
     nav: [
