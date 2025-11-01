@@ -20,18 +20,21 @@ Website with guides and examples - [https://www.crecto.dev/](https://www.crecto.
 user = User.new
 user.name = "Shakira"
 
-changeset = Repo.insert(user)
+changeset = User.changeset(user)
+changeset = Repo.insert(changeset)
 changeset.errors.any?
 
 inserted_user = changeset.instance
 inserted_user.name = "Keanu"
 
-changeset = Repo.update(user)
+changeset = User.changeset(inserted_user)
+changeset = Repo.update(changeset)
 changeset.errors.any?
 
 updated_user = changeset.instance
 
-changeset = Repo.delete(updated_user)
+changeset = User.changeset(updated_user)
+changeset = Repo.delete(changeset)
 ```
 
 ## Usage and Guides
@@ -58,7 +61,7 @@ The project comes pre-configured with SQLite support. Simply run:
 crystal spec
 ```
 
-This will create a local SQLite database (`./crecto_test.db`) and run all 223 tests.
+This will create a local SQLite database (`./crecto_test.db`) and run all 400+ tests.
 
 #### Testing with Other Databases
 
@@ -79,7 +82,7 @@ To test with PostgreSQL or MySQL:
 
    # For MySQL:
    config do |conf|
-     conf.adapter = Crecto::Adapters::MySQL
+     conf.adapter = Crecto::Adapters::Mysql
      conf.uri = "mysql://localhost/crecto_test"
    end
    ```
