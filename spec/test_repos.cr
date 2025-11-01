@@ -16,7 +16,7 @@ module TestRepo
       conf.password = ENV["POSTGRES_PASSWORD"]? || ""
       conf.port = (ENV["POSTGRES_PORT"]? || "5432").to_i
     when "mysql"
-      conf.adapter = Crecto::Adapters::MySQL
+      conf.adapter = Crecto::Adapters::Mysql
       conf.database = "crecto_test"
       conf.hostname = ENV["MYSQL_HOST"]? || "localhost"
       conf.username = ENV["MYSQL_USER"]? || "root"
@@ -46,7 +46,7 @@ module MysqlTestRepo
   extend Crecto::Repo
 
   config do |conf|
-    conf.adapter = Crecto::Adapters::MySQL
+    conf.adapter = Crecto::Adapters::Mysql
     conf.database = "crecto_test"
     conf.hostname = "localhost"
     conf.username = "root"

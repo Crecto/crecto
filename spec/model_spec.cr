@@ -83,6 +83,11 @@ describe Crecto::Model do
         user.name.should eq("test")
         user.things.should eq(nil)
       end
+
+      it "allows keyword initialization" do
+        user = User.new(name: "Test User")
+        user.name.should eq("Test User")
+      end
     end
   end
 end

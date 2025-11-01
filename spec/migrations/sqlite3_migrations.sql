@@ -9,6 +9,7 @@ DROP TABLE IF EXISTS things;
 DROP TABLE IF EXISTS vehicles;
 DROP TABLE IF EXISTS users_uuid_custom;
 DROP TABLE IF EXISTS things_that_belong_to_user_uuid_custom;
+DROP TABLE IF EXISTS users_required;
 
 CREATE TABLE users(
   id INTEGER NOT NULL PRIMARY KEY,
@@ -130,3 +131,14 @@ CREATE TABLE things_without_fields(
 );
 
 CREATE UNIQUE INDEX things_without_fields_cccccchh on things_without_fields (id);
+
+CREATE TABLE users_required(
+  id INTEGER NOT NULL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  age INTEGER NOT NULL,
+  is_admin BOOLEAN NOT NULL,
+  created_at DATETIME,
+  updated_at DATETIME
+);
+
+CREATE UNIQUE INDEX users_required_cccccchh on users_required (id);

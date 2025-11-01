@@ -12,6 +12,10 @@ require "uuid"
 require "spec"
 require "../src/crecto"
 require "./repo"
+require "./test_repos"
+
+# Ensure the correct test database is migrated before specs run
+TestDatabaseSetup.setup_database
 
 alias TestFloat = PG::Numeric | Float64
 
