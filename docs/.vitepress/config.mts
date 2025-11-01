@@ -6,6 +6,10 @@ export default defineConfig({
   base: '/',
   ignoreDeadLinks: true,
   themeConfig: {
+    search: {
+      provider: 'local'
+    },
+
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Getting Started', link: '/guide' },
