@@ -402,6 +402,12 @@ module Crecto
         end
       end
 
+      # Execute bulk insert operation for multiple changesets
+      # Must be implemented by specific database adapters
+      def run_bulk_insert(conn : DB::Database | DB::Transaction, queryable, changesets : Array(Crecto::Changeset::Changeset), result : Crecto::BulkResult, invalid_indices : Array(Int32) = [] of Int32)
+        raise NotImplementedError.new("run_bulk_insert must be implemented by database adapter")
+      end
+
       def execute(conn, query_string, params)
         start = Time.local
         begin

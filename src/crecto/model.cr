@@ -59,6 +59,17 @@ module Crecto
       property invalid_cast_attempts = [] of Symbol
 
       def initialize
+        super
+      end
+
+      def initialize(**attributes : **T) forall T
+        super()
+        cast!(**attributes)
+      end
+
+      def initialize(attributes : NamedTuple)
+        super()
+        cast(attributes)
       end
 
       # Return the primary key field as a String

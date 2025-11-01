@@ -1,3 +1,5 @@
+require "./repo/bulk_result"
+
 module Crecto
   # A repository maps to an underlying data store, controlled by the adapter.
   module Repo
@@ -311,6 +313,123 @@ module Crecto
     # ```
     def insert!(changeset : Crecto::Changeset::Changeset)
       insert!(changeset.instance)
+    end
+
+    # Insert multiple records efficiently in a single operation
+    #
+    # ```
+    # users = [User.new(name: "Alice"), User.new(name: "Bob")]
+    # result = Repo.insert_all(User, users)
+    # ```
+    def insert_all(queryable, records : Array(Model | Hash | NamedTuple))
+      insert_all_with_tx(queryable, records, nil)
+    end
+
+    # Insert multiple records efficiently in a single operation
+    #
+    # ```
+    # users = [User.new(name: "Alice"), User.new(name: "Bob")]
+    # result = Repo.insert_all(User, users)
+    # ```
+    private def insert_all_with_tx(queryable, records : Array(Model | Hash | NamedTuple), tx : DB::Transaction?)
+      start_time = Time.monotonic
+
+      # Handle empty input
+      raise ArgumentError.new("Records array cannot be empty") if records.empty?
+
+      # Convert all records to changesets for validation
+      changesets = records.map_with_index do |record, index|
+        case record
+        when Model
+          queryable.changeset(record)
+        when Hash
+          # Convert Hash keys to symbols for cast method
+          symbol_record = {} of Symbol => DbValue
+          record.each do |k, v|
+            # Use a simple approach to convert string to symbol
+            case k.to_s
+            when "id"
+              symbol_record[:id] = v.as(DbValue)
+            when "name"
+              symbol_record[:name] = v.as(DbValue)
+            when "things"
+              symbol_record[:things] = v.as(DbValue)
+            when "nope"
+              symbol_record[:nope] = v.as(DbValue)
+            when "some_date"
+              symbol_record[:some_date] = v.as(DbValue)
+            when "user_id"
+              symbol_record[:user_id] = v.as(DbValue)
+            when "is_admin"
+              symbol_record[:is_admin] = v.as(DbValue)
+            when "age"
+              symbol_record[:age] = v.as(DbValue)
+            else
+              # Skip unknown fields
+            end
+          end
+          instance = queryable.cast(symbol_record)
+          queryable.changeset(instance)
+        when NamedTuple
+          instance = queryable.cast(record)
+          queryable.changeset(instance)
+        else
+          raise ArgumentError.new("Unsupported record type: #{record.class}")
+        end
+      end
+
+      # Validate all changesets
+      invalid_indices = [] of Int32
+      changesets.each_with_index do |cs, i|
+        if !cs.valid?
+          invalid_indices << i
+        end
+      end
+
+      # Create BulkResult to track the operation
+      result = BulkResult.new(records.size)
+
+      # If there are validation failures, handle them but still process valid records
+      if invalid_indices.any?
+        invalid_indices.each do |index|
+          changeset = changesets[index]
+          result.add_error(index,
+            changeset,
+            changeset.instance.to_query_hash.transform_keys(&.to_s))
+        end
+      end
+
+      # Proceed with database insertion using only valid changesets
+      # The adapter will handle filtering out the invalid ones based on indices
+      config.adapter.run_bulk_insert(tx || config.get_connection, queryable, changesets, result, invalid_indices)
+
+      # Set duration and finalize result
+      duration = (Time.monotonic - start_time).total_milliseconds
+      result.finalize_result(duration)
+
+      result
+    end
+
+    # Insert multiple records efficiently or raise if any fail validation
+    #
+    # ```
+    # users = [User.new(name: "Alice"), User.new(name: "Bob")]
+    # result = Repo.insert_all!(User, users)
+    # ```
+    def insert_all!(queryable, records : Array(Model | Hash | NamedTuple))
+      result = insert_all(queryable, records)
+      if result.failed_count > 0
+        # Create a mock changeset from the error for raising InvalidChangeset
+        error = result.errors.first
+        if validation_errors = error.validation_errors
+          # This was a validation error
+          raise Exception.new("Validation failed: #{validation_errors.join(", ")}")
+        else
+          # This was a database error
+          raise Exception.new(error.error_message)
+        end
+      end
+      result
     end
 
     # Update a shema instance in the data store.

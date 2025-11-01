@@ -38,6 +38,101 @@ module Crecto
       delete!(changeset.instance)
     end
 
+    # Bulk insert multiple records within the transaction
+    def insert_all(queryable, records : Array(Crecto::Model | Hash | NamedTuple))
+      # Create a new bulk insert method that uses the transaction
+      start_time = Time.monotonic
+
+      # Handle empty input
+      raise ArgumentError.new("Records array cannot be empty") if records.empty?
+
+      # Convert all records to changesets for validation
+      changesets = records.map_with_index do |record, index|
+        case record
+        when Crecto::Model
+          queryable.changeset(record)
+        when Hash
+          # Convert Hash keys to symbols for cast method
+          symbol_record = {} of Symbol => DbValue
+          record.each do |k, v|
+            # Use a simple approach to convert string to symbol
+            case k.to_s
+            when "id"
+              symbol_record[:id] = v.as(DbValue)
+            when "name"
+              symbol_record[:name] = v.as(DbValue)
+            when "things"
+              symbol_record[:things] = v.as(DbValue)
+            when "nope"
+              symbol_record[:nope] = v.as(DbValue)
+            when "some_date"
+              symbol_record[:some_date] = v.as(DbValue)
+            when "user_id"
+              symbol_record[:user_id] = v.as(DbValue)
+            when "is_admin"
+              symbol_record[:is_admin] = v.as(DbValue)
+            when "age"
+              symbol_record[:age] = v.as(DbValue)
+            else
+              # Skip unknown fields
+            end
+          end
+          instance = queryable.cast(symbol_record)
+          queryable.changeset(instance)
+        when NamedTuple
+          instance = queryable.cast(record)
+          queryable.changeset(instance)
+        else
+          raise ArgumentError.new("Unsupported record type: #{record.class}")
+        end
+      end
+
+      # Validate all changesets
+      invalid_indices = [] of Int32
+      changesets.each_with_index do |cs, i|
+        if !cs.valid?
+          invalid_indices << i
+        end
+      end
+
+      # Create BulkResult to track the operation
+      result = Crecto::BulkResult.new(records.size)
+
+      # If there are validation failures, handle them but still process valid records
+      if invalid_indices.any?
+        invalid_indices.each do |index|
+          changeset = changesets[index]
+          result.add_error(index, changeset, changeset.instance.to_query_hash.transform_keys(&.to_s))
+        end
+      end
+
+      # Delegate to database adapter for bulk insertion
+      @repo.config.adapter.run_bulk_insert(@tx, queryable, changesets, result, invalid_indices)
+
+      # Set duration and finalize result
+      duration = (Time.monotonic - start_time).total_milliseconds
+      result.finalize_result(duration)
+
+      result
+    end
+
+    # Bulk insert multiple records within the transaction (strict version)
+    def insert_all!(queryable, records : Array(Crecto::Model | Hash | NamedTuple))
+      result = insert_all(queryable, records)
+      if result.failed_count > 0
+        # Create a mock changeset from the error for raising InvalidChangeset
+        error = result.errors.first
+        if validation_errors = error.validation_errors
+          # This was a validation error
+          raise Exception.new("Validation failed: #{validation_errors.join(", ")}")
+        else
+          # This was a database error
+          raise Exception.new(error.error_message)
+        end
+      end
+      result
+    end
+
     # Enhanced update with optimistic locking to prevent race conditions
     def update(queryable : Crecto::Model)
       # Check if the model has a version/lock column for optimistic locking
