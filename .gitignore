@@ -5,6 +5,9 @@
 db/
 /spec/repo.cr
 
+/docs/.vitepress/cache/
+/docs/.vitepress/dist/
+
 # SQLite3 testing database
 crecto_test.db
 spec/integration/integration_test.db
@@ -48,4 +51,3 @@ node_modules/
 /.cursor/
 /.specify/
 /bmad/
-/docs/
