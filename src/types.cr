@@ -1,12 +1,13 @@
 require "json"
 require "db"
+require "uuid"
 
 # :nodoc:
-alias DbValue = Bool | Float32 | Float64 | Int8 | Int16 | Int32 | Int64 | UInt8 | UInt16 | UInt32 | UInt64 | String | Time | JSON::Any | Nil
+alias DbValue = Bool | Float32 | Float64 | Int8 | Int16 | Int32 | Int64 | UInt8 | UInt16 | UInt32 | UInt64 | String | Time | JSON::Any | UUID | Nil
 # :nodoc:
-alias ArrayDbValue = Array(Bool) | Array(Float32) | Array(Float64) | Array(Int64) | Array(Int32) | Array(Int16) | Array(Int8) | Array(String) | Array(Time) | Array(JSON::Any) | Nil
-# alias for String | Int32 | Int64 | Nil
-alias PkeyValue = String | Int8 | Int16 | Int32 | Int64 | UInt8 | UInt16 | UInt32 | UInt64 | Nil
+alias ArrayDbValue = Array(Bool) | Array(Float32) | Array(Float64) | Array(Int64) | Array(Int32) | Array(Int16) | Array(Int8) | Array(String) | Array(Time) | Array(JSON::Any) | Array(UUID) | Nil
+# alias for String | Int32 | Int64 | Nil | UUID
+alias PkeyValue = String | Int8 | Int16 | Int32 | Int64 | UInt8 | UInt16 | UInt32 | UInt64 | UUID | Nil
 # :nodoc:
 alias WhereType = Hash(Symbol, PkeyValue) | Hash(Symbol, DbValue) | Hash(Symbol, Array(DbValue)) | Hash(Symbol, Array(PkeyValue)) | Hash(Symbol, Array(Int32)) | Hash(Symbol, Array(Int64)) | Hash(Symbol, Array(String)) | Hash(Symbol, Int32 | String) | Hash(Symbol, Int64 | String) | Hash(Symbol, Int32) | Hash(Symbol, Int64) | Hash(Symbol, Nil) | Hash(Symbol, String) | Hash(Symbol, Int32 | Int64 | String) | Hash(Symbol, Int32 | Int64 | String | Nil) | Hash(Symbol, Int16 | Int32 | Int64 | Int8 | String | UInt16 | UInt32 | UInt64 | UInt8) | NamedTuple(clause: String, params: Array(DbValue | PkeyValue)) | Hash(Symbol, Time) | Hash(Symbol, Array(Time))
 # :nodoc:
